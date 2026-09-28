@@ -658,6 +658,136 @@ let productSepIdx = 13;
 // 是否顯示左側「產業矩陣」欄標籤文字（預設隱藏，僅顯示策略矩陣）
 let showIndustryLabels = false;
 
+// ── Value Chain ───────────────────────────────────────────────────────────
+// 價值鏈資料（ST-01a）：目前只存不畫，矩陣仍讀 COLUMN_GROUPS（ST-01d 才切換）
+// 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
+// valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg }
+const VALUE_CHAIN_VERSION = 1;
+
+// 已使用的節點／連線 id（載入存檔後會重建，確保新 id 不會跟舊資料撞號）
+const vcUsedIds = new Set();
+let vcIdSeq = 0;
+function genNodeId(taken) {
+  let id;
+  do { id = 'n' + (++vcIdSeq).toString(36); } while (vcUsedIds.has(id) || (taken && taken.has(id)));
+  vcUsedIds.add(id);
+  return id;
+}
+
+function makeUnit(name, unitKind = 'activity') {
+  return { id: genNodeId(), name, type: 'unit', unitKind };
+}
+function makeGroup(name, children = []) {
+  return { id: genNodeId(), name, type: 'group', children };
+}
+
+// 走訪整個價值鏈的所有節點（含群組）
+function forEachValueChainNode(vc, fn) {
+  const walk = nodes => nodes.forEach(n => {
+    fn(n);
+    if (n.type === 'group') walk(n.children);
+  });
+  walk(vc.support);
+  walk(vc.primary);
+  walk(vc.products);
+}
+
+// 依 id 找節點（搜尋 primary / support / products），找不到回傳 null
+function findValueChainNode(id, vc = valueChain) {
+  let found = null;
+  forEachValueChainNode(vc, n => { if (!found && n.id === id) found = n; });
+  return found;
+}
+
+// 攤平成葉節點（unit）清單：支援活動 → 主要活動（深度優先）→ 產品（供 ST-01d 展開成矩陣欄位）
+function flattenValueChainUnits(vc = valueChain) {
+  const out = [];
+  forEachValueChainNode(vc, n => { if (n.type === 'unit') out.push(n); });
+  return out;
+}
+
+// 重建已使用 id 清單（載入存檔後呼叫）
+function resetValueChainIds(vc = valueChain) {
+  vcUsedIds.clear();
+  forEachValueChainNode(vc, n => vcUsedIds.add(n.id));
+  vc.links.forEach(l => vcUsedIds.add(l.id));
+}
+
+// 舊版 COLUMN_GROUPS → valueChain：分隔線前為主要活動，分隔線後為產品；全部標為「活動」
+function columnGroupsToValueChain(groups, sepIdx) {
+  const primary = [];
+  const products = [];
+  let flatIdx = 0;
+  groups.forEach(g => {
+    const category = (g && g.category) || '';
+    const items = Array.isArray(g && g.items) ? g.items : [];
+    const before = [];
+    items.forEach(name => {
+      if (flatIdx < sepIdx) before.push(name);
+      else products.push(makeUnit(name));  // 產品側一律攤平成單元
+      flatIdx++;
+    });
+    if (!before.length) return;
+    if (category) primary.push(makeGroup(category, before.map(name => makeUnit(name))));
+    else before.forEach(name => primary.push(makeUnit(name)));
+  });
+  return { v: VALUE_CHAIN_VERSION, primary, support: [], products, links: [], showArrowBg: true };
+}
+
+// 全新使用者的預設價值鏈：支援活動 3 項＋既有預設主要活動（資訊系統移到支援；品牌改為「品牌／商譽」資產）＋產品一～三
+function makeDefaultValueChain() {
+  const support = ['人力資源', '資訊系統', '財務管理'].map(name => makeUnit(name));
+  const primary = getFlatColumns().slice(0, productSepIdx)
+    .filter(name => name !== '資訊系統' && name !== '品牌')
+    .map(name => makeUnit(name));
+  primary.push(makeUnit('品牌／商譽', 'asset'));
+  const products = ['產品一', '產品二', '產品三'].map(name => makeUnit(name));
+  return { v: VALUE_CHAIN_VERSION, primary, support, products, links: [], showArrowBg: true };
+}
+
+// 驗證／正規化存檔中的 valueChain：丟掉壞節點、補預設欄位、id 去重、清掉斷掉的連線；不丟例外
+function normaliseValueChain(raw) {
+  const src = (raw && typeof raw === 'object') ? raw : {};
+  const seen = new Set();
+  const takeId = id => {
+    const ok = typeof id === 'string' && id && !seen.has(id);
+    const finalId = ok ? id : genNodeId(seen);
+    seen.add(finalId);
+    return finalId;
+  };
+  // allowGroup = false 時（支援活動、產品），群組會被攤平成其下的單元
+  const normNodes = (list, allowGroup) => {
+    const out = [];
+    (Array.isArray(list) ? list : []).forEach(n => {
+      if (!n || typeof n !== 'object') return;
+      const name = typeof n.name === 'string' ? n.name : (n.name == null ? '' : String(n.name));
+      const isGroup = n.type === 'group' || (n.type !== 'unit' && Array.isArray(n.children));
+      if (isGroup) {
+        const children = normNodes(n.children, allowGroup);
+        if (allowGroup) out.push({ id: takeId(n.id), name, type: 'group', children });
+        else out.push(...children);
+      } else {
+        out.push({ id: takeId(n.id), name, type: 'unit', unitKind: n.unitKind === 'asset' ? 'asset' : 'activity' });
+      }
+    });
+    return out;
+  };
+  const support  = normNodes(src.support, false);
+  const primary  = normNodes(src.primary, true);
+  const products = normNodes(src.products, false);
+  const nodeIds = new Set(seen);
+  const links = [];
+  (Array.isArray(src.links) ? src.links : []).forEach(l => {
+    if (!l || typeof l !== 'object') return;
+    if (!nodeIds.has(l.from) || !nodeIds.has(l.to)) return;
+    links.push({ id: takeId(l.id), from: l.from, to: l.to });
+  });
+  const showArrowBg = typeof src.showArrowBg === 'boolean' ? src.showArrowBg : true;
+  return { v: VALUE_CHAIN_VERSION, primary, support, products, links, showArrowBg };
+}
+
+let valueChain = makeDefaultValueChain();
+
 // ── 矩陣配色預設（可在矩陣格子上按右鍵切換）─────────────────────────────
 const COLOR_PALETTES = [
   {
@@ -2030,7 +2160,8 @@ function saveState() {
       strategyTitle: document.getElementById('strategyTitle').value,
       strategyDesc:  document.getElementById('strategyDesc').value,
       COLUMN_GROUPS: JSON.parse(JSON.stringify(COLUMN_GROUPS)),
-      competitors:   JSON.parse(JSON.stringify(competitors)),
+      valueChain:    JSON.parse(JSON.stringify(valueChain)),
+      competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
       activeIdx,
       productSepIdx,
@@ -2067,6 +2198,17 @@ function loadState() {
     if (typeof state.productSepIdx === 'number') productSepIdx = state.productSepIdx;
     if (typeof state.showIndustryLabels === 'boolean') showIndustryLabels = state.showIndustryLabels;
     if (typeof state.colorPaletteIdx === 'number' && COLOR_PALETTES[state.colorPaletteIdx]) colorPaletteIdx = state.colorPaletteIdx;
+    // 價值鏈：有存就正規化；舊存檔沒有 → 由欄位群組轉換（不自動補「品牌／商譽」）
+    try {
+      if (state.valueChain && typeof state.valueChain === 'object') {
+        valueChain = normaliseValueChain(state.valueChain);
+      } else if (Array.isArray(state.COLUMN_GROUPS) || Array.isArray(state.COLUMNS)) {
+        valueChain = columnGroupsToValueChain(COLUMN_GROUPS, productSepIdx);
+      }
+      resetValueChainIds();
+    } catch(e) {
+      valueChain = makeDefaultValueChain();
+    }
     while (arrows.length < competitors.length) arrows.push([]);
     while (arrows.length > competitors.length) arrows.pop();
     return true;
@@ -2143,7 +2285,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
 </div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/08/16
+  最後更新日期：2026/09/28
 </div>
 </body>
 </html>
