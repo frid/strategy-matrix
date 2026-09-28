@@ -6,7 +6,7 @@ description: >-
   「/task-next」「把 TODO 的 XX-01 做掉」時使用。
   硬規則：一次只做一項；先規劃、等使用者點頭再執行；不在 main 上改；使用者沒說「merge」不合併。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Task Next — 從 TODO.md 接手下一項任務
@@ -23,6 +23,8 @@ metadata:
 3. **不在 `main` 上改**：必須在 worktree／feature branch 上（CLAUDE.md §Git 規則）。
 4. **使用者沒明確說「merge」，不合併回 `main`**。`main` 一更新就自動部署 GitHub Pages。
 5. **要刪檔、搬檔、改檔名，或規格有兩種以上合理解讀 → 停下問使用者**，不猜。
+6. **改檔、驗證都交給 subagent**：主 session 只負責讀 TODO、寫計畫、派工、檢查 subagent 的成果、收尾（`TODO.md`／頁尾日期／commit 可由主 session 做）。主 session 不直接改 `index.html`，連「只有一行」的改動也一樣。
+7. **主 session 用量守在六成內**：context 用量超過約 60% → 先把目前進度收尾（commit），提醒使用者 `/clear` 後再用 `task-next` 接著做。`/clear` 只有使用者能按。
 
 ---
 
@@ -58,7 +60,9 @@ git branch --show-current
 
 ## 步驟 3 — 寫計畫，等使用者點頭（強制關卡）
 
-先讀 `index.html` 相關段落，弄清楚要改哪裡，再用這個格式回報：
+`index.html` 很大（2000+ 行），**不要整份讀進主 session**。派一個 `Explore` subagent（thoroughness 用 "medium"）去找：跟任務相關的區塊／函式在第幾行、資料怎麼存（localStorage 結構）、匯出（PPTX 等）有沒有要跟著改。只拿回結論和行號。
+
+拿到結論後，用這個格式回報：
 
 ```
 ▶ 準備動工：<代號> <標題>
@@ -76,6 +80,8 @@ git branch --show-current
 【要你決定的點】<條列，最多 2 個選項＋我的建議；或「無」>
 
 【驗證方式】<做完怎麼證明它對了>
+
+【派工】worker：<haiku／sonnet／opus>，理由 <一句>；verifier：sonnet
 ```
 
 「動作」要寫到使用者能直接說「第 3 步不要做」。
@@ -84,16 +90,39 @@ git branch --show-current
 
 ---
 
-## 步驟 4 — 執行
+## 步驟 4 — 派 worker subagent 執行
 
-- 照計畫改 `index.html`（單一檔案網頁，HTML／CSS／JS 都在裡面）。
-- 寫法跟著檔案現有風格走（命名、縮排、註解密度）。
-- 新增的功能若會存進 localStorage／匯出（PPTX、JSON 等），確認舊資料讀得進來、匯出有帶到新欄位。
-- 做到一半發現計畫要改 → 停下，跟使用者講哪裡不一樣、為什麼，再繼續。
+用 Agent tool，`subagent_type: general-purpose`，`model` 由主 session 依任務自己選（不用問使用者）：
+
+| 任務性質 | model | 例子 |
+|---|---|---|
+| 機械性小改：改文字、改顏色、改日期、加一個按鈕呼叫既有函式 | `haiku` | 改副標題、換預設欄位名 |
+| 一般功能：新 UI 區塊、新互動、改匯出內容，規格清楚 | `sonnet` | 加一種匯出格式、加欄位拖曳 |
+| 牽涉資料結構／多處連動／規格要推敲 | `opus` | 價值鏈編輯（動到矩陣結構＋存檔＋PPTX 匯出） |
+
+判準：規格越清楚、動到的地方越少 → 越輕。拿不準就往重的選一級。
+
+prompt 至少交代：
+- 任務代號、TODO.md 原文、附圖路徑（叫它用 Read 看圖）
+- 使用者**已同意的計畫全文**（步驟 3），照計畫做，不加料
+- Explore 找到的相關行號
+- 寫法跟著檔案現有風格走（命名、縮排、註解密度）
+- 會存進 localStorage／匯出（PPTX、JSON 等）的功能：舊資料要讀得進來，匯出要帶到新內容
+- **禁止**：不得 commit、不得改 `TODO.md`、不得改頁尾「最後更新日期」（收尾由主 session 做）
+- 做到一半發現計畫行不通 → 停下回報「哪裡不一樣、有哪些選項」，不要自己決定
+- 回報：改了哪些檔、哪幾段、為什麼
+
+worker 回來後，主 session 用 `git diff --stat` 看改動範圍有沒有超出計畫；超出 → 回報使用者。
 
 ---
 
-## 步驟 5 — 驗證
+## 步驟 5 — 派 verifier subagent 驗證
+
+**改的人不驗自己。** 主 session 另派一個 `general-purpose`、`model: sonnet` 的 subagent 做驗證（subagent 不能再開 subagent，一定是主 session 依序派）。
+
+verifier prompt 交代：任務代號、計畫中的【驗證方式】、worker 報告的改動清單、下面兩項檢查；並**禁止它改任何檔**，只回報 PASS／FAIL 和證據（截圖路徑、錯誤訊息）。
+
+檢查項目：
 
 1. **語法檢查**：把 `<script>` 抽出來用 node 檢查，不能有語法錯誤。
 
@@ -119,6 +148,9 @@ git branch --show-current
 
 3. 據實回報：過就說過；沒過就貼錯誤訊息，不要說成功。
 
+verifier 回報後，主 session 自己看一眼截圖（Read 圖檔）確認。
+**FAIL → 不收尾**：把失敗原因回報使用者，問要不要再派 worker 修。
+
 ---
 
 ## 步驟 6 — 收尾
@@ -142,4 +174,5 @@ git branch --show-current
 
 | 版號 | 日期 | 變更 |
 |---|---|---|
+| 1.1.0 | 2026-09-28 | 改檔交 worker subagent（依任務選 haiku／sonnet／opus）、驗證另派 verifier subagent、讀 index.html 用 Explore；主 session 用量守六成 |
 | 1.0.0 | 2026-09-28 | 建立：參考 QMSWeb `qms-next`，簡化成單檔網頁專案版（先規劃再執行、補編號、截圖驗證） |
