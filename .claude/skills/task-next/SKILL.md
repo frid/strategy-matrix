@@ -6,7 +6,7 @@ description: >-
   「/task-next」「把 TODO 的 XX-01 做掉」時使用。
   硬規則：一次只做一項；先規劃、等使用者點頭再執行；不在 main 上改；使用者沒說「merge」不合併。
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Task Next — 從 TODO.md 接手下一項任務
@@ -81,7 +81,7 @@ git branch --show-current
 
 【驗證方式】<做完怎麼證明它對了>
 
-【派工】worker：<haiku／sonnet／opus>，理由 <一句>；verifier：sonnet
+【派工】worker：<worker-haiku／worker-sonnet／worker-opus>，理由 <一句>；verifier：verifier-sonnet
 ```
 
 「動作」要寫到使用者能直接說「第 3 步不要做」。
@@ -92,13 +92,13 @@ git branch --show-current
 
 ## 步驟 4 — 派 worker subagent 執行
 
-用 Agent tool，`subagent_type: general-purpose`，`model` 由主 session 依任務自己選（不用問使用者）：
+用 Agent tool，`subagent_type` 依下表選 `worker-haiku`／`worker-sonnet`／`worker-opus`（`.claude/agents/`，frontmatter 已固定模型，**不另傳 `model` 參數**；類型名帶模型，使用者在 subagent view 看得到）。由主 session 依任務自己選（不用問使用者）：
 
-| 任務性質 | model | 例子 |
+| 任務性質 | `subagent_type` | 例子 |
 |---|---|---|
-| 機械性小改：改文字、改顏色、改日期、加一個按鈕呼叫既有函式 | `haiku` | 改副標題、換預設欄位名 |
-| 一般功能：新 UI 區塊、新互動、改匯出內容，規格清楚 | `sonnet` | 加一種匯出格式、加欄位拖曳 |
-| 牽涉資料結構／多處連動／規格要推敲 | `opus` | 價值鏈編輯（動到矩陣結構＋存檔＋PPTX 匯出） |
+| 機械性小改：改文字、改顏色、改日期、加一個按鈕呼叫既有函式 | `worker-haiku` | 改副標題、換預設欄位名 |
+| 一般功能：新 UI 區塊、新互動、改匯出內容，規格清楚 | `worker-sonnet` | 加一種匯出格式、加欄位拖曳 |
+| 牽涉資料結構／多處連動／規格要推敲 | `worker-opus` | 價值鏈編輯（動到矩陣結構＋存檔＋PPTX 匯出） |
 
 判準：規格越清楚、動到的地方越少 → 越輕。拿不準就往重的選一級。
 
@@ -118,7 +118,7 @@ worker 回來後，主 session 用 `git diff --stat` 看改動範圍有沒有超
 
 ## 步驟 5 — 派 verifier subagent 驗證
 
-**改的人不驗自己。** 主 session 另派一個 `general-purpose`、`model: sonnet` 的 subagent 做驗證（subagent 不能再開 subagent，一定是主 session 依序派）。
+**改的人不驗自己。** 主 session 另派 `subagent_type: verifier-sonnet`（`.claude/agents/verifier-sonnet.md`，只有 Read／Bash／Grep／Glob，不能改檔）做驗證（subagent 不能再開 subagent，一定是主 session 依序派）。
 
 verifier prompt 交代：任務代號、計畫中的【驗證方式】、worker 報告的改動清單、下面兩項檢查；並**禁止它改任何檔**，只回報 PASS／FAIL 和證據（截圖路徑、錯誤訊息）。
 
@@ -174,5 +174,6 @@ verifier 回報後，主 session 自己看一眼截圖（Read 圖檔）確認。
 
 | 版號 | 日期 | 變更 |
 |---|---|---|
+| 1.2.0 | 2026-09-28 | 派工改用 `worker-haiku`／`worker-sonnet`／`worker-opus`、驗證改用 `verifier-sonnet`（`.claude/agents/`，類型名帶模型），取代 `general-purpose`＋`model` 參數；參考 QMSWeb |
 | 1.1.0 | 2026-09-28 | 改檔交 worker subagent（依任務選 haiku／sonnet／opus）、驗證另派 verifier subagent、讀 index.html 用 Explore；主 session 用量守六成 |
 | 1.0.0 | 2026-09-28 | 建立：參考 QMSWeb `qms-next`，簡化成單檔網頁專案版（先規劃再執行、補編號、截圖驗證） |
