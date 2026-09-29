@@ -233,10 +233,25 @@
   .add-col-btn:hover { background: var(--cell-hover); }
 
   /* ── Value chain editor（支援活動｜主要活動（群組可巢狀）｜產品）── */
+  #valueChainEditor { position: relative; }
   .vc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .vc-toolbar .panel-title { margin-bottom: 0; }
   .vc-arrow-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--ink-light); cursor: pointer; white-space: nowrap; }
-  .vc-zones { display: grid; grid-template-columns: minmax(120px, auto) minmax(0, 1fr) minmax(120px, auto); gap: 10px; align-items: stretch; }
+  .vc-link-toggle {
+    display: flex; align-items: center; gap: 5px; font-size: 0.76rem; font-weight: 500;
+    padding: 5px 11px; border-radius: 8px; border: 1px solid var(--grid-line);
+    background: white; color: var(--ink); cursor: pointer; white-space: nowrap; box-shadow: var(--shadow);
+  }
+  .vc-link-toggle.active { background: var(--col-header); color: white; border-color: var(--col-header); }
+  /* 連線模式下，方塊改為十字游標，提示可點擊建立連線 */
+  #valueChainEditor.vc-link-mode .vc-unit, #valueChainEditor.vc-link-mode .vc-group { cursor: crosshair; }
+  /* 連線起點等待中：黃色 highlight（呼應矩陣 pending 樣式）*/
+  .vc-unit.vc-link-pending, .vc-group.vc-link-pending {
+    outline: 2px dashed #e0a020; outline-offset: -2px; background: #fff3cd !important;
+  }
+  /* 連線 SVG 疊加層：細線＋箭頭，不擋滑鼠事件 */
+  #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+  .vc-zones { position: relative; display: grid; grid-template-columns: minmax(120px, auto) minmax(0, 1fr) minmax(120px, auto); gap: 10px; align-items: stretch; }
   @media (max-width: 800px) { .vc-zones { grid-template-columns: minmax(0, 1fr); } }
   .vc-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .vc-zone-title { font-size: 0.72rem; font-weight: 700; color: var(--col-header); letter-spacing: 0.06em; }
@@ -849,9 +864,14 @@ function normaliseValueChain(raw) {
   const products = normNodes(src.products, false);
   const nodeIds = new Set(seen);
   const links = [];
+  const seenPairs = new Set();
   (Array.isArray(src.links) ? src.links : []).forEach(l => {
     if (!l || typeof l !== 'object') return;
     if (!nodeIds.has(l.from) || !nodeIds.has(l.to)) return;
+    if (l.from === l.to) return;  // 丟掉自我連線
+    const pairKey = l.from + '→' + l.to;
+    if (seenPairs.has(pairKey)) return;  // 丟掉重複的 from→to
+    seenPairs.add(pairKey);
     links.push({ id: takeId(l.id), from: l.from, to: l.to });
   });
   const showArrowBg = typeof src.showArrowBg === 'boolean' ? src.showArrowBg : true;
@@ -1315,6 +1335,8 @@ const VC_ZONES = [
 ];
 let vcDragSrc = null;  // { id, zone }（拖曳中的節點）
 let vcFocusId = null;  // 新增節點後自動聚焦到它的名稱輸入框
+let vcLinkMode = false;   // 連線模式開關（UI 狀態，不存檔）
+let vcLinkPendingId = null;  // 連線模式下，等待第二次點擊的節點 id
 
 // 找節點所在位置：回傳 { zone, list, idx, node }（list 為它所在的陣列），找不到回傳 null
 function locateVcNode(id) {
@@ -1354,6 +1376,37 @@ function deleteVcNode(id) {
   const ids = collectVcIds(n);
   loc.list.splice(loc.idx, 1);
   valueChain.links = valueChain.links.filter(l => !ids.has(l.from) && !ids.has(l.to));
+  commitValueChain();
+}
+
+// 連線模式下點方塊：第一次點＝設為等待中起點，再點同一個＝取消，點另一個＝建立連線
+function handleVcLinkClick(nodeId) {
+  if (!vcLinkPendingId) {
+    vcLinkPendingId = nodeId;
+    renderValueChainEditor();
+    return;
+  }
+  if (vcLinkPendingId === nodeId) {
+    vcLinkPendingId = null;
+    renderValueChainEditor();
+    return;
+  }
+  const from = vcLinkPendingId;
+  const to = nodeId;
+  vcLinkPendingId = null;
+  const dup = valueChain.links.some(l => l.from === from && l.to === to);
+  if (dup) {
+    alert('這兩個方塊之間已經有連線了。');
+    renderValueChainEditor();
+    return;
+  }
+  valueChain.links.push({ id: genNodeId(vcUsedIds), from, to });
+  commitValueChain();
+}
+
+// 刪除一條連線
+function deleteVcLink(id) {
+  valueChain.links = valueChain.links.filter(l => l.id !== id);
   commitValueChain();
 }
 
@@ -1427,8 +1480,17 @@ function buildVcNode(node, zone) {
   const isGroup = node.type === 'group';
   const el = document.createElement('div');
   el.className = isGroup ? 'vc-group' : 'vc-unit' + (node.unitKind === 'asset' ? ' vc-asset' : '');
+  if (node.id === vcLinkPendingId) el.classList.add('vc-link-pending');
   el.draggable = true;
   el.dataset.vcId = node.id;
+
+  // 連線模式：點方塊建立/取消連線（點在 input／✕／活動-資產 標籤上時，那些控制項自己已 stopPropagation，不會走到這裡）
+  el.addEventListener('click', e => {
+    if (!vcLinkMode) return;
+    if (e.target.closest('input')) return;
+    e.stopPropagation();
+    handleVcLinkClick(node.id);
+  });
 
   // ── 標題列：名稱 + （單元）活動／資產標記 + ＋同層 / ＋子項 / ✕ ──
   const head = document.createElement('div');
@@ -1526,13 +1588,27 @@ function buildVcNode(node, zone) {
 function renderValueChainEditor() {
   const editor = document.getElementById('valueChainEditor');
   editor.innerHTML = '';
+  editor.classList.toggle('vc-link-mode', vcLinkMode);
 
-  // ── 工具列：說明 + 大箭頭背景開關 ──
+  // ── 工具列：說明 + 連線模式開關 + 大箭頭背景開關 ──
   const toolbar = document.createElement('div');
   toolbar.className = 'vc-toolbar';
   const hint = document.createElement('div');
   hint.className = 'panel-title';
-  hint.textContent = '價值鏈編輯（點名稱可改名 | 拖曳排序，拖到群組空白處＝放進群組 | 點「活動／資產」切換單元性質）';
+  hint.textContent = vcLinkMode
+    ? '連線模式：點第一個方塊（變黃）→ 再點第二個方塊＝建立連線；點同一個方塊可取消'
+    : '價值鏈編輯（點名稱可改名 | 拖曳排序，拖到群組空白處＝放進群組 | 點「活動／資產」切換單元性質）';
+
+  const linkBtn = document.createElement('button');
+  linkBtn.type = 'button';
+  linkBtn.className = 'vc-link-toggle' + (vcLinkMode ? ' active' : '');
+  linkBtn.textContent = '🔗 連線模式';
+  linkBtn.addEventListener('click', () => {
+    vcLinkMode = !vcLinkMode;
+    vcLinkPendingId = null;
+    renderValueChainEditor();
+  });
+
   const arrowLabel = document.createElement('label');
   arrowLabel.className = 'vc-arrow-toggle';
   const arrowChk = document.createElement('input');
@@ -1545,8 +1621,14 @@ function renderValueChainEditor() {
   arrowLabel.appendChild(arrowChk);
   arrowLabel.appendChild(document.createTextNode('大箭頭背景'));
   toolbar.appendChild(hint);
+  toolbar.appendChild(linkBtn);
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
+
+  // 連線 SVG 疊加層（畫在整個編輯器上方，座標以 editor 為原點；不擋滑鼠事件）
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.id = 'vcLineCanvas';
+  editor.appendChild(svg);
 
   // ── 三區 ──
   const zones = document.createElement('div');
@@ -1603,12 +1685,119 @@ function renderValueChainEditor() {
   });
   editor.appendChild(zones);
 
+  // ── 連線清單（點 ✕ 刪除）──
+  const linkPanelTitle = document.createElement('div');
+  linkPanelTitle.className = 'panel-title';
+  linkPanelTitle.style.marginTop = '10px';
+  linkPanelTitle.textContent = '連線清單（點 ✕ 可刪除）';
+  editor.appendChild(linkPanelTitle);
+
+  const linkList = document.createElement('div');
+  linkList.className = 'arrow-list';
+  if (!valueChain.links.length) {
+    const empty = document.createElement('div');
+    empty.className = 'no-arrows';
+    empty.textContent = '尚未建立任何連線（開啟「🔗 連線模式」後點兩個方塊即可建立）';
+    linkList.appendChild(empty);
+  } else {
+    valueChain.links.forEach(link => {
+      const fromNode = findValueChainNode(link.from);
+      const toNode = findValueChainNode(link.to);
+      const item = document.createElement('div');
+      item.className = 'arrow-item';
+      const label = document.createElement('span');
+      label.className = 'arrow-label';
+      label.textContent = `${(fromNode && fromNode.name) || '（已刪除）'} → ${(toNode && toNode.name) || '（已刪除）'}`;
+      const del = document.createElement('span');
+      del.className = 'arrow-del';
+      del.textContent = '✕';
+      del.addEventListener('click', () => deleteVcLink(link.id));
+      item.appendChild(label);
+      item.appendChild(del);
+      linkList.appendChild(item);
+    });
+  }
+  editor.appendChild(linkList);
+
   // 新增的節點：直接進入改名
   if (vcFocusId) {
     const inp = editor.querySelector(`[data-vc-id="${vcFocusId}"] input`);
     vcFocusId = null;
     if (inp) { inp.focus(); inp.select(); }
   }
+
+  drawVcLinks();
+}
+
+// ── Value chain links：畫方塊間的細箭頭（連線清單資料 → SVG）──────────────
+// 取節點方塊相對於 #valueChainEditor 的座標與寬高（zoom-safe，作法同 getCellCenter）
+function getVcNodeRect(id) {
+  const editor = document.getElementById('valueChainEditor');
+  const el = editor.querySelector(`[data-vc-id="${id}"]`);
+  if (!el) return null;
+  let x = 0, y = 0, node = el;
+  while (node && node !== editor) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+}
+
+// 從矩形中心朝目標點方向，取矩形邊界上的交點（讓箭頭停在方塊邊緣而不是穿過去）
+function vcRectEdgePoint(rect, towardX, towardY) {
+  const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+  const dx = towardX - cx, dy = towardY - cy;
+  if (!dx && !dy) return { x: cx, y: cy };
+  const halfW = rect.w / 2, halfH = rect.h / 2;
+  const scale = Math.min(
+    dx ? Math.abs(halfW / dx) : Infinity,
+    dy ? Math.abs(halfH / dy) : Infinity
+  );
+  return { x: cx + dx * scale, y: cy + dy * scale };
+}
+
+function drawVcLinks() {
+  const svg = document.getElementById('vcLineCanvas');
+  if (!svg) return;
+  svg.innerHTML = '';
+  if (!valueChain.links.length) return;
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+  marker.setAttribute('id', 'vc-arrow-head');
+  marker.setAttribute('markerWidth', '9');
+  marker.setAttribute('markerHeight', '9');
+  marker.setAttribute('refX', '8');
+  marker.setAttribute('refY', '4.5');
+  marker.setAttribute('orient', 'auto');
+  marker.setAttribute('markerUnits', 'userSpaceOnUse');
+  const ap = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  ap.setAttribute('d', 'M0,0 L0,9 L9,4.5 z');
+  ap.setAttribute('fill', '#5a4fcf');
+  marker.appendChild(ap);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  valueChain.links.forEach(link => {
+    const r1 = getVcNodeRect(link.from);
+    const r2 = getVcNodeRect(link.to);
+    if (!r1 || !r2) return;
+    const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
+    const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
+    const p1 = vcRectEdgePoint(r1, c2.x, c2.y);
+    const p2 = vcRectEdgePoint(r2, c1.x, c1.y);
+    // 微微上弧，避免多條連線完全重疊看不出來
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2 - 14;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${p1.x} ${p1.y} Q ${mx} ${my}, ${p2.x} ${p2.y}`);
+    path.setAttribute('stroke', '#5a4fcf');
+    path.setAttribute('stroke-width', '2.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('opacity', '0.85');
+    path.setAttribute('marker-end', 'url(#vc-arrow-head)');
+    svg.appendChild(path);
+  });
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────
@@ -2635,6 +2824,7 @@ loadState();
 applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 window.addEventListener('resize', drawLines);
+window.addEventListener('resize', drawVcLinks);
 renderColEditor();
 renderValueChainEditor();
 buildTable();
