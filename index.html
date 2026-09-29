@@ -232,6 +232,72 @@
   }
   .add-col-btn:hover { background: var(--cell-hover); }
 
+  /* ── Value chain editor（支援活動｜主要活動（群組可巢狀）｜產品）── */
+  .vc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .vc-toolbar .panel-title { margin-bottom: 0; }
+  .vc-arrow-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--ink-light); cursor: pointer; white-space: nowrap; }
+  .vc-zones { display: grid; grid-template-columns: minmax(120px, auto) minmax(0, 1fr) minmax(120px, auto); gap: 10px; align-items: stretch; }
+  @media (max-width: 800px) { .vc-zones { grid-template-columns: minmax(0, 1fr); } }
+  .vc-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .vc-zone-title { font-size: 0.72rem; font-weight: 700; color: var(--col-header); letter-spacing: 0.06em; }
+  .vc-zone-body {
+    flex: 1; display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
+    min-height: 60px; padding: 8px; border-radius: 8px;
+    border: 1px dashed var(--grid-line); background: #faf9fd;
+  }
+  .vc-zone-body.drag-over { border-color: var(--col-header); background: var(--cell-hover); }
+  .vc-zone-empty { font-size: 0.68rem; color: var(--cell-text); }
+  .vc-zone-footer { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* 主要活動：橫向排列、放不下自動換行；可選大箭頭背景 */
+  .vc-zone-primary .vc-zone-body { flex-direction: row; flex-wrap: wrap; align-items: flex-start; overflow-x: auto; }
+  .vc-zone-body.vc-arrow-bg { position: relative; isolation: isolate; padding: 18px 56px 18px 12px; border-color: transparent; background: transparent; }
+  .vc-zone-body.vc-arrow-bg::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; background: #dcdce2;
+    clip-path: polygon(0 10%, calc(100% - 48px) 10%, calc(100% - 48px) 0, 100% 50%, calc(100% - 48px) 100%, calc(100% - 48px) 90%, 0 90%);
+  }
+  .vc-zone-body.vc-arrow-bg.drag-over::before { background: #cfc6e6; }
+
+  .vc-group {
+    display: flex; flex-direction: column; gap: 5px;
+    background: rgba(123,111,160,0.16); border-radius: 8px;
+    padding: 5px 7px 7px; cursor: grab; user-select: none;
+    border: 2px solid transparent;
+  }
+  .vc-group:active, .vc-unit:active { cursor: grabbing; }
+  .vc-group-body {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-start;
+    min-height: 26px; min-width: 60px; padding: 3px; border-radius: 6px;
+    border: 1px dashed transparent;
+  }
+  .vc-group-body.drag-over { border-color: var(--col-header); background: rgba(255,255,255,0.55); }
+  .vc-unit {
+    display: flex; align-items: center; gap: 3px;
+    background: white; border-radius: 5px; padding: 3px 6px;
+    font-size: 0.74rem; cursor: grab; user-select: none;
+    border: 1px solid var(--grid-line);
+  }
+  .vc-unit.vc-asset { background: #fff8e8; border-color: #e8c87a; }
+  .vc-zone-support .vc-unit { background: #ececef; border-color: #d4d4da; }
+  .vc-zone-products .vc-unit { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
+  .vc-group.drag-over, .vc-unit.drag-over { box-shadow: -3px 0 0 var(--col-header); }
+  .vc-group.dragging, .vc-unit.dragging { opacity: 0.35; }
+  .vc-node-head { display: flex; align-items: center; gap: 3px; }
+  .vc-node-head input {
+    border: none; border-bottom: 1px dashed transparent; background: transparent; font-family: inherit;
+    font-size: 0.74rem; color: var(--ink); outline: none; min-width: 2em; padding: 1px 2px;
+  }
+  .vc-group > .vc-node-head input { font-weight: 700; border-bottom-color: var(--col-header); }
+  .vc-node-head input:focus { border-bottom: 1px solid var(--col-header); background: white; }
+  .vc-kind {
+    font-size: 0.58rem; padding: 0 4px; border-radius: 3px; cursor: pointer; white-space: nowrap;
+    background: var(--cell-hover); color: var(--col-header);
+  }
+  .vc-kind.vc-kind-asset { background: #f3dfa8; color: #7a5200; }
+  .vc-act { font-size: 0.60rem; opacity: 0.35; cursor: pointer; white-space: nowrap; }
+  .vc-act:hover { opacity: 1; color: var(--col-header); }
+  .vc-act.vc-act-remove:hover { color: #d64545; }
+
   /* ── Buttons ── */
   button {
     padding: 6px 14px; border-radius: 8px; font-size: 0.80rem;
@@ -553,6 +619,12 @@
       <textarea id="strategyDesc" placeholder="例：A 公司為 B 市場(B14)製造 C 產品(A14)。工廠外移(E07)，以降低生產成本(A07)，…" autocomplete="off"></textarea>
     </div>
   </div>
+</div>
+
+<!-- Value chain editor（ST-01b）：支援活動｜主要活動｜產品 -->
+<h2 class="section-title">價值鏈</h2>
+<div class="panel">
+  <div class="vc-editor" id="valueChainEditor"></div>
 </div>
 
 <!-- Legend + Arrow list (matrix drawing itself moved to bottom of page) -->
@@ -1232,6 +1304,311 @@ function renderColEditor() {
   addInline.appendChild(addInp);
   addInline.appendChild(confirmBtn);
   editor.appendChild(addInline);
+}
+
+// ── Value Chain Editor（ST-01b）──────────────────────────────────────────
+// 三區：支援活動（單元）｜主要活動（群組可任意巢狀）｜產品（單元）；拖曳只能在同一區內移動
+const VC_ZONES = [
+  { key: 'support',  title: '支援活動', allowGroup: false },
+  { key: 'primary',  title: '主要活動', allowGroup: true  },
+  { key: 'products', title: '產品',     allowGroup: false },
+];
+let vcDragSrc = null;  // { id, zone }（拖曳中的節點）
+let vcFocusId = null;  // 新增節點後自動聚焦到它的名稱輸入框
+
+// 找節點所在位置：回傳 { zone, list, idx, node }（list 為它所在的陣列），找不到回傳 null
+function locateVcNode(id) {
+  const find = list => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) return { list, idx: i, node: list[i] };
+      if (list[i].type === 'group') { const hit = find(list[i].children); if (hit) return hit; }
+    }
+    return null;
+  };
+  for (const z of VC_ZONES) {
+    const hit = find(valueChain[z.key]);
+    if (hit) return { zone: z.key, ...hit };
+  }
+  return null;
+}
+
+// 節點本身＋所有子孫的 id
+function collectVcIds(node, out = new Set()) {
+  out.add(node.id);
+  if (node.type === 'group') node.children.forEach(c => collectVcIds(c, out));
+  return out;
+}
+
+function commitValueChain() {
+  renderValueChainEditor();
+  saveState();
+}
+
+// 刪除節點（群組連同子孫），並清掉連到這些節點的連線
+function deleteVcNode(id) {
+  const loc = locateVcNode(id);
+  if (!loc) return;
+  const n = loc.node;
+  if (n.type === 'group' && n.children.length &&
+      !confirm(`確定刪除群組「${n.name || '（未命名）'}」及其下所有項目？`)) return;
+  const ids = collectVcIds(n);
+  loc.list.splice(loc.idx, 1);
+  valueChain.links = valueChain.links.filter(l => !ids.has(l.from) && !ids.has(l.to));
+  commitValueChain();
+}
+
+// 在 id 節點後面插入一個新節點（同層）
+function insertVcSibling(id, newNode) {
+  const loc = locateVcNode(id);
+  if (!loc) return;
+  loc.list.splice(loc.idx + 1, 0, newNode);
+  vcFocusId = newNode.id;
+  commitValueChain();
+}
+
+// 拖曳中的節點能否放到 targetId 前（或 targetId 群組內）：同一區、且不能放進自己或自己的子孫
+function canVcDrop(zone, targetId) {
+  if (!vcDragSrc || vcDragSrc.zone !== zone) return false;
+  if (targetId == null) return true;
+  const src = locateVcNode(vcDragSrc.id);
+  return !!src && !collectVcIds(src.node).has(targetId);
+}
+
+// 把拖曳中的節點移到 targetList 裡 beforeId 之前（beforeId 為 null＝放到最後）
+function moveVcNode(targetList, beforeId) {
+  const src = locateVcNode(vcDragSrc.id);
+  vcDragSrc = null;
+  if (!src || src.node.id === beforeId) { renderValueChainEditor(); return; }
+  src.list.splice(src.idx, 1);
+  const at = beforeId ? targetList.findIndex(n => n.id === beforeId) : -1;
+  targetList.splice(at < 0 ? targetList.length : at, 0, src.node);
+  commitValueChain();
+}
+
+function clearVcDragOver() {
+  document.querySelectorAll('#valueChainEditor .drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+// 讓「放到最後」的容器（群組內容區、整區空白處）接受拖放
+function bindVcDropArea(el, zone, getList, ownerId) {
+  el.addEventListener('dragover', e => {
+    if (!vcDragSrc) return;
+    e.stopPropagation();
+    if (!canVcDrop(zone, ownerId)) return;
+    e.preventDefault();
+    clearVcDragOver();
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearVcDragOver();
+    if (!canVcDrop(zone, ownerId)) return;
+    moveVcNode(getList(), null);
+  });
+}
+
+// 名稱輸入框寬度隨字數調整
+function sizeVcInput(inp) {
+  inp.style.width = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
+}
+
+function makeVcAction(text, title, onClick, extraClass = '') {
+  const a = document.createElement('span');
+  a.className = 'vc-act' + (extraClass ? ' ' + extraClass : '');
+  a.textContent = text;
+  a.title = title;
+  a.addEventListener('mousedown', e => e.stopPropagation());
+  a.addEventListener('click', e => { e.stopPropagation(); onClick(); });
+  return a;
+}
+
+function buildVcNode(node, zone) {
+  const isGroup = node.type === 'group';
+  const el = document.createElement('div');
+  el.className = isGroup ? 'vc-group' : 'vc-unit' + (node.unitKind === 'asset' ? ' vc-asset' : '');
+  el.draggable = true;
+  el.dataset.vcId = node.id;
+
+  // ── 標題列：名稱 + （單元）活動／資產標記 + ＋同層 / ＋子項 / ✕ ──
+  const head = document.createElement('div');
+  head.className = 'vc-node-head';
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = node.name;
+  inp.maxLength = 20;
+  inp.placeholder = isGroup ? '群組名稱' : '單元名稱';
+  sizeVcInput(inp);
+  inp.addEventListener('mousedown', e => e.stopPropagation());
+  inp.addEventListener('input', () => sizeVcInput(inp));
+  inp.addEventListener('change', () => {
+    node.name = inp.value.trim() || node.name;
+    inp.value = node.name;
+    sizeVcInput(inp);
+    saveState();
+  });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+  head.appendChild(inp);
+
+  if (!isGroup) {
+    const kind = document.createElement('span');
+    const isAsset = node.unitKind === 'asset';
+    kind.className = 'vc-kind' + (isAsset ? ' vc-kind-asset' : '');
+    kind.textContent = isAsset ? '資產' : '活動';
+    kind.title = '點一下切換 活動／資產';
+    kind.addEventListener('mousedown', e => e.stopPropagation());
+    kind.addEventListener('click', e => {
+      e.stopPropagation();
+      node.unitKind = isAsset ? 'activity' : 'asset';
+      commitValueChain();
+    });
+    head.appendChild(kind);
+  }
+
+  head.appendChild(makeVcAction('＋同層', '在後面新增同層項目', () =>
+    insertVcSibling(node.id, isGroup ? makeGroup('新群組') : makeUnit('新單元'))));
+  if (isGroup) {
+    head.appendChild(makeVcAction('＋子項', '在群組內新增單元', () => {
+      const child = makeUnit('新單元');
+      node.children.push(child);
+      vcFocusId = child.id;
+      commitValueChain();
+    }));
+  }
+  head.appendChild(makeVcAction('✕', isGroup ? '刪除群組（含其下所有項目）' : '刪除', () =>
+    deleteVcNode(node.id), 'vc-act-remove'));
+  el.appendChild(head);
+
+  // ── 群組內容區：子節點；拖到空白處＝放到群組最後 ──
+  if (isGroup) {
+    const body = document.createElement('div');
+    body.className = 'vc-group-body';
+    node.children.forEach(c => body.appendChild(buildVcNode(c, zone)));
+    bindVcDropArea(body, zone, () => node.children, node.id);
+    el.appendChild(body);
+  }
+
+  // 拖曳排序：放到某節點上＝插在它前面（可跨群組，但不能跨區）
+  el.addEventListener('dragstart', e => {
+    e.stopPropagation();
+    vcDragSrc = { id: node.id, zone };
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', node.id);
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+  el.addEventListener('dragend', e => {
+    e.stopPropagation();
+    el.classList.remove('dragging');
+    clearVcDragOver();
+    vcDragSrc = null;
+  });
+  el.addEventListener('dragover', e => {
+    if (!vcDragSrc) return;
+    e.stopPropagation();
+    if (!canVcDrop(zone, node.id)) return;
+    e.preventDefault();
+    clearVcDragOver();
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearVcDragOver();
+    if (!canVcDrop(zone, node.id)) return;
+    const target = locateVcNode(node.id);
+    if (target) moveVcNode(target.list, node.id);
+  });
+
+  return el;
+}
+
+function renderValueChainEditor() {
+  const editor = document.getElementById('valueChainEditor');
+  editor.innerHTML = '';
+
+  // ── 工具列：說明 + 大箭頭背景開關 ──
+  const toolbar = document.createElement('div');
+  toolbar.className = 'vc-toolbar';
+  const hint = document.createElement('div');
+  hint.className = 'panel-title';
+  hint.textContent = '價值鏈編輯（點名稱可改名 | 拖曳排序，拖到群組空白處＝放進群組 | 點「活動／資產」切換單元性質）';
+  const arrowLabel = document.createElement('label');
+  arrowLabel.className = 'vc-arrow-toggle';
+  const arrowChk = document.createElement('input');
+  arrowChk.type = 'checkbox';
+  arrowChk.checked = valueChain.showArrowBg;
+  arrowChk.addEventListener('change', () => {
+    valueChain.showArrowBg = arrowChk.checked;
+    commitValueChain();
+  });
+  arrowLabel.appendChild(arrowChk);
+  arrowLabel.appendChild(document.createTextNode('大箭頭背景'));
+  toolbar.appendChild(hint);
+  toolbar.appendChild(arrowLabel);
+  editor.appendChild(toolbar);
+
+  // ── 三區 ──
+  const zones = document.createElement('div');
+  zones.className = 'vc-zones';
+  VC_ZONES.forEach(z => {
+    const list = valueChain[z.key];
+    const zoneEl = document.createElement('div');
+    zoneEl.className = 'vc-zone vc-zone-' + z.key;
+
+    const title = document.createElement('div');
+    title.className = 'vc-zone-title';
+    title.textContent = z.title;
+    zoneEl.appendChild(title);
+
+    const body = document.createElement('div');
+    body.className = 'vc-zone-body' + (z.key === 'primary' && valueChain.showArrowBg ? ' vc-arrow-bg' : '');
+    list.forEach(n => body.appendChild(buildVcNode(n, z.key)));
+    if (!list.length) {
+      const empty = document.createElement('span');
+      empty.className = 'vc-zone-empty';
+      empty.textContent = '（尚無項目，按下方按鈕新增）';
+      body.appendChild(empty);
+    }
+    bindVcDropArea(body, z.key, () => valueChain[z.key], null);
+    zoneEl.appendChild(body);
+
+    // 區尾：新增最上層單元／群組
+    const footer = document.createElement('div');
+    footer.className = 'vc-zone-footer';
+    const addUnitBtn = document.createElement('span');
+    addUnitBtn.className = 'col-item-add';
+    addUnitBtn.textContent = '＋ 單元';
+    addUnitBtn.addEventListener('click', () => {
+      const u = makeUnit('新單元');
+      list.push(u);
+      vcFocusId = u.id;
+      commitValueChain();
+    });
+    footer.appendChild(addUnitBtn);
+    if (z.allowGroup) {
+      const addGroupBtn = document.createElement('span');
+      addGroupBtn.className = 'col-item-add';
+      addGroupBtn.textContent = '＋ 群組';
+      addGroupBtn.addEventListener('click', () => {
+        const g = makeGroup('新群組');
+        list.push(g);
+        vcFocusId = g.id;
+        commitValueChain();
+      });
+      footer.appendChild(addGroupBtn);
+    }
+    zoneEl.appendChild(footer);
+    zones.appendChild(zoneEl);
+  });
+  editor.appendChild(zones);
+
+  // 新增的節點：直接進入改名
+  if (vcFocusId) {
+    const inp = editor.querySelector(`[data-vc-id="${vcFocusId}"] input`);
+    vcFocusId = null;
+    if (inp) { inp.focus(); inp.select(); }
+  }
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────
@@ -2259,6 +2636,7 @@ applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 window.addEventListener('resize', drawLines);
 renderColEditor();
+renderValueChainEditor();
 buildTable();
 renderCompetitorBar();
 renderArrowList();
@@ -2285,7 +2663,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
 </div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/09/28
+  最後更新日期：2026/09/29
 </div>
 </body>
 </html>
