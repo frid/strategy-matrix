@@ -237,7 +237,7 @@
   .vc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   .vc-toolbar .panel-title { margin-bottom: 0; }
   .vc-arrow-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--ink-light); cursor: pointer; white-space: nowrap; }
-  .vc-link-toggle {
+  .vc-link-toggle, .vc-expand-btn {
     display: flex; align-items: center; gap: 5px; font-size: 0.76rem; font-weight: 500;
     padding: 5px 11px; border-radius: 8px; border: 1px solid var(--grid-line);
     background: white; color: var(--ink); cursor: pointer; white-space: nowrap; box-shadow: var(--shadow);
@@ -611,6 +611,28 @@
   .btn-save:hover { background: #237a47; }
   .btn-load { background: #1565c0; color: white; }
   .btn-load:hover { background: #0d47a1; }
+
+  /* ── 展開到策略矩陣：確認／結果對話框（ST-01d）── */
+  .sm-modal {
+    display: none; position: fixed; inset: 0; z-index: 9998;
+    background: rgba(0,0,0,0.45); align-items: center; justify-content: center; padding: 16px;
+  }
+  .sm-modal.open { display: flex; }
+  .sm-modal-box {
+    background: white; border-radius: 14px; padding: 22px 26px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    width: min(560px, 100%); max-height: 86vh; overflow-y: auto;
+    font-size: 0.82rem; color: var(--ink);
+  }
+  .sm-modal-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--ink); }
+  .sm-modal-radio { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .sm-modal-radio label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .sm-modal-sub { font-weight: 700; color: var(--col-header); margin: 10px 0 4px; font-size: 0.78rem; }
+  .sm-modal-list { list-style: none; padding: 6px 10px; background: #f7f5ff; border-radius: 6px; max-height: 160px; overflow-y: auto; }
+  .sm-modal-list li { padding: 2px 0; font-size: 0.76rem; }
+  .sm-modal-list .sm-modal-empty { color: var(--ink-light); font-style: italic; }
+  .sm-modal-code { font-family: 'DM Mono', monospace; }
+  .sm-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -655,9 +677,9 @@
   <div class="arrow-list" id="arrowList"></div>
 </div>
 
-<!-- Column editor (content swapped under 價值單元欄位管理) -->
-<h2 class="section-title">價值單元欄位管理</h2>
-<div class="panel">
+<!-- Column editor (content swapped under 價值單元欄位管理)；ST-01d 起欄位改由價值鏈「展開到策略矩陣」產生，此區先隱藏（程式保留）-->
+<h2 class="section-title" style="display:none">價值單元欄位管理</h2>
+<div class="panel" style="display:none">
   <div class="panel-title">欄位管理（可編輯名稱、拖曳排序 | 點細項左側 ▏ 可移動產品欄分隔線 | 大類名稱可留空＝單層欄位，填了名稱即可用「＋ 細項」加入子欄位）</div>
   <div class="col-editor" id="colEditor"></div>
 </div>
@@ -707,6 +729,11 @@
 
 <div id="paletteMenu" class="palette-menu"></div>
 
+<!-- 展開到策略矩陣：確認／結果對話框（ST-01d）-->
+<div id="expandModal" class="sm-modal">
+  <div class="sm-modal-box" id="expandModalBox"></div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
@@ -727,6 +754,29 @@ function getGroupStartIdx(groupIdx) {
 function syncColumns() { COLUMNS = getFlatColumns(); }
 syncColumns();
 
+// 每個欄位的群組路徑（ST-01d）：COLUMN_PATHS[ci] = [最上層群組名, …, 直屬群組名]；空陣列＝沒有群組
+// 由「展開到策略矩陣」產生；舊存檔沒有 → 由 COLUMN_GROUPS 的大類推導成兩層（跟舊版表頭一樣）
+let COLUMN_PATHS = null;
+function columnGroupsToPaths(groups) {
+  return groups.flatMap(g => g.items.map(() => (g.category && g.category.trim()) ? [g.category] : []));
+}
+// 取得目前欄位路徑；長度對不上 COLUMNS（例如欄位被舊編輯器改過）時退回由 COLUMN_GROUPS 推導
+function getColumnPaths() {
+  if (Array.isArray(COLUMN_PATHS) && COLUMN_PATHS.length === COLUMNS.length) return COLUMN_PATHS;
+  return columnGroupsToPaths(COLUMN_GROUPS);
+}
+// 由欄位路徑重建最上層的 COLUMN_GROUPS（相鄰且最上層群組相同者併成一組），讓既有存檔／匯出邏輯照常運作
+function pathsToColumnGroups(names, paths) {
+  const groups = [];
+  names.forEach((name, ci) => {
+    const top = (paths[ci].length && String(paths[ci][0]).trim()) ? paths[ci][0] : null;  // 大類留空的組只能有 1 欄
+    const last = groups[groups.length - 1];
+    if (top !== null && last && last.category === top && last.fromPath) last.items.push(name);
+    else groups.push({ category: top === null ? '' : top, items: [name], fromPath: top !== null });
+  });
+  return groups.map(g => ({ category: g.category, items: g.items }));
+}
+
 // Y軸六大策略構面（per 規範）：含左側簡稱（left_label）與右側分類標籤（right_label）
 const ROWS = [
   { id: 'A', leftLabel: '關聯', rightLabel: '產品', label: '產品線廣度與特色' },
@@ -746,7 +796,7 @@ let productSepIdx = 13;
 let showIndustryLabels = false;
 
 // ── Value Chain ───────────────────────────────────────────────────────────
-// 價值鏈資料（ST-01a）：目前只存不畫，矩陣仍讀 COLUMN_GROUPS（ST-01d 才切換）
+// 價值鏈資料（ST-01a）：矩陣欄位由價值鏈「展開到策略矩陣」產生（ST-01d），展開前矩陣維持原本欄位
 // 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
 // valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg }
 const VALUE_CHAIN_VERSION = 1;
@@ -1010,17 +1060,33 @@ let dragArrowSrc = null; // { ci, ai } for arrow list reorder
 // ── Undo ──────────────────────────────────────────────────────────────────
 let history = [];
 
-function pushHistory() {
-  history.push(JSON.stringify(arrows));
+// 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
+function pushHistory(withColumns = false) {
+  const snap = withColumns
+    ? { arrows, cols: { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), productSepIdx } }
+    : arrows;
+  history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
   document.getElementById('undoBtn').disabled = false;
 }
 
 function undo() {
   if (!history.length) return;
-  arrows = JSON.parse(history.pop());
+  const snap = JSON.parse(history.pop());
+  let colsChanged = false;
+  if (Array.isArray(snap)) {
+    arrows = snap;
+  } else {
+    arrows = snap.arrows;
+    COLUMN_GROUPS = snap.cols.COLUMN_GROUPS;
+    COLUMN_PATHS  = snap.cols.COLUMN_PATHS;
+    productSepIdx = snap.cols.productSepIdx;
+    syncColumns();
+    colsChanged = true;
+  }
   if (!history.length) document.getElementById('undoBtn').disabled = true;
   cancelPending();
+  if (colsChanged) { renderColEditor(); buildTable(); }
   drawLines();
   renderArrowList();
   updateStatus();
@@ -1620,8 +1686,17 @@ function renderValueChainEditor() {
   });
   arrowLabel.appendChild(arrowChk);
   arrowLabel.appendChild(document.createTextNode('大箭頭背景'));
+  // 展開到策略矩陣（ST-01d）：以價值鏈的葉節點重新產生矩陣欄位
+  const expandBtn = document.createElement('button');
+  expandBtn.type = 'button';
+  expandBtn.className = 'vc-expand-btn';
+  expandBtn.textContent = '📐 展開到策略矩陣';
+  expandBtn.title = '依目前價值鏈重新產生下方策略矩陣的欄位（既有箭頭依欄位名稱搬移）';
+  expandBtn.addEventListener('click', () => openExpandDialog());
+
   toolbar.appendChild(hint);
   toolbar.appendChild(linkBtn);
+  toolbar.appendChild(expandBtn);
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
 
@@ -1800,6 +1875,163 @@ function drawVcLinks() {
   });
 }
 
+// ── 展開到策略矩陣（ST-01d）──────────────────────────────────────────────
+// 價值鏈是唯一來源：按鈕按下後，以葉節點重新產生矩陣欄位；既有箭頭依欄位名稱搬移，找不到的刪除
+let expandSupportFirst = true;  // 對話框選項：支援活動放最前面（false＝放在主要活動後面）；不存檔
+
+function cellCode(cell) { return `${cell.row}${String(cell.col+1).padStart(2,'0')}`; }
+
+// 由價值鏈產生欄位：{ names, paths, sepIdx }；支援活動路徑為 ['支援活動']，主要活動為其上層群組名稱，產品不分組
+// 空白名稱以「（未命名）」代替（loadState 會濾掉空白欄名，避免重新整理後欄位錯位）
+function buildValueChainColumns(supportFirst) {
+  const unitName = n => n.name || '（未命名）';
+  const support = valueChain.support.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: ['支援活動'] }));
+  const primary = [];
+  const walk = (nodes, path) => nodes.forEach(n => {
+    if (n.type === 'group') walk(n.children, [...path, n.name]);
+    else primary.push({ name: unitName(n), path });
+  });
+  walk(valueChain.primary, []);
+  const products = valueChain.products.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: [] }));
+  const cols = supportFirst ? [...support, ...primary, ...products] : [...primary, ...support, ...products];
+  return {
+    names:  cols.map(c => c.name),
+    paths:  cols.map(c => c.path),
+    sepIdx: cols.length - products.length,
+  };
+}
+
+// 試算展開結果（不改任何資料）：新欄位、搬移後的箭頭、會被刪的箭頭、格子代號有變的清單
+function planValueChainExpand(supportFirst) {
+  const cols = buildValueChainColumns(supportFirst);
+  // 新欄位：名稱 → 依出現順序的欄位索引（同名欄位以「第 n 個」對應）
+  const newIdxByName = new Map();
+  cols.names.forEach((name, ci) => {
+    if (!newIdxByName.has(name)) newIdxByName.set(name, []);
+    newIdxByName.get(name).push(ci);
+  });
+  const seenCount = new Map();
+  const oldToNew = COLUMNS.map(name => {
+    const nth = seenCount.get(name) || 0;
+    seenCount.set(name, nth + 1);
+    const list = newIdxByName.get(name);
+    return list && nth < list.length ? list[nth] : -1;
+  });
+
+  const deleted = [];
+  const changed = [];
+  const changedSeen = new Set();
+  const noteChange = (oldCell, newCell) => {
+    const pair = `${cellCode(oldCell)}→${cellCode(newCell)}`;
+    if (oldCell.col !== newCell.col && !changedSeen.has(pair)) { changedSeen.add(pair); changed.push(pair); }
+  };
+  const newArrows = arrows.map((compArrows, ci) => {
+    const kept = [];
+    compArrows.forEach(a => {
+      const nf = oldToNew[a.from.col] ?? -1;
+      const nt = oldToNew[a.to.col] ?? -1;
+      if (nf < 0 || nt < 0) {
+        deleted.push({ comp: competitors[ci] ? competitors[ci].name : '', from: cellCode(a.from), to: cellCode(a.to), note: a.note || '' });
+        return;
+      }
+      const moved = { ...a, from: { ...a.from, col: nf }, to: { ...a.to, col: nt } };
+      noteChange(a.from, moved.from);
+      noteChange(a.to, moved.to);
+      kept.push(moved);
+    });
+    return kept;
+  });
+  return { cols, newArrows, deleted, changed, before: COLUMNS.length, after: cols.names.length };
+}
+
+// 實際套用：先記復原點（含欄位），再換欄位與箭頭
+function expandValueChainToMatrix(supportFirst) {
+  const plan = planValueChainExpand(supportFirst);
+  pushHistory(true);
+  COLUMN_PATHS  = plan.cols.paths;
+  COLUMN_GROUPS = pathsToColumnGroups(plan.cols.names, plan.cols.paths);
+  productSepIdx = plan.cols.sepIdx;
+  syncColumns();
+  arrows = plan.newArrows;
+  cancelPending();
+  renderColEditor();
+  saveState();
+  rebuildTable();
+  updateStatus();
+  return plan;
+}
+
+// 對話框內的清單（刪除的箭頭／代號變動）
+function expandPlanListsHtml(plan) {
+  const li = (items, empty) => items.length
+    ? items.map(t => `<li>${t}</li>`).join('')
+    : `<li class="sm-modal-empty">${empty}</li>`;
+  const delItems = plan.deleted.map(d =>
+    `${escXml(d.comp)}：<span class="sm-modal-code">${d.from} → ${d.to}</span>${d.note ? '（' + escXml(d.note) + '）' : ''}`);
+  const chgItems = plan.changed.map(c => `<span class="sm-modal-code">${c}</span>`);
+  return `
+    <div>欄位數：<b>${plan.before}</b> → <b>${plan.after}</b></div>
+    <div class="sm-modal-sub">會被刪除的箭頭（欄位名稱在價值鏈中找不到）：${plan.deleted.length} 條</div>
+    <ul class="sm-modal-list">${li(delItems, '無')}</ul>
+    <div class="sm-modal-sub">格子代號有變的（箭頭會跟著搬移）：${plan.changed.length} 格</div>
+    <ul class="sm-modal-list">${li(chgItems, '無')}</ul>`;
+}
+
+function closeExpandModal() {
+  document.getElementById('expandModal').classList.remove('open');
+}
+
+// 確認對話框：選支援活動位置（即時重算預覽）→ 確定／取消
+function openExpandDialog() {
+  const units = flattenValueChainUnits();
+  if (units.length < 2) { alert('價值鏈至少需要 2 個單元才能展開到策略矩陣。'); return; }
+  const modal = document.getElementById('expandModal');
+  const box = document.getElementById('expandModalBox');
+  const render = () => {
+    const plan = planValueChainExpand(expandSupportFirst);
+    box.innerHTML = `
+      <h3>📐 展開到策略矩陣</h3>
+      <div class="sm-modal-radio">支援活動放：
+        <label><input type="radio" name="expandSupportPos" value="first" ${expandSupportFirst ? 'checked' : ''}>最前面（預設）</label>
+        <label><input type="radio" name="expandSupportPos" value="after" ${expandSupportFirst ? '' : 'checked'}>主活動後面</label>
+      </div>
+      ${expandPlanListsHtml(plan)}
+      <div class="sm-modal-actions">
+        <button class="btn-ghost" id="expandCancelBtn">取消</button>
+        <button class="btn-primary" id="expandOkBtn">確定</button>
+      </div>`;
+    box.querySelectorAll('input[name="expandSupportPos"]').forEach(r => r.addEventListener('change', () => {
+      expandSupportFirst = r.value === 'first';
+      render();
+    }));
+    box.querySelector('#expandCancelBtn').addEventListener('click', closeExpandModal);
+    box.querySelector('#expandOkBtn').addEventListener('click', () => {
+      const done = expandValueChainToMatrix(expandSupportFirst);
+      showExpandResult(done);
+    });
+  };
+  render();
+  modal.classList.add('open');
+}
+
+// 結果通知（沿用同一個對話框）
+function showExpandResult(plan) {
+  const box = document.getElementById('expandModalBox');
+  box.innerHTML = `
+    <h3>✅ 已展開到策略矩陣</h3>
+    ${expandPlanListsHtml(plan)}
+    <div class="sm-modal-sub" style="font-weight:400; color:var(--ink-light);">如需回到展開前，可按「↩ 復原」。</div>
+    <div class="sm-modal-actions">
+      <button class="btn-primary" id="expandCloseBtn">關閉</button>
+    </div>`;
+  box.querySelector('#expandCloseBtn').addEventListener('click', closeExpandModal);
+  document.getElementById('expandModal').classList.add('open');
+}
+
+document.getElementById('expandModal').addEventListener('click', e => {
+  if (e.target.id === 'expandModal') closeExpandModal();
+});
+
 // ── Table ─────────────────────────────────────────────────────────────────
 function rebuildTable() {
   buildTable();
@@ -1813,65 +2045,67 @@ function buildTable() {
   table.innerHTML = '';
 
   // ── thead：X軸欄頭（黃底 #FFFF00、深藍字 #00008B、粗體）──
-  // 若任一欄位群組有填「大類」，thead 會有兩列：大類列（橫排、跨欄）+ 細項列（直排）；
-  // 沒有欄位群組使用大類時，維持原本單列結構（向下相容，畫面不變）
+  // 多層表頭（ST-01d）：表頭列數＝最深群組路徑層數＋1。每一層中，相鄰且上層路徑相同的欄位合併成一格群組（colspan，橫排）；
+  // 路徑較淺的欄位，其欄名從該層往下跨列（rowspan）補滿。沒有任何群組時維持原本單列結構（向下相容，畫面不變）
   const thead = document.createElement('thead');
-  const hasCategories = COLUMN_GROUPS.some(g => g.category && g.category.trim());
-
-  const row1 = document.createElement('tr');
-  const row2 = hasCategories ? document.createElement('tr') : null;
+  const paths = getColumnPaths();
+  const depth = paths.reduce((m, p) => Math.max(m, p.length), 0);
+  const headRows = Array.from({ length: depth + 1 }, () => document.createElement('tr'));
+  const markProduct = (th, ci) => {
+    if (ci === productSepIdx) { th.classList.add('product-separator'); th.style.borderLeft = '3px solid #000000'; }
+    if (ci >= productSepIdx) th.classList.add('product-col-header');
+  };
+  // 兩欄在第 level 層是否屬於同一個群組（路徑前 level+1 段都相同）
+  const sameGroup = (a, b, level) => {
+    for (let k = 0; k <= level; k++) if (a[k] !== b[k]) return false;
+    return true;
+  };
 
   // 左上角 corner 儲存格（淺青綠底，配合 Y 軸列標籤）
   const cornerL = document.createElement('th');
   cornerL.className = 'col-header-corner';
   cornerL.textContent = '';
-  if (hasCategories) cornerL.rowSpan = 2;
-  row1.appendChild(cornerL);
+  if (depth > 0) cornerL.rowSpan = depth + 1;
+  headRows[0].appendChild(cornerL);
 
-  let flatIdx = 0;
-  COLUMN_GROUPS.forEach(group => {
-    const hasCat = !!(group.category && group.category.trim());
-    if (hasCat) {
-      // 大類儲存格：橫排文字，跨越該組所有細項欄位
-      const catTh = document.createElement('th');
-      catTh.className = 'col-header-group';
-      catTh.textContent = group.category;
-      catTh.colSpan = group.items.length;
-      if (flatIdx === productSepIdx) { catTh.classList.add('product-separator'); catTh.style.borderLeft = '3px solid #000000'; }
-      if (flatIdx >= productSepIdx) catTh.classList.add('product-col-header');
-      row1.appendChild(catTh);
-
-      group.items.forEach((item, j) => {
-        const idx = flatIdx + j;
-        const leafTh = document.createElement('th');
-        leafTh.className = 'col-header-leaf';
-        leafTh.textContent = item;
-        if (idx === productSepIdx) { leafTh.classList.add('product-separator'); leafTh.style.borderLeft = '3px solid #000000'; }
-        if (idx >= productSepIdx) leafTh.classList.add('product-col-header');
-        row2.appendChild(leafTh);
-      });
-    } else {
-      // 無大類：單一欄位，維持原本樣式，若表格是兩列結構則跨列顯示
-      const th = document.createElement('th');
-      th.className = 'col-header';
-      th.textContent = group.items[0];
-      if (hasCategories) th.rowSpan = 2;
-      if (flatIdx === productSepIdx) { th.classList.add('product-separator'); th.style.borderLeft = '3px solid #000000'; }
-      if (flatIdx >= productSepIdx) th.classList.add('product-col-header');
-      row1.appendChild(th);
+  for (let level = 0; level <= depth; level++) {
+    let ci = 0;
+    while (ci < COLUMNS.length) {
+      const p = paths[ci];
+      if (p.length > level) {
+        // 群組儲存格：橫排文字，跨越同群組的相鄰欄位（不跨越產品欄分隔線）
+        let end = ci + 1;
+        while (end < COLUMNS.length && end !== productSepIdx && paths[end].length > level && sameGroup(paths[end], p, level)) end++;
+        const groupTh = document.createElement('th');
+        groupTh.className = 'col-header-group';
+        groupTh.textContent = p[level];
+        groupTh.colSpan = end - ci;
+        markProduct(groupTh, ci);
+        headRows[level].appendChild(groupTh);
+        ci = end;
+      } else {
+        if (p.length === level) {
+          // 欄名儲存格：直排；沒有群組的欄位用 col-header（跟舊版單層一樣），有群組的用 col-header-leaf；往下跨列補滿
+          const th = document.createElement('th');
+          th.className = level === 0 ? 'col-header' : 'col-header-leaf';
+          th.textContent = COLUMNS[ci];
+          if (depth + 1 - level > 1) th.rowSpan = depth + 1 - level;
+          markProduct(th, ci);
+          headRows[level].appendChild(th);
+        }
+        ci++;
+      }
     }
-    flatIdx += group.items.length;
-  });
+  }
 
   // 右上角 corner 儲存格
   const cornerR = document.createElement('th');
   cornerR.className = 'col-header-corner';
   cornerR.textContent = '';
-  if (hasCategories) cornerR.rowSpan = 2;
-  row1.appendChild(cornerR);
+  if (depth > 0) cornerR.rowSpan = depth + 1;
+  headRows[0].appendChild(cornerR);
 
-  thead.appendChild(row1);
-  if (hasCategories) thead.appendChild(row2);
+  headRows.forEach(tr => thead.appendChild(tr));
   table.appendChild(thead);
 
   // ── tbody：六大策略構面列 ──
@@ -2726,6 +2960,7 @@ function saveState() {
       strategyTitle: document.getElementById('strategyTitle').value,
       strategyDesc:  document.getElementById('strategyDesc').value,
       COLUMN_GROUPS: JSON.parse(JSON.stringify(COLUMN_GROUPS)),
+      COLUMN_PATHS:  JSON.parse(JSON.stringify(getColumnPaths())),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
@@ -2756,6 +2991,13 @@ function loadState() {
       COLUMN_GROUPS = state.COLUMNS.map(name => ({ category: '', items: [name] }));
     }
     syncColumns();
+    // 欄位群組路徑（ST-01d）：長度要跟欄位數相同、每格都是字串陣列才採用；否則（含舊存檔）由 COLUMN_GROUPS 推導
+    if (Array.isArray(state.COLUMN_PATHS) && state.COLUMN_PATHS.length === COLUMNS.length &&
+        state.COLUMN_PATHS.every(p => Array.isArray(p) && p.every(x => typeof x === 'string'))) {
+      COLUMN_PATHS = state.COLUMN_PATHS;
+    } else {
+      COLUMN_PATHS = null;
+    }
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
     if (Array.isArray(state.arrows))
