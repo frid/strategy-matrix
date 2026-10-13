@@ -255,7 +255,7 @@
      主要活動＋產品在下（並排方塊），右側 Margin 箭頭，左／下括號標示支援／主要活動 */
   .vc-zones {
     position: relative; display: grid; gap: 10px;
-    grid-template-columns: 22px minmax(0, 1fr) 52px;
+    grid-template-columns: 22px minmax(0, 1fr) 76px;
     grid-template-rows: auto auto auto;
     grid-template-areas:
       "supportlabel support    margin"
@@ -313,7 +313,7 @@
   .vc-margin-arrow {
     grid-area: margin; background: #2E8B3D; color: #fff; font-weight: 700; font-size: 0.78rem;
     writing-mode: vertical-rl; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: center;
-    clip-path: polygon(0 10%, 58% 10%, 58% 0, 100% 50%, 58% 100%, 58% 90%, 0 90%);
+    clip-path: polygon(0 10%, 72% 10%, 72% 0, 100% 50%, 72% 100%, 72% 90%, 0 90%);
     pointer-events: none; user-select: none;
   }
   /* 左側「支援活動」括號、下方「主要活動」括號：純裝飾標示，不可互動 */
@@ -334,7 +334,7 @@
   .vc-zones.vc-arrow-bg .vc-zone-support .vc-unit,
   .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-unit,
   .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-group {
-    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+    clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%);
   }
 
   .vc-group {
@@ -359,10 +359,10 @@
   }
   /* 支援活動＝橫條（橘）、主要活動＝方塊（藍）；資產標記（:not(.vc-asset)）要蓋過區塊底色以維持可辨識 */
   .vc-zone-support .vc-unit:not(.vc-asset) {
-    background: #C55A11; border-color: #A8470D; color: #fff; font-weight: 600; padding: 9px 30px 9px 14px;
+    background: linear-gradient(90deg, #C55A11, #a84a0e); border-color: #A8470D; color: #fff; font-weight: 600; padding: 9px 30px 9px 14px;
   }
   .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset), .vc-zone-primary > .vc-zone-body > .vc-group {
-    background: #1F7AC4; border-color: #15568E; color: #fff; padding: 10px 10px;
+    background: linear-gradient(90deg, #1F7AC4, #1a5fa8); border-color: #15568E; color: #fff; padding: 10px 30px;
   }
   /* 產品管理面板（ST-01i）：產品不畫在 Porter 價值鏈圖內，改在這裡管理，展開到策略矩陣後成為產品欄 */
   .vc-products-panel { margin-top: 10px; }
