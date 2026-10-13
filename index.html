@@ -1694,9 +1694,26 @@ function renderValueChainEditor() {
   expandBtn.title = '依目前價值鏈重新產生下方策略矩陣的欄位（既有箭頭依欄位名稱搬移）';
   expandBtn.addEventListener('click', () => openExpandDialog());
 
+  // 存／載價值鏈（ST-01f）：只匯出匯入價值鏈本身，不動矩陣箭頭／競爭者／策略名稱
+  const vcSaveBtn = document.createElement('button');
+  vcSaveBtn.type = 'button';
+  vcSaveBtn.className = 'vc-expand-btn';
+  vcSaveBtn.textContent = '💾 存價值鏈';
+  vcSaveBtn.title = '把目前的價值鏈單獨存成一個 JSON 檔';
+  vcSaveBtn.addEventListener('click', () => exportValueChainJSON());
+
+  const vcLoadBtn = document.createElement('button');
+  vcLoadBtn.type = 'button';
+  vcLoadBtn.className = 'vc-expand-btn';
+  vcLoadBtn.textContent = '📂 載價值鏈';
+  vcLoadBtn.title = '匯入先前存的價值鏈 JSON 檔（會覆蓋目前價值鏈）';
+  vcLoadBtn.addEventListener('click', () => importValueChainJSON());
+
   toolbar.appendChild(hint);
   toolbar.appendChild(linkBtn);
   toolbar.appendChild(expandBtn);
+  toolbar.appendChild(vcSaveBtn);
+  toolbar.appendChild(vcLoadBtn);
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
 
@@ -3150,6 +3167,47 @@ function importStateJSON() {
       location.reload();
     } catch(e) {
       alert('檔案格式不正確，請選擇由本工具匯出的 JSON 存檔。');
+    }
+  };
+  inp.click();
+}
+
+// 只匯出價值鏈本身（ST-01f），不含矩陣箭頭／競爭者／策略名稱
+function exportValueChainJSON() {
+  const title = document.getElementById('strategyTitle').value.trim();
+  const data  = { kind: 'strategyMatrix.valueChain', v: VALUE_CHAIN_VERSION, exportedAt: new Date().toISOString(), title, valueChain };
+  const blob  = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url   = URL.createObjectURL(blob);
+  const link  = document.createElement('a');
+  link.download = (title || '策略矩陣') + '_價值鏈.json';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// 匯入單獨存的價值鏈 JSON（ST-01f）：相容「整份 state」格式與裸的價值鏈物件
+function importValueChainJSON() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      let rawVc = null;
+      if (parsed && typeof parsed === 'object') {
+        if (parsed.valueChain && typeof parsed.valueChain === 'object') rawVc = parsed.valueChain; // 單獨存檔 或 整份 state
+        else if (parsed.primary) rawVc = parsed; // 裸的價值鏈物件
+      }
+      if (!rawVc) throw new Error('not a valueChain file');
+      if (!confirm('匯入會覆蓋目前的價值鏈；矩陣欄位要按「展開到策略矩陣」才會更新，確定要匯入嗎？')) return;
+      valueChain = normaliseValueChain(rawVc);
+      resetValueChainIds(valueChain);
+      commitValueChain();
+    } catch(e) {
+      alert('檔案格式不正確，請選擇由「存價值鏈」匯出的 JSON 檔。');
     }
   };
   inp.click();
