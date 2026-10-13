@@ -306,7 +306,7 @@
   }
   /* 群組：寬度固定最小值（可被長名稱撐開），內容由上往下排，頂端對齊同一列的其他群組／單元 */
   .vc-zone-primary > .vc-zone-body > .vc-group {
-    flex: 0 0 auto; min-width: 140px; justify-content: flex-start; text-align: center; white-space: nowrap;
+    flex: 0 0 260px; min-width: 0; justify-content: flex-start; text-align: center; white-space: nowrap;
   }
 
   /* 右側 Margin／利潤 箭頭：純裝飾、固定文字，不可互動、不參與連線與拖放，隨「大箭頭背景」開關顯示 */
@@ -346,10 +346,11 @@
   .vc-group:active, .vc-unit:active { cursor: grabbing; }
   .vc-group-body {
     display: flex; flex-direction: column; align-items: stretch; gap: 4px;
-    min-height: 26px; min-width: 60px; padding: 3px; border-radius: 6px;
+    min-height: 26px; min-width: 0; padding: 3px; border-radius: 6px;
     border: 1px dashed transparent;
   }
   .vc-group-body.drag-over { border-color: var(--col-header); background: rgba(255,255,255,0.55); }
+  .vc-group-body > .vc-unit { min-width: 0; }
   .vc-unit {
     display: flex; align-items: center; gap: 3px;
     background: white; border-radius: 5px; padding: 3px 6px;
@@ -395,18 +396,33 @@
     font-size: 0.74rem; color: var(--ink); outline: none; min-width: 2em; padding: 1px 2px;
   }
   .vc-group > .vc-node-head input { font-weight: 700; border-bottom-color: var(--col-header); }
+  /* 名稱 input 優先取得空間，只有真的放不下時（flex-shrink）才縮小，不要一開始就被 .vc-kind／.vc-act 擠掉 */
+  .vc-group-body > .vc-unit > .vc-node-head > input { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+  .vc-group > .vc-node-head > input { flex: 1 1 auto; min-width: 0; max-width: 100%; }
   .vc-node-head input:focus { border-bottom: 1px solid var(--col-header); background: white; }
   .vc-kind {
     font-size: 0.58rem; padding: 0 4px; border-radius: 3px; cursor: pointer; white-space: nowrap;
     background: var(--cell-hover); color: var(--col-header);
+    flex: 0 0 auto;
   }
   .vc-kind.vc-kind-asset { background: #f3dfa8; color: #7a5200; }
   /* 群組內子項的標題列撐滿寬度，使標籤能靠右對齊 */
-  .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; }
+  .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; }
   .vc-group-body > .vc-unit > .vc-node-head > .vc-kind { margin-left: auto; }
-  .vc-act { font-size: 0.60rem; opacity: 0.35; cursor: pointer; white-space: nowrap; }
+  .vc-act { font-size: 0.60rem; opacity: 0.35; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
   .vc-act:hover { opacity: 1; color: var(--col-header); }
   .vc-act.vc-act-remove:hover { color: #d64545; }
+  /* 主要活動區（群組標題列／群組內子項）動作鈕預設隱藏，滑鼠移到該節點才顯示，讓名稱 input 平時獨享寬度；
+     用 display 而非 visibility，才能真的把寬度讓給名稱（否則即使隱藏仍佔位，名稱空間沒變多）。
+     範圍只限 .vc-zone-primary，支援活動區與產品面板的動作鈕維持原樣常駐顯示 */
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head > .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-group .vc-group-body > .vc-unit > .vc-node-head > .vc-act {
+    display: none;
+  }
+  .vc-zone-primary > .vc-zone-body > .vc-group:hover > .vc-node-head > .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-group .vc-group-body > .vc-unit:hover > .vc-node-head > .vc-act {
+    display: inline;
+  }
 
   /* ── Buttons ── */
   button {
@@ -1663,12 +1679,14 @@ function buildVcNode(node, zone) {
   inp.value = node.name;
   inp.maxLength = 20;
   inp.placeholder = isGroup ? '群組名稱' : '單元名稱';
+  inp.title = node.name;
   sizeVcInput(inp);
   inp.addEventListener('mousedown', e => e.stopPropagation());
   inp.addEventListener('input', () => sizeVcInput(inp));
   inp.addEventListener('change', () => {
     node.name = inp.value.trim() || node.name;
     inp.value = node.name;
+    inp.title = node.name;
     sizeVcInput(inp);
     saveState();
   });
