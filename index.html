@@ -401,7 +401,8 @@
     background: var(--cell-hover); color: var(--col-header);
   }
   .vc-kind.vc-kind-asset { background: #f3dfa8; color: #7a5200; }
-  /* 群組內子項的活動／資產標籤靠右對齊，連成垂直線 */
+  /* 群組內子項的標題列撐滿寬度，使標籤能靠右對齊 */
+  .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; }
   .vc-group-body > .vc-unit > .vc-node-head > .vc-kind { margin-left: auto; }
   .vc-act { font-size: 0.60rem; opacity: 0.35; cursor: pointer; white-space: nowrap; }
   .vc-act:hover { opacity: 1; color: var(--col-header); }
