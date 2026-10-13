@@ -269,13 +269,13 @@
     .vc-activities-row { flex-direction: column; overflow-x: visible; }
   }
   .vc-zone-support { grid-area: support; }
-  /* 主要活動＋產品的共同容器：同一列橫向並排，每區依內容自然寬度（方塊多的自然較寬，不強制 1:1）；
+  /* 主要活動容器（ST-01i 起產品不在圖內，主要活動可用整列寬度）；
      欄位很多時整列水平捲動，但個別方塊不換行、不被壓縮裁字 */
   .vc-activities-row {
     grid-area: activities; display: flex; align-items: stretch; gap: 10px;
     overflow-x: auto; min-width: 0;
   }
-  .vc-activities-row > .vc-zone-primary, .vc-activities-row > .vc-zone-products { flex: 0 0 auto; min-width: 0; }
+  .vc-activities-row > .vc-zone-primary { flex: 1 1 auto; min-width: 0; }
   .vc-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .vc-zone-title { font-size: 0.72rem; font-weight: 700; color: var(--col-header); letter-spacing: 0.06em; }
   .vc-zone-body {
@@ -294,17 +294,15 @@
   }
   .vc-zone-support .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
 
-  /* 主要活動＋產品：同一列並排方塊（產品接在主要活動最後、Margin 箭頭左邊）；
-     每個方塊依文字內容自然寬度（flex: 0 0 auto），不強制換行也不互相擠壓裁字，
-     欄位太多時由外層 .vc-activities-row 整列水平捲動 */
-  .vc-zone-primary .vc-zone-body, .vc-zone-products .vc-zone-body {
+  /* 主要活動：同一列並排方塊；每個方塊依文字內容自然寬度（flex: 0 0 auto），
+     不強制換行也不互相擠壓裁字，欄位太多時由外層 .vc-activities-row 整列水平捲動 */
+  .vc-zone-primary .vc-zone-body {
     flex-direction: row; flex-wrap: nowrap; align-items: stretch;
     padding: 0; border: none; background: transparent;
   }
-  .vc-zone-primary .vc-zone-body.drag-over, .vc-zone-products .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
+  .vc-zone-primary .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
   .vc-zone-primary > .vc-zone-body > .vc-unit,
-  .vc-zone-primary > .vc-zone-body > .vc-group,
-  .vc-zone-products > .vc-zone-body > .vc-unit {
+  .vc-zone-primary > .vc-zone-body > .vc-group {
     flex: 0 0 auto; min-width: 76px; justify-content: center; text-align: center; white-space: nowrap;
   }
 
@@ -332,8 +330,7 @@
   /* 斜切效果（Porter 箭頭樣式），隨「大箭頭背景」開關顯示 */
   .vc-zones.vc-arrow-bg .vc-zone-support .vc-unit,
   .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-unit,
-  .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-group,
-  .vc-zones.vc-arrow-bg .vc-zone-products > .vc-zone-body > .vc-unit {
+  .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-group {
     clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
   }
 
@@ -363,7 +360,16 @@
   .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset), .vc-zone-primary > .vc-zone-body > .vc-group {
     background: #1F7AC4; border-color: #15568E; color: #fff; padding: 10px 10px;
   }
-  .vc-zone-products .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
+  /* 產品管理面板（ST-01i）：產品不畫在 Porter 價值鏈圖內，改在這裡管理，展開到策略矩陣後成為產品欄 */
+  .vc-products-panel { margin-top: 10px; }
+  .vc-products-body {
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start;
+    min-height: 34px; padding: 6px; border-radius: 8px;
+    border: 1px dashed var(--grid-line); background: #faf9fd;
+  }
+  .vc-products-body.drag-over { border-color: var(--col-header); background: var(--cell-hover); }
+  .vc-products-body > .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
+  .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
   .vc-unit.vc-asset { background: #fff8e8; border-color: #e8c87a; }
   .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
   .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-act,
@@ -1469,10 +1475,11 @@ function renderColEditor() {
 
 // ── Value Chain Editor（ST-01b）──────────────────────────────────────────
 // 三區：支援活動（單元）｜主要活動（群組可任意巢狀）｜產品（單元）；拖曳只能在同一區內移動
+// porter = 是否畫進 Porter 價值鏈圖；ST-01i 起產品改在圖外的「產品管理面板」維護（矩陣產品欄不變）
 const VC_ZONES = [
-  { key: 'support',  title: '支援活動', allowGroup: false },
-  { key: 'primary',  title: '主要活動', allowGroup: true  },
-  { key: 'products', title: '產品',     allowGroup: false },
+  { key: 'support',  title: '支援活動', allowGroup: false, porter: true  },
+  { key: 'primary',  title: '主要活動', allowGroup: true,  porter: true  },
+  { key: 'products', title: '產品',     allowGroup: false, porter: false },
 ];
 let vcDragSrc = null;  // { id, zone }（拖曳中的節點）
 let vcFocusId = null;  // 新增節點後自動聚焦到它的名稱輸入框
@@ -1812,6 +1819,7 @@ function renderValueChainEditor() {
   activitiesRow.className = 'vc-activities-row';
 
   VC_ZONES.forEach(z => {
+    if (!z.porter) return;  // 產品不畫在價值鏈圖內（ST-01i），改由下方產品管理面板處理
     const list = valueChain[z.key];
     const zoneEl = document.createElement('div');
     zoneEl.className = 'vc-zone vc-zone-' + z.key;
@@ -1879,6 +1887,44 @@ function renderValueChainEditor() {
   }
 
   editor.appendChild(zones);
+
+  // ── 產品管理面板（ST-01i）：產品不在 Porter 價值鏈圖內，改在這裡新增／改名／刪除／拖曳排序；
+  //    資料仍寫回 valueChain.products，按「📐 展開到策略矩陣」後成為矩陣右側的產品欄 ──
+  const prodPanel = document.createElement('div');
+  prodPanel.className = 'vc-products-panel';
+
+  const prodTitle = document.createElement('div');
+  prodTitle.className = 'panel-title';
+  prodTitle.textContent = '產品（展開到策略矩陣後成為右側產品欄；可改名／拖曳排序，連線模式下也可點選建立連線）';
+  prodPanel.appendChild(prodTitle);
+
+  const prodBody = document.createElement('div');
+  prodBody.className = 'vc-products-body';
+  valueChain.products.forEach(n => prodBody.appendChild(buildVcNode(n, 'products')));
+  if (!valueChain.products.length) {
+    const empty = document.createElement('span');
+    empty.className = 'vc-zone-empty';
+    empty.textContent = '（尚無產品，按下方按鈕新增）';
+    prodBody.appendChild(empty);
+  }
+  bindVcDropArea(prodBody, 'products', () => valueChain.products, null);
+  prodPanel.appendChild(prodBody);
+
+  const prodFooter = document.createElement('div');
+  prodFooter.className = 'vc-products-footer';
+  const addProdBtn = document.createElement('span');
+  addProdBtn.className = 'col-item-add';
+  addProdBtn.textContent = '＋ 產品';
+  addProdBtn.addEventListener('click', () => {
+    const u = makeUnit('新產品');
+    valueChain.products.push(u);
+    vcFocusId = u.id;
+    commitValueChain();
+  });
+  prodFooter.appendChild(addProdBtn);
+  prodPanel.appendChild(prodFooter);
+
+  editor.appendChild(prodPanel);
 
   // ── 連線清單（點 ✕ 刪除）──
   const linkPanelTitle = document.createElement('div');
