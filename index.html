@@ -3163,8 +3163,9 @@ async function exportPptx() {
   // 匯出所有策略構想（競爭者）的箭頭，依競爭者順序合併成同一份 PPTX
   const allSteps = arrows.flatMap((compArrows, ci) => compArrows.map(arrow => ({ ci, arrow })));
 
-  if (allSteps.length === 0) {
-    alert('尚未繪製任何箭頭。\n請先繪製箭頭後再匯出 PPTX。');
+  // ST：沒有箭頭也能匯出（只出價值鏈頁＋矩陣總覽頁）；真的完全沒內容才擋
+  if (allSteps.length === 0 && valueChainIsEmpty() && COLUMNS.length === 0) {
+    alert('目前沒有任何可匯出的內容。\n請先建立矩陣欄位、價值鏈或箭頭。');
     return;
   }
 
