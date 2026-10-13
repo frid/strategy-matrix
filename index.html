@@ -2617,6 +2617,41 @@ async function captureFrameBase64() {
   return matrixCanvas.toDataURL('image/png'); // full data URL
 }
 
+// ── Helper: is the value chain empty? (ST-01e：空的話匯出時跳過該頁) ──────
+function valueChainIsEmpty() {
+  return !valueChain.primary.length && !valueChain.support.length && !valueChain.products.length;
+}
+
+// ── Helper: capture value chain editor as base64 PNG (ST-01e) ───────────
+// 含方塊、SVG 連線（#vcLineCanvas）與大箭頭背景（依 valueChain.showArrowBg，畫面本來就有就直接截）
+async function captureValueChainBase64() {
+  window.scrollTo(0, 0);
+  const editor = document.getElementById('valueChainEditor');
+
+  // 若編輯區（或其祖先）被 display:none 隱藏，暫時顯示以便截圖，截圖後還原
+  const hiddenEls = [];
+  for (let node = editor; node && node !== document.body; node = node.parentElement) {
+    if (getComputedStyle(node).display === 'none') {
+      hiddenEls.push({ el: node, style: node.getAttribute('style') });
+    }
+  }
+  hiddenEls.forEach(({ el }) => { el.style.display = 'block'; });
+
+  // 重繪一次連線 SVG，確保座標依目前（已還原顯示的）版面計算，html2canvas 才能正確截到連線
+  drawVcLinks();
+  await new Promise(r => setTimeout(r, 30));
+
+  const canvas = await html2canvas(editor, {
+    scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+  });
+
+  hiddenEls.forEach(({ el, style }) => {
+    if (style === null) el.removeAttribute('style'); else el.setAttribute('style', style);
+  });
+
+  return canvas.toDataURL('image/png');
+}
+
 // ── Export PPTX (self-contained, no external lib) ────────────────────────
 // Builds a valid PPTX (Office Open XML ZIP) from scratch using JSZip
 async function exportPptx() {
@@ -2635,6 +2670,17 @@ async function exportPptx() {
   const label   = document.getElementById('progressLabel');
   overlay.classList.add('active');
   fill.style.width = '0%';
+
+  // ── 0. Capture value chain overview（ST-01e：非空才有這頁，放在第一張）──
+  const hasValueChain = !valueChainIsEmpty();
+  const vcOffset = hasValueChain ? 1 : 0;
+  let vcBase64 = null;
+  if (hasValueChain) {
+    label.textContent = '截圖價值鏈圖...';
+    fill.style.width  = '5%';
+    const vcDataUrl = await captureValueChainBase64();
+    vcBase64 = vcDataUrl.replace(/^data:image\/png;base64,/, '');
+  }
 
   // ── 1. Capture frames ──────────────────────────────────────────────────
   const frames = []; // { dataUrl, base64 }
@@ -2775,13 +2821,67 @@ async function exportPptx() {
   const imgX = areaX + Math.round((areaW - imgW) / 2);
   const imgY = areaY + Math.round((areaH - imgH) / 2);
 
+  // ── Value chain slide（ST-01e）：非空才插入，永遠是第 1 張，其餘投影片編號整體往後推 vcOffset ──
+  if (hasValueChain) {
+    zip.folder('ppt/media').file('img1.png', vcBase64, { base64: true });
+
+    const vcImg = new Image();
+    await new Promise(res => { vcImg.onload = res; vcImg.src = 'data:image/png;base64,' + vcBase64; });
+    const vcRatio = vcImg.naturalWidth / vcImg.naturalHeight;
+    let vcImgW, vcImgH;
+    if (vcRatio > areaRatio) {
+      vcImgW = areaW;
+      vcImgH = Math.round(areaW / vcRatio);
+    } else {
+      vcImgH = areaH;
+      vcImgW = Math.round(areaH * vcRatio);
+    }
+    const vcImgX = areaX + Math.round((areaW - vcImgW) / 2);
+    const vcImgY = areaY + Math.round((areaH - vcImgH) / 2);
+
+    const vcTitleText = titleText ? `${titleText}　價值鏈` : '價值鏈';
+    const vcTitleXml = `
+    <p:sp>
+      <p:nvSpPr><p:cNvPr id="2" name="title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${PAD_EMU}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${titleH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+      <p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="4400" b="1" dirty="0"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>${escXml(vcTitleText)}</a:t></a:r></a:p></p:txBody>
+    </p:sp>`;
+
+    const vcSlideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <p:cSld>
+    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="0" y="0"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>
+      ${vcTitleXml}
+      <p:pic>
+        <p:nvPicPr><p:cNvPr id="4" name="img1"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>
+        <p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>
+        <p:spPr><a:xfrm><a:off x="${vcImgX}" y="${vcImgY}"/><a:ext cx="${vcImgW}" cy="${vcImgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+      </p:pic>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sld>`;
+
+    zip.folder('ppt/slides').file('slide1.xml', vcSlideXml);
+    zip.folder('ppt/slides/_rels').file('slide1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/img1.png"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`);
+  }
+
   for (let i = 0; i < N; i++) {
     label.textContent = `組合投影片 ${i + 1} / ${N}...`;
     fill.style.width  = `${Math.round(80 + (i / N) * 15)}%`;
     await new Promise(r => setTimeout(r, 10));
 
     const step = i + 1;
-    const imgId = i + 1;
+    const imgId = i + 1 + vcOffset;
 
     // Embed image
     zip.folder('ppt/media').file(`img${imgId}.png`, frames[i].base64, { base64: true });
@@ -2853,7 +2953,7 @@ async function exportPptx() {
   const finalDataUrl = await captureFrameBase64();
   const finalBase64  = finalDataUrl.replace(/^data:image\/png;base64,/, '');
 
-  const finalIdx = N + 1;
+  const finalIdx = N + 1 + vcOffset;
   zip.folder('ppt/media').file(`img${finalIdx}.png`, finalBase64, { base64: true });
 
   // ── Final slide（完整策略矩陣總覽）：同一白底黑字版面，無步驟標示 ──
@@ -2894,8 +2994,8 @@ async function exportPptx() {
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
 </Relationships>`);
 
-  // Update Content_Types and presentation: step slides + full overview
-  const totalSlides = N + 1;
+  // Update Content_Types and presentation: value chain page (if any) + step slides + full overview
+  const totalSlides = N + 1 + vcOffset;
   const sldIdLst2 = Array.from({length: totalSlides}, (_, i) =>
     `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join('');
   zip.folder('ppt').file('presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -3095,7 +3195,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
 </div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/09/29
+  最後更新日期：2026/10/13
 </div>
 </body>
 </html>
