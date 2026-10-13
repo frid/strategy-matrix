@@ -21,19 +21,22 @@
     --cell-hover: #ede8f8;
     --shadow: 0 2px 12px rgba(100,80,160,0.10);
 
-    /* ── 矩陣配色（可透過右鍵選單切換預設配色）── */
-    --mx-leaf-bg: #FFFF00;
-    --mx-leaf-text: #00008B;
-    --mx-group-bg: #1565C0;
+    /* ── 矩陣配色（可透過右鍵選單切換預設配色）；預設「價值鏈同調（藍橘）」，與 COLOR_PALETTES[0] 一致 ── */
+    --mx-leaf-bg: #E8F0FA;
+    --mx-leaf-text: #15568E;
+    --mx-group-bg: #1F7AC4;
     --mx-group-text: #FFFFFF;
-    --mx-corner-bg: #7FDBDA;
-    --mx-corner-text: #00008B;
-    --mx-rowlabel-bg: #7FDBDA;
-    --mx-rowlabel-text: #00008B;
-    --mx-product-header-bg: #D98C8C;
-    --mx-product-header-text: #4A0000;
-    --mx-product-cell-bg: #F6DCDC;
-    --mx-product-cell-hover: #eec5c5;
+    --mx-group-grad: linear-gradient(90deg, #1F7AC4, #1a5fa8);
+    --mx-corner-bg: #C55A11;
+    --mx-corner-text: #FFFFFF;
+    --mx-rowlabel-bg: #C55A11;
+    --mx-rowlabel-text: #FFFFFF;
+    --mx-rowlabel-grad: linear-gradient(90deg, #C55A11, #a84a0e);
+    --mx-product-header-bg: #C98A8A;
+    --mx-product-header-text: #4A2020;
+    --mx-product-cell-bg: #F2E0E0;
+    --mx-product-cell-hover: #e6caca;
+    --mx-code-text: #1a5fa8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -519,21 +522,21 @@
     height: auto;
     min-height: 160px;
     width: 136px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     text-align: center;
     vertical-align: middle;
   }
 
-  /* ── 兩層欄位標題（大類 + 細項）：大類為藍底白字橫排，細項維持原本黃底直排 ──
+  /* ── 兩層欄位標題（大類 + 細項）：大類為藍底白字橫排（漸層），細項維持原本黃底直排 ──
      兩者之間用較粗的黑色底線分開，視覺上明確區隔上下兩個區塊 */
   #matrixTable thead th.col-header-group {
-    background: var(--mx-group-bg);
+    background: var(--mx-group-grad);
     color: var(--mx-group-text);
     font-weight: bold;
     writing-mode: horizontal-tb;
     height: auto;
     min-height: 46px;
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     text-align: center;
     vertical-align: middle;
     padding: 8px 4px;
@@ -549,44 +552,44 @@
     height: auto;
     min-height: 114px;
     width: 136px;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     text-align: center;
     vertical-align: middle;
     padding: 8px 6px;
   }
 
-  /* 左上角與右上角 corner 儲存格：淺青綠底，配合列標籤色系 */
+  /* 左上角與右上角 corner 儲存格：價值鏈橘系底，配合列標籤色系（漸層） */
   #matrixTable thead th.col-header-corner {
-    background: var(--mx-corner-bg);
+    background: var(--mx-rowlabel-grad);
     color: var(--mx-corner-text);
     font-weight: bold;
     writing-mode: horizontal-tb;
     height: auto;
     width: 144px;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     padding: 10px 8px;
     white-space: normal;
   }
 
-  /* ── Y軸左側標籤：淺青綠底、深藍字、粗體 ── */
+  /* ── Y軸左側標籤：價值鏈橘系底（漸層）、白字、粗體 ── */
   td.row-label-left {
-    background: var(--mx-rowlabel-bg);
+    background: var(--mx-rowlabel-grad);
     color: var(--mx-rowlabel-text);
     font-weight: bold;
     width: 144px;
     padding: 10px 8px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     text-align: center;
   }
 
   /* Y軸右側標籤：同左側配色 */
   td.row-label-right {
-    background: var(--mx-rowlabel-bg);
+    background: var(--mx-rowlabel-grad);
     color: var(--mx-rowlabel-text);
     font-weight: bold;
     width: 144px;
     padding: 10px 8px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     text-align: center;
   }
 
@@ -603,11 +606,11 @@
   /* hover 時灰底 highlight */
   td.matrix-cell:hover { background: #e8e8e8 !important; }
 
-  /* 儲存格座標碼：藍色（#0000FF）粗體底線（per 規範）*/
+  /* 儲存格座標碼：藍色粗體底線（per 規範；實際色碼隨配色切換，見 --mx-code-text）*/
   .cell-code {
     font-family: 'DM Mono', monospace;
-    font-size: 1.1rem;
-    color: #0000FF;
+    font-size: 0.9rem;
+    color: var(--mx-code-text);
     font-weight: bold;
     text-decoration: underline;
   }
@@ -1044,14 +1047,32 @@ let valueChain = makeDefaultValueChain();
 // ── 矩陣配色預設（可在矩陣格子上按右鍵切換）─────────────────────────────
 const COLOR_PALETTES = [
   {
+    // ST-01o：與左側價值鏈圖同一套藍橘色系（彩度／亮度比照價值鏈），設為預設
+    name: '價值鏈同調（藍橘）',
+    vars: {
+      '--mx-leaf-bg': '#E8F0FA', '--mx-leaf-text': '#15568E',
+      '--mx-group-bg': '#1F7AC4', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #1F7AC4, #1a5fa8)',
+      '--mx-corner-bg': '#C55A11', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#C55A11', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #C55A11, #a84a0e)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+    },
+  },
+  {
     name: '標準規範（黃藍）',
     vars: {
       '--mx-leaf-bg': '#FFFF00', '--mx-leaf-text': '#00008B',
       '--mx-group-bg': '#1565C0', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #1565C0, #1565C0)',
       '--mx-corner-bg': '#7FDBDA', '--mx-corner-text': '#00008B',
       '--mx-rowlabel-bg': '#7FDBDA', '--mx-rowlabel-text': '#00008B',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #7FDBDA, #7FDBDA)',
       '--mx-product-header-bg': '#D98C8C', '--mx-product-header-text': '#4A0000',
       '--mx-product-cell-bg': '#F6DCDC', '--mx-product-cell-hover': '#eec5c5',
+      '--mx-code-text': '#0000FF',
     },
   },
   {
@@ -1059,10 +1080,13 @@ const COLOR_PALETTES = [
     vars: {
       '--mx-leaf-bg': '#DCE6F2', '--mx-leaf-text': '#1f3a5f',
       '--mx-group-bg': '#4A6FA5', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #4A6FA5, #4A6FA5)',
       '--mx-corner-bg': '#C7D6E8', '--mx-corner-text': '#1f3a5f',
       '--mx-rowlabel-bg': '#C7D6E8', '--mx-rowlabel-text': '#1f3a5f',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #C7D6E8, #C7D6E8)',
       '--mx-product-header-bg': '#E3B8B8', '--mx-product-header-text': '#5c2626',
       '--mx-product-cell-bg': '#F7E6E6', '--mx-product-cell-hover': '#eecfcf',
+      '--mx-code-text': '#0000FF',
     },
   },
   {
@@ -1070,14 +1094,17 @@ const COLOR_PALETTES = [
     vars: {
       '--mx-leaf-bg': '#E0E0E0', '--mx-leaf-text': '#111111',
       '--mx-group-bg': '#333333', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #333333, #333333)',
       '--mx-corner-bg': '#CCCCCC', '--mx-corner-text': '#111111',
       '--mx-rowlabel-bg': '#CCCCCC', '--mx-rowlabel-text': '#111111',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #CCCCCC, #CCCCCC)',
       '--mx-product-header-bg': '#C97B7B', '--mx-product-header-text': '#3a0000',
       '--mx-product-cell-bg': '#F0D6D6', '--mx-product-cell-hover': '#e3baba',
+      '--mx-code-text': '#0000FF',
     },
   },
 ];
-let colorPaletteIdx = 0; // 預設採用「標準規範（黃藍）」；可右鍵切換其他配色
+let colorPaletteIdx = 0; // 預設採用「價值鏈同調（藍橘）」（ST-01o）；可右鍵切換其他配色
 
 function applyPalette(idx) {
   const palette = COLOR_PALETTES[idx];
@@ -2800,6 +2827,7 @@ function pptxPalette() {
     prodHeadBg:  pptxHex(vars['--mx-product-header-bg'], 'D98C8C'),
     prodHeadText:pptxHex(vars['--mx-product-header-text'], '4A0000'),
     prodCellBg:  pptxHex(vars['--mx-product-cell-bg'], 'F6DCDC'),
+    codeText:    pptxHex(vars['--mx-code-text'], '0000FF'),
   };
 }
 
@@ -2930,7 +2958,7 @@ function buildMatrixTableXml(L, shapeId) {
     COLUMNS.forEach((_, ci) => {
       tcs += pptxTc({
         text: `${row.id}${String(ci + 1).padStart(2, '0')}`,
-        bold: true, underline: true, sz: 1100, color: '0000FF',
+        bold: true, underline: true, sz: 1100, color: P.codeText,
         fill: ci >= productSepIdx ? P.prodCellBg : 'FFFFFF',
         thickLeft: ci === productSepIdx,
       });
