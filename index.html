@@ -251,8 +251,31 @@
   }
   /* 連線 SVG 疊加層：細線＋箭頭，不擋滑鼠事件 */
   #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
-  .vc-zones { position: relative; display: grid; grid-template-columns: minmax(120px, auto) minmax(0, 1fr) minmax(120px, auto); gap: 10px; align-items: stretch; }
-  @media (max-width: 800px) { .vc-zones { grid-template-columns: minmax(0, 1fr); } }
+  /* ST-01h：版型依循經典 Porter 價值鏈圖——支援活動在上（橫跨全寬的橫條，由上而下堆疊）、
+     主要活動＋產品在下（並排方塊），右側 Margin 箭頭，左／下括號標示支援／主要活動 */
+  .vc-zones {
+    position: relative; display: grid; gap: 10px;
+    grid-template-columns: 22px minmax(0, 1fr) 52px;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "supportlabel support    margin"
+      ".            activities margin"
+      ".            pbracket   .";
+    align-items: stretch;
+  }
+  @media (max-width: 800px) {
+    .vc-zones { grid-template-columns: minmax(0, 1fr); grid-template-areas: "support" "activities"; }
+    .vc-support-label, .vc-primary-label, .vc-margin-arrow { display: none; }
+    .vc-activities-row { flex-direction: column; overflow-x: visible; }
+  }
+  .vc-zone-support { grid-area: support; }
+  /* 主要活動＋產品的共同容器：同一列橫向並排，每區依內容自然寬度（方塊多的自然較寬，不強制 1:1）；
+     欄位很多時整列水平捲動，但個別方塊不換行、不被壓縮裁字 */
+  .vc-activities-row {
+    grid-area: activities; display: flex; align-items: stretch; gap: 10px;
+    overflow-x: auto; min-width: 0;
+  }
+  .vc-activities-row > .vc-zone-primary, .vc-activities-row > .vc-zone-products { flex: 0 0 auto; min-width: 0; }
   .vc-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .vc-zone-title { font-size: 0.72rem; font-weight: 700; color: var(--col-header); letter-spacing: 0.06em; }
   .vc-zone-body {
@@ -264,14 +287,55 @@
   .vc-zone-empty { font-size: 0.68rem; color: var(--cell-text); }
   .vc-zone-footer { display: flex; gap: 5px; flex-wrap: wrap; }
 
-  /* 主要活動：橫向排列、放不下自動換行；可選大箭頭背景 */
-  .vc-zone-primary .vc-zone-body { flex-direction: row; flex-wrap: wrap; align-items: flex-start; overflow-x: auto; }
-  .vc-zone-body.vc-arrow-bg { position: relative; isolation: isolate; padding: 18px 56px 18px 12px; border-color: transparent; background: transparent; }
-  .vc-zone-body.vc-arrow-bg::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; background: #dcdce2;
-    clip-path: polygon(0 10%, calc(100% - 48px) 10%, calc(100% - 48px) 0, 100% 50%, calc(100% - 48px) 100%, calc(100% - 48px) 90%, 0 90%);
+  /* 支援活動：每一項是一條橫跨整欄寬度的橫條，由上而下堆疊 */
+  .vc-zone-support .vc-zone-body {
+    flex-direction: column; align-items: stretch; gap: 4px;
+    padding: 0; border: none; background: transparent;
   }
-  .vc-zone-body.vc-arrow-bg.drag-over::before { background: #cfc6e6; }
+  .vc-zone-support .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
+
+  /* 主要活動＋產品：同一列並排方塊（產品接在主要活動最後、Margin 箭頭左邊）；
+     每個方塊依文字內容自然寬度（flex: 0 0 auto），不強制換行也不互相擠壓裁字，
+     欄位太多時由外層 .vc-activities-row 整列水平捲動 */
+  .vc-zone-primary .vc-zone-body, .vc-zone-products .vc-zone-body {
+    flex-direction: row; flex-wrap: nowrap; align-items: stretch;
+    padding: 0; border: none; background: transparent;
+  }
+  .vc-zone-primary .vc-zone-body.drag-over, .vc-zone-products .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
+  .vc-zone-primary > .vc-zone-body > .vc-unit,
+  .vc-zone-primary > .vc-zone-body > .vc-group,
+  .vc-zone-products > .vc-zone-body > .vc-unit {
+    flex: 0 0 auto; min-width: 76px; justify-content: center; text-align: center; white-space: nowrap;
+  }
+
+  /* 右側 Margin／利潤 箭頭：純裝飾、固定文字，不可互動、不參與連線與拖放，隨「大箭頭背景」開關顯示 */
+  .vc-margin-arrow {
+    grid-area: margin; background: #2E8B3D; color: #fff; font-weight: 700; font-size: 0.78rem;
+    writing-mode: vertical-rl; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: center;
+    clip-path: polygon(0 10%, 58% 10%, 58% 0, 100% 50%, 58% 100%, 58% 90%, 0 90%);
+    pointer-events: none; user-select: none;
+  }
+  /* 左側「支援活動」括號、下方「主要活動」括號：純裝飾標示，不可互動 */
+  .vc-support-label {
+    grid-area: supportlabel; writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 700; color: var(--ink-light);
+    border-top: 2px solid var(--grid-line); border-bottom: 2px solid var(--grid-line); border-left: 2px solid var(--grid-line);
+    border-radius: 6px 0 0 6px; pointer-events: none; user-select: none;
+  }
+  .vc-primary-label {
+    grid-area: pbracket; display: flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 700; color: var(--ink-light);
+    border-left: 2px solid var(--grid-line); border-right: 2px solid var(--grid-line); border-bottom: 2px solid var(--grid-line);
+    border-radius: 0 0 6px 6px; padding: 2px 4px; margin-top: -4px; pointer-events: none; user-select: none;
+  }
+
+  /* 斜切效果（Porter 箭頭樣式），隨「大箭頭背景」開關顯示 */
+  .vc-zones.vc-arrow-bg .vc-zone-support .vc-unit,
+  .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-unit,
+  .vc-zones.vc-arrow-bg .vc-zone-primary > .vc-zone-body > .vc-group,
+  .vc-zones.vc-arrow-bg .vc-zone-products > .vc-zone-body > .vc-unit {
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+  }
 
   .vc-group {
     display: flex; flex-direction: column; gap: 5px;
@@ -292,9 +356,20 @@
     font-size: 0.74rem; cursor: grab; user-select: none;
     border: 1px solid var(--grid-line);
   }
+  /* 支援活動＝橫條（橘）、主要活動＝方塊（藍）；資產標記（:not(.vc-asset)）要蓋過區塊底色以維持可辨識 */
+  .vc-zone-support .vc-unit:not(.vc-asset) {
+    background: #C55A11; border-color: #A8470D; color: #fff; font-weight: 600; padding: 9px 30px 9px 14px;
+  }
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset), .vc-zone-primary > .vc-zone-body > .vc-group {
+    background: #1F7AC4; border-color: #15568E; color: #fff; padding: 10px 10px;
+  }
+  .vc-zone-products .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
   .vc-unit.vc-asset { background: #fff8e8; border-color: #e8c87a; }
-  .vc-zone-support .vc-unit { background: #ececef; border-color: #d4d4da; }
-  .vc-zone-products .vc-unit { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act {
+    color: #fff;
+  }
   .vc-group.drag-over, .vc-unit.drag-over { box-shadow: -3px 0 0 var(--col-header); }
   .vc-group.dragging, .vc-unit.dragging { opacity: 0.35; }
   .vc-node-head { display: flex; align-items: center; gap: 3px; }
@@ -1722,9 +1797,20 @@ function renderValueChainEditor() {
   svg.id = 'vcLineCanvas';
   editor.appendChild(svg);
 
-  // ── 三區 ──
+  // ── 三區（支援活動橫條在上、主要活動＋產品並排在下；版型依 ST-01h 的 Porter 價值鏈圖）──
   const zones = document.createElement('div');
-  zones.className = 'vc-zones';
+  zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
+
+  // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
+  const supportLabel = document.createElement('div');
+  supportLabel.className = 'vc-support-label';
+  supportLabel.textContent = '支援活動';
+  zones.appendChild(supportLabel);
+
+  // 主要活動＋產品共同容器：同一列橫向並排，各自依內容自然寬度（方塊多的自然較寬）
+  const activitiesRow = document.createElement('div');
+  activitiesRow.className = 'vc-activities-row';
+
   VC_ZONES.forEach(z => {
     const list = valueChain[z.key];
     const zoneEl = document.createElement('div');
@@ -1736,7 +1822,7 @@ function renderValueChainEditor() {
     zoneEl.appendChild(title);
 
     const body = document.createElement('div');
-    body.className = 'vc-zone-body' + (z.key === 'primary' && valueChain.showArrowBg ? ' vc-arrow-bg' : '');
+    body.className = 'vc-zone-body';
     list.forEach(n => body.appendChild(buildVcNode(n, z.key)));
     if (!list.length) {
       const empty = document.createElement('span');
@@ -1773,8 +1859,25 @@ function renderValueChainEditor() {
       footer.appendChild(addGroupBtn);
     }
     zoneEl.appendChild(footer);
-    zones.appendChild(zoneEl);
+    if (z.key === 'support') zones.appendChild(zoneEl);
+    else activitiesRow.appendChild(zoneEl);
   });
+  zones.appendChild(activitiesRow);
+
+  // 下方「主要活動」括號（純裝飾，不可互動／不參與連線與拖放）
+  const primaryLabel = document.createElement('div');
+  primaryLabel.className = 'vc-primary-label';
+  primaryLabel.textContent = '主要活動';
+  zones.appendChild(primaryLabel);
+
+  // 右側 Margin／利潤 箭頭（純裝飾、固定文字，不可編輯／不參與連線／不可拖放），隨「大箭頭背景」開關顯示
+  if (valueChain.showArrowBg) {
+    const marginArrow = document.createElement('div');
+    marginArrow.className = 'vc-margin-arrow';
+    marginArrow.textContent = 'Margin／利潤';
+    zones.appendChild(marginArrow);
+  }
+
   editor.appendChild(zones);
 
   // ── 連線清單（點 ✕ 刪除）──
