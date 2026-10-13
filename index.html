@@ -376,6 +376,12 @@
   .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act {
     color: #fff;
   }
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head input:focus,
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head input:focus,
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head input:focus {
+    background: #fff;
+    color: var(--ink);
+  }
   .vc-group.drag-over, .vc-unit.drag-over { box-shadow: -3px 0 0 var(--col-header); }
   .vc-group.dragging, .vc-unit.dragging { opacity: 0.35; }
   .vc-node-head { display: flex; align-items: center; gap: 3px; }
