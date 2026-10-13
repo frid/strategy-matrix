@@ -2765,93 +2765,372 @@ function drawLinesForFrame(allSteps, activeStep) {
   });
 }
 
-// ── Helper: capture matrix frame as base64 PNG ───────────────────────────
-async function captureFrameBase64() {
-  window.scrollTo(0, 0);
-  await new Promise(r => setTimeout(r, 30));
-
-  const matrixWrapper = document.querySelector('.matrix-wrapper');
-  // 只有直排文字的欄位標題（.col-header：無大類的獨立欄位／.col-header-leaf：有大類時的細項列）
-  // 需要模擬直排，因為 html2canvas 不支援 writing-mode；大類列（橫排）與角落儲存格不需處理
-  const vThs = matrixWrapper.querySelectorAll('thead th.col-header, thead th.col-header-leaf');
-  const thBackups = [];
-  vThs.forEach(th => {
-    const original = th.innerHTML;
-    const originalStyle = th.getAttribute('style') || '';
-    thBackups.push({ th, original, originalStyle });
-    // 高度隨文字量自動變高，截圖前先量測目前（直排）實際高度，套用到假橫排版面，維持跟畫面一致
-    const liveHeight = th.offsetHeight;
-    const text = th.textContent.trim();
-    th.innerHTML = text.split('').join('<br>');
-    th.style.writingMode = 'horizontal-tb';
-    th.style.lineHeight = '1.3';
-    th.style.fontSize = '20px';
-    th.style.width = '136px';
-    th.style.height = liveHeight + 'px';
-    th.style.padding = '8px 4px';
-    th.style.verticalAlign = 'middle';
-  });
-
-  // Temporarily shrink wrapper to table's intrinsic width to avoid capturing extra whitespace
-  const _wrapOvf = matrixWrapper.style.overflow;
-  const _wrapW   = matrixWrapper.style.width;
-  const _trueW   = document.getElementById('matrixContainer').scrollWidth;
-  matrixWrapper.style.overflow = 'visible';
-  matrixWrapper.style.width    = _trueW + 'px';
-  await new Promise(r => setTimeout(r, 20));
-
-  const matrixCanvas = await html2canvas(matrixWrapper, {
-    scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
-  });
-
-  matrixWrapper.style.overflow = _wrapOvf;
-  matrixWrapper.style.width    = _wrapW;
-
-  thBackups.forEach(({ th, original, originalStyle }) => {
-    th.innerHTML = original;
-    th.setAttribute('style', originalStyle);
-  });
-
-  return matrixCanvas.toDataURL('image/png'); // full data URL
-}
+// EMU 換算（1 inch = 914400 EMU）；矩陣表格、箭頭與價值鏈圖形的座標都用它
+const in2emu = v => Math.round(v * 914400);
 
 // ── Helper: is the value chain empty? (ST-01e：空的話匯出時跳過該頁) ──────
 function valueChainIsEmpty() {
   return !valueChain.primary.length && !valueChain.support.length && !valueChain.products.length;
 }
 
-// ── Helper: capture value chain editor as base64 PNG (ST-01e) ───────────
-// 含方塊、SVG 連線（#vcLineCanvas）與大箭頭背景（依 valueChain.showArrowBg，畫面本來就有就直接截）
-async function captureValueChainBase64() {
-  window.scrollTo(0, 0);
-  const editor = document.getElementById('valueChainEditor');
+// ══ PPTX：原生物件版（ST-01g）══════════════════════════════════════════════
+// 以下 build*Xml() 都回傳可直接塞進 <p:spTree> 的 DrawingML 字串；不再截圖，
+// 匯出的格子／箭頭／價值鏈方塊在 PowerPoint 裡都是可點選編輯的原生物件。
 
-  // 若編輯區（或其祖先）被 display:none 隱藏，暫時顯示以便截圖，截圖後還原
-  const hiddenEls = [];
-  for (let node = editor; node && node !== document.body; node = node.parentElement) {
-    if (getComputedStyle(node).display === 'none') {
-      hiddenEls.push({ el: node, style: node.getAttribute('style') });
+// 色票 → 6 碼大寫 HEX（去掉 #，支援 #abc 縮寫）；取不到時回傳 fallback
+function pptxHex(v, fallback) {
+  const s = String(v || '').trim().replace(/^#/, '');
+  if (/^[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
+  if (/^[0-9a-fA-F]{3}$/.test(s)) return s.split('').map(c => c + c).join('').toUpperCase();
+  return fallback;
+}
+
+// 取目前配色的 CSS 變數（跟畫面上的矩陣同一組色），轉成 PPTX 用的 HEX
+function pptxPalette() {
+  const vars = (COLOR_PALETTES[colorPaletteIdx] || COLOR_PALETTES[0]).vars;
+  return {
+    leafBg:      pptxHex(vars['--mx-leaf-bg'], 'FFFF00'),
+    leafText:    pptxHex(vars['--mx-leaf-text'], '00008B'),
+    groupBg:     pptxHex(vars['--mx-group-bg'], '1565C0'),
+    groupText:   pptxHex(vars['--mx-group-text'], 'FFFFFF'),
+    cornerBg:    pptxHex(vars['--mx-corner-bg'], '7FDBDA'),
+    cornerText:  pptxHex(vars['--mx-corner-text'], '00008B'),
+    rowLabelBg:  pptxHex(vars['--mx-rowlabel-bg'], '7FDBDA'),
+    rowLabelText:pptxHex(vars['--mx-rowlabel-text'], '00008B'),
+    prodHeadBg:  pptxHex(vars['--mx-product-header-bg'], 'D98C8C'),
+    prodHeadText:pptxHex(vars['--mx-product-header-text'], '4A0000'),
+    prodCellBg:  pptxHex(vars['--mx-product-cell-bg'], 'F6DCDC'),
+  };
+}
+
+// 競爭者色 → 淡化後的 HEX（同 colorToLight 的混白比例，只是輸出格式不同）
+function pptxLightHex(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const blend = 0.72;
+  const mix = c => Math.round(c + (255 - c) * blend).toString(16).padStart(2,'0');
+  return (mix(r) + mix(g) + mix(b)).toUpperCase();
+}
+
+// 單一表格儲存格。opts: { text, bold, sz, color, fill, gridSpan, rowSpan, hMerge, vMerge, vert, thickLeft, underline }
+function pptxTc(opts) {
+  const o = opts || {};
+  const attrs =
+    (o.rowSpan  && o.rowSpan  > 1 ? ` rowSpan="${o.rowSpan}"`   : '') +
+    (o.gridSpan && o.gridSpan > 1 ? ` gridSpan="${o.gridSpan}"` : '') +
+    (o.hMerge ? ' hMerge="1"' : '') +
+    (o.vMerge ? ' vMerge="1"' : '');
+  const text = (o.text || '').trim();
+  const run = text
+    ? `<a:r><a:rPr lang="zh-TW" sz="${o.sz || 1000}" b="${o.bold ? 1 : 0}"${o.underline ? ' u="sng"' : ''} dirty="0"><a:solidFill><a:srgbClr val="${o.color || '000000'}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(text)}</a:t></a:r>`
+    : `<a:endParaRPr lang="zh-TW" sz="${o.sz || 1000}"/>`;
+  // 細黑框；產品欄分隔線（productSepIdx）左邊加粗，對應畫面上的 3px 粗線
+  const thin = `<a:solidFill><a:srgbClr val="000000"/></a:solidFill>`;
+  const lnL = `<a:lnL w="${o.thickLeft ? 28575 : 6350}" cap="flat">${thin}</a:lnL>`;
+  return `<a:tc${attrs}><a:txBody><a:bodyPr${o.vert ? ` vert="${o.vert}"` : ''} anchor="ctr" lIns="18000" rIns="18000" tIns="18000" bIns="18000"><a:normAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="ctr"/>${run}</a:p></a:txBody>`
+    + `<a:tcPr anchor="ctr"${o.vert ? ` vert="${o.vert}"` : ''}>${lnL}<a:lnR w="6350" cap="flat">${thin}</a:lnR><a:lnT w="6350" cap="flat">${thin}</a:lnT><a:lnB w="6350" cap="flat">${thin}</a:lnB>`
+    + `<a:solidFill><a:srgbClr val="${o.fill || 'FFFFFF'}"/></a:solidFill></a:tcPr></a:tc>`;
+}
+
+// ── 策略矩陣的版面尺寸（表格座標＋箭頭座標共用一份，確保箭頭落在格子中心）──
+// 回傳 { tblX, tblY, tblW, tblH, labelW, colW, headH, bodyRowH, depth, paths, colXCenter(), rowYCenter() }
+function matrixLayout(areaX, areaY, areaW, areaH) {
+  const paths  = getColumnPaths();
+  const depth  = paths.reduce((m, p) => Math.max(m, p.length), 0);
+  const nCols  = COLUMNS.length;
+
+  const labelW = Math.max(in2emu(0.22), Math.min(in2emu(0.5), Math.round(areaW * 0.035)));
+  const colW   = Math.floor((areaW - labelW * 2) / Math.max(nCols, 1));
+  const tblW   = labelW * 2 + colW * nCols;
+
+  // 表頭約佔可用高度 34%：大類列固定薄，剩下留給直排欄名
+  const headH     = Math.round(areaH * 0.34);
+  const groupRowH = depth ? Math.min(in2emu(0.26), Math.floor(headH * 0.5 / depth)) : 0;
+  const leafRowH  = headH - groupRowH * depth;
+  const bodyRowH  = Math.floor((areaH - headH) / ROWS.length);
+  const tblH      = headH + bodyRowH * ROWS.length;
+
+  const tblX = areaX + Math.round((areaW - tblW) / 2);
+  const tblY = areaY + Math.round((areaH - tblH) / 2);
+
+  return {
+    tblX, tblY, tblW, tblH, labelW, colW, headH, groupRowH, leafRowH, bodyRowH, depth, paths, nCols,
+    colXCenter: ci => tblX + labelW + colW * ci + Math.round(colW / 2),
+    rowYCenter: ri => tblY + headH + bodyRowH * ri + Math.round(bodyRowH / 2),
+  };
+}
+
+// ── 策略矩陣表格（原生 a:tbl）────────────────────────────────────────────
+// 多層表頭的合併邏輯與 buildTable() 完全一致：群組橫向 colspan、欄名向下 rowspan，
+// 只是 DrawingML 用 gridSpan/hMerge 與 rowSpan/vMerge 表示延續格。
+function buildMatrixTableXml(L, shapeId) {
+  const P = pptxPalette();
+  const { depth, paths, nCols } = L;
+
+  // 先把每個表頭格算進 (level, ci) 網格，再逐列輸出，避免延續格漏掉
+  const grid = Array.from({ length: depth + 1 }, () => new Array(nCols).fill(null));
+  const sameGroup = (a, b, level) => {
+    for (let k = 0; k <= level; k++) if (a[k] !== b[k]) return false;
+    return true;
+  };
+  for (let level = 0; level <= depth; level++) {
+    let ci = 0;
+    while (ci < nCols) {
+      const p = paths[ci];
+      if (p.length > level) {
+        let end = ci + 1;
+        while (end < nCols && end !== productSepIdx && paths[end].length > level && sameGroup(paths[end], p, level)) end++;
+        grid[level][ci] = { text: p[level], gridSpan: end - ci, isGroup: true, ci };
+        for (let k = ci + 1; k < end; k++) grid[level][k] = { hMerge: true, ci: k };
+        ci = end;
+      } else {
+        if (p.length === level) {
+          const rs = depth + 1 - level;
+          grid[level][ci] = { text: COLUMNS[ci], rowSpan: rs, isLeaf: true, ci };
+          for (let l = level + 1; l <= depth; l++) grid[l][ci] = { vMerge: true, ci };
+        }
+        ci++;
+      }
     }
   }
-  hiddenEls.forEach(({ el }) => { el.style.display = 'block'; });
 
-  // 重繪一次連線 SVG，確保座標依目前（已還原顯示的）版面計算，html2canvas 才能正確截到連線
-  drawVcLinks();
-  await new Promise(r => setTimeout(r, 30));
+  // 表頭列：左右角落格在第一列向下跨滿整個表頭
+  const headTrs = [];
+  for (let level = 0; level <= depth; level++) {
+    let tcs = '';
+    if (level === 0) tcs += pptxTc({ rowSpan: depth + 1, fill: P.cornerBg, color: P.cornerText });
+    else             tcs += pptxTc({ vMerge: true, fill: P.cornerBg, color: P.cornerText });
 
-  const canvas = await html2canvas(editor, {
-    scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+    for (let ci = 0; ci < nCols; ci++) {
+      const g = grid[level][ci];
+      const isProd = ci >= productSepIdx;
+      const base = {
+        thickLeft: ci === productSepIdx,
+        fill:  g && g.isGroup ? (isProd ? P.prodHeadBg : P.groupBg) : (isProd ? P.prodHeadBg : P.leafBg),
+        color: g && g.isGroup ? (isProd ? P.prodHeadText : P.groupText) : (isProd ? P.prodHeadText : P.leafText),
+        bold: true,
+        sz: 1000,
+      };
+      if (!g)              tcs += pptxTc({ ...base, hMerge: true });
+      else if (g.hMerge)   tcs += pptxTc({ ...base, hMerge: true });
+      else if (g.vMerge)   tcs += pptxTc({ ...base, vMerge: true });
+      else if (g.isGroup)  tcs += pptxTc({ ...base, text: g.text, gridSpan: g.gridSpan });
+      // 欄名直排（eaVert＝中日韓直書，對應畫面上的 writing-mode）
+      else                 tcs += pptxTc({ ...base, text: g.text, rowSpan: g.rowSpan, vert: 'eaVert' });
+    }
+
+    if (level === 0) tcs += pptxTc({ rowSpan: depth + 1, fill: P.cornerBg, color: P.cornerText });
+    else             tcs += pptxTc({ vMerge: true, fill: P.cornerBg, color: P.cornerText });
+
+    headTrs.push(`<a:tr h="${level < depth ? L.groupRowH : L.leafRowH}">${tcs}</a:tr>`);
+  }
+
+  // 資料列：左右列標籤 + 每格座標碼（藍色粗體底線，per 規範）
+  const bodyTrs = ROWS.map(row => {
+    let tcs = pptxTc({ text: showIndustryLabels ? row.leftLabel : row.rightLabel, bold: true, sz: 1000, fill: P.rowLabelBg, color: P.rowLabelText });
+    COLUMNS.forEach((_, ci) => {
+      tcs += pptxTc({
+        text: `${row.id}${String(ci + 1).padStart(2, '0')}`,
+        bold: true, underline: true, sz: 1100, color: '0000FF',
+        fill: ci >= productSepIdx ? P.prodCellBg : 'FFFFFF',
+        thickLeft: ci === productSepIdx,
+      });
+    });
+    tcs += pptxTc({ text: row.rightLabel, bold: true, sz: 1000, fill: P.rowLabelBg, color: P.rowLabelText });
+    return `<a:tr h="${L.bodyRowH}">${tcs}</a:tr>`;
+  }).join('');
+
+  const gridCols = `<a:gridCol w="${L.labelW}"/>`
+    + COLUMNS.map(() => `<a:gridCol w="${L.colW}"/>`).join('')
+    + `<a:gridCol w="${L.labelW}"/>`;
+
+  return `
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="${shapeId}" name="策略矩陣"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="${L.tblX}" y="${L.tblY}"/><a:ext cx="${L.tblW}" cy="${L.tblH}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl>
+            <a:tblPr firstRow="0" firstCol="0" bandRow="0"/>
+            <a:tblGrid>${gridCols}</a:tblGrid>
+            ${headTrs.join('')}${bodyTrs}
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>`;
+}
+
+// ── 直線連接器（箭頭）：給定兩點，產生一支帶箭頭頭的 p:cxnSp ──────────────
+function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu) {
+  const x = Math.min(p1.x, p2.x), y = Math.min(p1.y, p2.y);
+  const cx = Math.abs(p2.x - p1.x), cy = Math.abs(p2.y - p1.y);
+  const flipH = p2.x < p1.x ? ' flipH="1"' : '';
+  const flipV = p2.y < p1.y ? ' flipV="1"' : '';
+  return `
+      <p:cxnSp>
+        <p:nvCxnSpPr><p:cNvPr id="${shapeId}" name="${escXml(name)}"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>
+        <p:spPr>
+          <a:xfrm${flipH}${flipV}><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>
+          <a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom>
+          <a:ln w="${widthEmu}" cap="flat"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill><a:tailEnd type="triangle" w="lg" len="lg"/></a:ln>
+        </p:spPr>
+      </p:cxnSp>`;
+}
+
+// ── 策略矩陣上的箭頭（原生連接器）──────────────────────────────────────
+// 邏輯對齊 drawLinesForFrame()：只畫到 activeStep，當前一支用競爭者原色加粗，
+// 先前的用淡色細線；activeStep = null 代表總覽頁（全部用原色）
+function buildArrowShapesXml(L, allSteps, activeStep, startId) {
+  let id = startId;
+  let xml = '';
+  allSteps.forEach((step, idx) => {
+    if (activeStep !== null && idx > activeStep) return;
+    const isActive  = activeStep === null || idx === activeStep;
+    const compColor = competitors[step.ci].color;
+    const colorHex  = isActive ? pptxHex(compColor, '000000') : pptxLightHex(compColor);
+    const width     = isActive ? 76200 : 38100;   // 6pt / 3pt
+
+    const ri1 = ROWS.findIndex(r => r.id === step.arrow.from.row);
+    const ri2 = ROWS.findIndex(r => r.id === step.arrow.to.row);
+    if (ri1 < 0 || ri2 < 0) return;
+    if (step.arrow.from.col >= L.nCols || step.arrow.to.col >= L.nCols) return;
+
+    const p1 = { x: L.colXCenter(step.arrow.from.col), y: L.rowYCenter(ri1) };
+    const p2 = { x: L.colXCenter(step.arrow.to.col),   y: L.rowYCenter(ri2) };
+    if (p1.x === p2.x && p1.y === p2.y) return;
+
+    xml += pptxConnector(id++, `箭頭 ${idx + 1}`, p1, p2, colorHex, width);
+  });
+  return xml;
+}
+
+// ── 價值鏈頁（原生圖形）──────────────────────────────────────────────────
+// 不量 DOM（編輯區可能被隱藏），改用與編輯器相同結構的自有版面計算：
+// 支援活動＝上方橫條（由上往下堆）、主要活動＝下方並排的欄（群組內子項垂直排列）、
+// 產品不畫（ST-01i）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）並加右側 Margin 箭頭。
+function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
+  let id = startId;
+  let xml = '';
+  const rectById = {};                       // 連線用：節點 id → { x, y, w, h }
+  const gap       = in2emu(0.055);
+  const zoneTitleH= in2emu(0.2);
+  const labelW    = in2emu(0.26);             // 左側「支援活動」括號
+  const marginW   = in2emu(0.34);             // 右側 Margin／利潤 箭頭
+  const arrowBg   = !!valueChain.showArrowBg;
+  const boxPrst   = arrowBg ? 'homePlate' : 'roundRect';
+
+  const support = valueChain.support.filter(n => n.type === 'unit' || n.type === 'group');
+  const primary = valueChain.primary;
+
+  const contentX = areaX + labelW + gap;
+  const contentW = areaW - labelW - gap - (arrowBg ? marginW + gap : 0);
+
+  // 每一欄需要幾個「單元高」：群組＝標題 + 子項數；單元＝1
+  const colRows = primary.map(n => (n.type === 'group' ? 1 + n.children.length : 1));
+  const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1]));
+  const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1);
+  const unitH  = Math.max(in2emu(0.2), Math.min(in2emu(0.42), Math.floor(availH / Math.max(totalRows, 1))));
+
+  // 一個方塊
+  const box = (name, x, y, w, h, prst, fill, textColor, bold, sz) => {
+    rectById[name.id] = { x, y, w, h };
+    return `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="${id++}" name="${escXml(name.name || '（未命名）')}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
+          <a:prstGeom prst="${prst}"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="${fill}"/></a:solidFill>
+          <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
+        </p:spPr>
+        <p:txBody><a:bodyPr anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="18000" bIns="18000"><a:normAutofit/></a:bodyPr><a:lstStyle/>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(name.name || '（未命名）')}</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>`;
+  };
+
+  // 純文字標籤（區塊標題）
+  const textLabel = (text, x, y, w, h, sz, colorHex, bold, algn, vert) => `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="${id++}" name="${escXml(text)}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+        <p:txBody><a:bodyPr${vert ? ` vert="${vert}"` : ''} anchor="ctr" lIns="0" rIns="0" tIns="0" bIns="0"/><a:lstStyle/><a:p><a:pPr algn="${algn}"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(text)}</a:t></a:r></a:p></p:txBody>
+      </p:sp>`;
+
+  // ── 支援活動區（橘色橫條，整列寬）──
+  let y = areaY;
+  xml += textLabel('支援活動', contentX, y, contentW, zoneTitleH, 900, '6B6B80', true, 'l');
+  const supportTop = y + zoneTitleH;
+  y = supportTop;
+  support.forEach(n => {
+    const fill = n.unitKind === 'asset' ? 'FFF8E8' : 'C55A11';
+    const txt  = n.unitKind === 'asset' ? '7A5A12' : 'FFFFFF';
+    xml += box(n, contentX, y, contentW, unitH, boxPrst, fill, txt, true, 1000);
+    y += unitH + gap;
+  });
+  const supportBottom = y;
+  // 左側「支援活動」括號（直排純文字標示，對應畫面的裝飾括號）
+  if (support.length) {
+    xml += textLabel('支援活動', areaX, supportTop, labelW, supportBottom - supportTop - gap, 800, '8A8AA0', true, 'ctr', 'eaVert');
+  }
+
+  // ── 主要活動區（藍色方塊並排；群組內子項垂直排列）──
+  const primaryTitleY = supportBottom;
+  xml += textLabel('主要活動', contentX, primaryTitleY, contentW, zoneTitleH, 900, '6B6B80', true, 'l');
+  const primaryTop = primaryTitleY + zoneTitleH;
+  const nCols = primary.length;
+  const colW  = nCols ? Math.floor((contentW - gap * (nCols - 1)) / nCols) : contentW;
+  const childH = Math.round(unitH * 0.78);
+  const pad    = in2emu(0.04);
+
+  primary.forEach((n, i) => {
+    const x = contentX + (colW + gap) * i;
+    if (n.type === 'group') {
+      const kids   = n.children.filter(c => c.type === 'unit' || c.type === 'group');
+      const groupH = pad * 2 + unitH + kids.length * (childH + pad);
+      xml += box(n, x, primaryTop, colW, groupH, boxPrst, '1F7AC4', 'FFFFFF', true, 1000);
+      let ky = primaryTop + pad + unitH;
+      kids.forEach(k => {
+        const kFill = k.unitKind === 'asset' ? 'FFF8E8' : 'FFFFFF';
+        const kTxt  = k.unitKind === 'asset' ? '7A5A12' : '1A1A2E';
+        xml += box(k, x + pad, ky, colW - pad * 2 - (arrowBg ? in2emu(0.14) : 0), childH, 'roundRect', kFill, kTxt, false, 900);
+        ky += childH + pad;
+      });
+    } else {
+      const fill = n.unitKind === 'asset' ? 'FFF8E8' : '1F7AC4';
+      const txt  = n.unitKind === 'asset' ? '7A5A12' : 'FFFFFF';
+      xml += box(n, x, primaryTop, colW, unitH, boxPrst, fill, txt, true, 1000);
+    }
   });
 
-  hiddenEls.forEach(({ el, style }) => {
-    if (style === null) el.removeAttribute('style'); else el.setAttribute('style', style);
+  // ── 右側 Margin／利潤 綠色大箭頭（隨「大箭頭背景」開關顯示，純裝飾）──
+  if (arrowBg) {
+    const mx = areaX + areaW - marginW;
+    const my = supportTop;
+    const mh = Math.max(unitH, areaY + areaH - supportTop);
+    xml += `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="${id++}" name="Margin／利潤"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm rot="5400000"><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="rightArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="2E8B3D"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+        <p:txBody><a:bodyPr vert="eaVert" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="900" b="1" dirty="0"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>Margin／利潤</a:t></a:r></a:p></p:txBody>
+      </p:sp>`;
+  }
+
+  // ── 連線（valueChain.links）：原生直線連接器；取矩形邊界交點，作法同 drawVcLinks ──
+  valueChain.links.forEach((link, i) => {
+    const r1 = rectById[link.from], r2 = rectById[link.to];
+    if (!r1 || !r2) return;
+    const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
+    const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
+    const p1 = vcRectEdgePoint(r1, c2.x, c2.y);
+    const p2 = vcRectEdgePoint(r2, c1.x, c1.y);
+    const rp = p => ({ x: Math.round(p.x), y: Math.round(p.y) });
+    xml += pptxConnector(id++, `價值鏈連線 ${i + 1}`, rp(p1), rp(p2), '5A4FCF', 19050);
   });
 
-  return canvas.toDataURL('image/png');
+  return xml;
 }
 
 // ── Export PPTX (self-contained, no external lib) ────────────────────────
 // Builds a valid PPTX (Office Open XML ZIP) from scratch using JSZip
+// ST-01g：全部改成 PowerPoint 原生物件（表格／連接器／圖形），不再嵌入截圖
 async function exportPptx() {
   // 匯出所有策略構想（競爭者）的箭頭，依競爭者順序合併成同一份 PPTX
   const allSteps = arrows.flatMap((compArrows, ci) => compArrows.map(arrow => ({ ci, arrow })));
@@ -2869,90 +3148,24 @@ async function exportPptx() {
   overlay.classList.add('active');
   fill.style.width = '0%';
 
-  // ── 0. Capture value chain overview（ST-01e：非空才有這頁，放在第一張）──
+  // ── 0. 價值鏈頁（ST-01e：非空才有這頁，放在第一張）──
   const hasValueChain = !valueChainIsEmpty();
   const vcOffset = hasValueChain ? 1 : 0;
-  let vcBase64 = null;
-  if (hasValueChain) {
-    label.textContent = '截圖價值鏈圖...';
-    fill.style.width  = '5%';
-    const vcDataUrl = await captureValueChainBase64();
-    vcBase64 = vcDataUrl.replace(/^data:image\/png;base64,/, '');
-  }
 
-  // ── 1. Capture frames ──────────────────────────────────────────────────
-  const frames = []; // { dataUrl, base64 }
-  for (let step = 0; step < allSteps.length; step++) {
-    label.textContent = `截圖第 ${step + 1} / ${allSteps.length} 張...`;
-    fill.style.width  = `${Math.round((step / allSteps.length) * 75)}%`;
-
-    drawLinesForFrame(allSteps, step);
-    await new Promise(r => setTimeout(r, 40));
-
-    const dataUrl = await captureFrameBase64();
-    // Strip the data:image/png;base64, prefix
-    const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-    frames.push({ dataUrl, base64 });
-  }
-  drawLines();
-
-  // ── 2. Build PPTX ZIP ─────────────────────────────────────────────────
   label.textContent = '正在組合 PPTX...';
-  fill.style.width  = '80%';
+  fill.style.width  = '10%';
   await new Promise(r => setTimeout(r, 30));
 
   const zip = new JSZip();
-  const N   = frames.length;
+  const N   = allSteps.length;
 
   // EMU helpers (1 inch = 914400 EMU, slide = 9144000 x 5143500)
   const W = 9144000, H = 5143500; // 10" x 5.625"
-  const in2emu = v => Math.round(v * 914400);
-
-  // ── [Content_Types].xml ───────────────────────────────────────────────
-  let slideRels = '';
-  for (let i = 1; i <= N; i++) {
-    slideRels += `<Override PartName="/ppt/slides/slide${i}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`;
-    slideRels += `<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>`;
-  }
-  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml"  ContentType="application/xml"/>
-  <Default Extension="png"  ContentType="image/png"/>
-  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
-  <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
-  <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
-  <Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
-  ${Array.from({length:N},(_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}
-  ${Array.from({length:N},(_,i)=>`<Override PartName="/ppt/media/img${i+1}.png" ContentType="image/png"/>`).join('')}
-</Types>`);
 
   // ── _rels/.rels ────────────────────────────────────────────────────────
   zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
-</Relationships>`);
-
-  // ── ppt/presentation.xml ──────────────────────────────────────────────
-  const sldIdLst = Array.from({length:N},(_,i)=>
-    `<p:sldId id="${256+i}" r:id="rId${i+1}"/>`).join('');
-  zip.folder('ppt').file('presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
-  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" saveSubsetFonts="1">
-  <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rIdM1"/></p:sldMasterIdLst>
-  <p:sldIdLst>${sldIdLst}</p:sldIdLst>
-  <p:sldSz cx="${W}" cy="${H}" type="screen16x9"/>
-  <p:notesSz cx="${H}" cy="${W}"/>
-</p:presentation>`);
-
-  // ── ppt/_rels/presentation.xml.rels ──────────────────────────────────
-  const presRels = Array.from({length:N},(_,i)=>
-    `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('');
-  zip.folder('ppt/_rels').file('presentation.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  ${presRels}
-  <Relationship Id="rIdM1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
 </Relationships>`);
 
   // ── Minimal theme ─────────────────────────────────────────────────────
@@ -2991,61 +3204,22 @@ async function exportPptx() {
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
 </Relationships>`);
 
-  // ── Per-slide XML + images（版面 per 司徒達賢格式規範：白底、黑色大字置中標題、矩陣佔主體）
+  // ── 版面（per 司徒達賢格式規範：白底、黑色大字置中標題、矩陣佔主體）──
   const PAD_EMU = in2emu(0.28);               // 上下左右邊距
   const titleH  = in2emu(0.82);               // 標題文字區高度（純文字，無底色背景）
   const descH   = in2emu(0.58);               // 說明文字區高度（矩陣圖下方）
 
-  // 計算矩陣圖可用區域（標題下方 → 說明文字上方）
+  // 內容可用區域（標題下方 → 說明文字上方）
   const areaX = PAD_EMU;
   const areaY = PAD_EMU + titleH;
   const areaW = W - PAD_EMU * 2;
   const areaH = H - PAD_EMU - titleH - descH - PAD_EMU;
-  const areaRatio = areaW / areaH;
 
-  // 取得截圖長寬比以保持等比縮放
-  const firstImg = new Image();
-  await new Promise(res => { firstImg.onload = res; firstImg.src = frames[0].dataUrl; });
-  const srcRatio = firstImg.naturalWidth / firstImg.naturalHeight;
+  // 矩陣表格／箭頭共用同一份座標
+  const L = matrixLayout(areaX, areaY, areaW, areaH);
 
-  let imgW, imgH;
-  if (srcRatio > areaRatio) {
-    imgW = areaW;
-    imgH = Math.round(areaW / srcRatio);
-  } else {
-    imgH = areaH;
-    imgW = Math.round(areaH * srcRatio);
-  }
-  const imgX = areaX + Math.round((areaW - imgW) / 2);
-  const imgY = areaY + Math.round((areaH - imgH) / 2);
-
-  // ── Value chain slide（ST-01e）：非空才插入，永遠是第 1 張，其餘投影片編號整體往後推 vcOffset ──
-  if (hasValueChain) {
-    zip.folder('ppt/media').file('img1.png', vcBase64, { base64: true });
-
-    const vcImg = new Image();
-    await new Promise(res => { vcImg.onload = res; vcImg.src = 'data:image/png;base64,' + vcBase64; });
-    const vcRatio = vcImg.naturalWidth / vcImg.naturalHeight;
-    let vcImgW, vcImgH;
-    if (vcRatio > areaRatio) {
-      vcImgW = areaW;
-      vcImgH = Math.round(areaW / vcRatio);
-    } else {
-      vcImgH = areaH;
-      vcImgW = Math.round(areaH * vcRatio);
-    }
-    const vcImgX = areaX + Math.round((areaW - vcImgW) / 2);
-    const vcImgY = areaY + Math.round((areaH - vcImgH) / 2);
-
-    const vcTitleText = titleText ? `${titleText}　價值鏈` : '價值鏈';
-    const vcTitleXml = `
-    <p:sp>
-      <p:nvSpPr><p:cNvPr id="2" name="title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-      <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${PAD_EMU}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${titleH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
-      <p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="4400" b="1" dirty="0"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>${escXml(vcTitleText)}</a:t></a:r></a:p></p:txBody>
-    </p:sp>`;
-
-    const vcSlideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  // 投影片殼（標題、說明、內容 shape tree 都由呼叫端給）
+  const slideShell = body => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -3054,178 +3228,111 @@ async function exportPptx() {
     <p:spTree>
       <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
       <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="0" y="0"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>
-      ${vcTitleXml}
-      <p:pic>
-        <p:nvPicPr><p:cNvPr id="4" name="img1"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>
-        <p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>
-        <p:spPr><a:xfrm><a:off x="${vcImgX}" y="${vcImgY}"/><a:ext cx="${vcImgW}" cy="${vcImgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
-      </p:pic>
+      ${body}
     </p:spTree>
   </p:cSld>
   <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
 </p:sld>`;
 
-    zip.folder('ppt/slides').file('slide1.xml', vcSlideXml);
-    zip.folder('ppt/slides/_rels').file('slide1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/img1.png"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
-</Relationships>`);
-  }
-
-  for (let i = 0; i < N; i++) {
-    label.textContent = `組合投影片 ${i + 1} / ${N}...`;
-    fill.style.width  = `${Math.round(80 + (i / N) * 15)}%`;
-    await new Promise(r => setTimeout(r, 10));
-
-    const step = i + 1;
-    const imgId = i + 1 + vcOffset;
-
-    // Embed image
-    zip.folder('ppt/media').file(`img${imgId}.png`, frames[i].base64, { base64: true });
-
-    // ── 標題文字框：白底、黑色粗體大字、水平置中（per 規範參考圖）──────
-    const titleXml = `
+  // ── 標題文字框：白底、黑色粗體大字、水平置中（per 規範參考圖）──────
+  const titleSp = text => `
     <p:sp>
       <p:nvSpPr><p:cNvPr id="2" name="title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
       <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${PAD_EMU}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${titleH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
-      <p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="4400" b="1" dirty="0"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>${escXml(titleText)}</a:t></a:r></a:p></p:txBody>
+      <p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="4400" b="1" dirty="0"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>${escXml(text)}</a:t></a:r></a:p></p:txBody>
     </p:sp>`;
 
-    // ── 說明文字框：矩陣下方、左對齊、含步驟資訊 ──────────────────────
-    // 每一步驟顯示的是該箭頭自己的補充說明，而非整體策略說明（策略說明僅保留在最後總覽頁）
-    const stepNote   = (allSteps[i].arrow.note || '').trim();
-    const compName   = competitors[allSteps[i].ci].name;
-    const stepPrefix = `（Step ${step} / ${N}）${compName}`;
-    const descLine = stepNote ? stepPrefix + '　' + stepNote : stepPrefix;
-    const descXml = `
+  // ── 說明文字框：內容下方、左對齊 ──────────────────────────────────
+  const descSp = text => `
     <p:sp>
       <p:nvSpPr><p:cNvPr id="3" name="desc"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
       <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${H - descH}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${descH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
       <p:txBody>
-        <a:bodyPr anchor="t" wrap="square" lIns="0" rIns="0" tIns="${in2emu(0.08)}" bIns="0">
-          <a:normAutofit/>
-        </a:bodyPr>
+        <a:bodyPr anchor="t" wrap="square" lIns="0" rIns="0" tIns="${in2emu(0.08)}" bIns="0"><a:normAutofit/></a:bodyPr>
         <a:lstStyle/>
-        <a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-TW" sz="1600" dirty="0"><a:solidFill><a:srgbClr val="1a1a2e"/></a:solidFill></a:rPr><a:t>${escXml(descLine)}</a:t></a:r></a:p>
+        <a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-TW" sz="1600" dirty="0"><a:solidFill><a:srgbClr val="1a1a2e"/></a:solidFill></a:rPr><a:t>${escXml(text)}</a:t></a:r></a:p>
       </p:txBody>
     </p:sp>`;
 
-    const slideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
-       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
-  <p:cSld>
-    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
-    <p:spTree>
-      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
-      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="0" y="0"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>
-      ${titleXml}
-      ${descXml}
-      <p:pic>
-        <p:nvPicPr><p:cNvPr id="4" name="img${imgId}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>
-        <p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>
-        <p:spPr><a:xfrm><a:off x="${imgX}" y="${imgY}"/><a:ext cx="${imgW}" cy="${imgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
-      </p:pic>
-    </p:spTree>
-  </p:cSld>
-  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
-</p:sld>`;
-
-    zip.folder('ppt/slides').file(`slide${imgId}.xml`, slideXml);
-
-    zip.folder('ppt/slides/_rels').file(`slide${imgId}.xml.rels`, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  const slideRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/img${imgId}.png"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
-</Relationships>`);
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`;
+
+  // ── 價值鏈頁（ST-01e）：非空才插入，永遠是第 1 張 ──────────────────
+  if (hasValueChain) {
+    const vcTitleText = titleText ? `${titleText}　價值鏈` : '價值鏈';
+    const vcBody = titleSp(vcTitleText) + buildValueChainShapesXml(areaX, areaY, areaW, areaH, 10);
+    zip.folder('ppt/slides').file('slide1.xml', slideShell(vcBody));
+    zip.folder('ppt/slides/_rels').file('slide1.xml.rels', slideRelsXml);
   }
 
-  // ── Final slide: full matrix with all arrows in original colors ─────────
+  // ── 步驟頁：每一步一張，矩陣表格 + 畫到該步的箭頭 ────────────────────
+  for (let i = 0; i < N; i++) {
+    label.textContent = `組合投影片 ${i + 1} / ${N}...`;
+    fill.style.width  = `${Math.round(10 + (i / N) * 80)}%`;
+    if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
+
+    const slideNo = i + 1 + vcOffset;
+
+    // 每一步驟顯示的是該箭頭自己的補充說明，而非整體策略說明（策略說明僅保留在最後總覽頁）
+    const stepNote   = (allSteps[i].arrow.note || '').trim();
+    const compName   = competitors[allSteps[i].ci].name;
+    const stepPrefix = `（Step ${i + 1} / ${N}）${compName}`;
+    const descLine   = stepNote ? stepPrefix + '　' + stepNote : stepPrefix;
+
+    const body = titleSp(titleText) + descSp(descLine)
+      + buildMatrixTableXml(L, 10)
+      + buildArrowShapesXml(L, allSteps, i, 20);
+
+    zip.folder('ppt/slides').file(`slide${slideNo}.xml`, slideShell(body));
+    zip.folder('ppt/slides/_rels').file(`slide${slideNo}.xml.rels`, slideRelsXml);
+  }
+
+  // ── 最後一張：完整策略矩陣總覽（所有箭頭原色，無步驟標示）────────────
   label.textContent = '製作完整策略圖...';
-  fill.style.width = '95%';
+  fill.style.width = '92%';
 
-  // Draw all arrows normally (full color)
-  drawLines();
-  await new Promise(r => setTimeout(r, 40));
-  const finalDataUrl = await captureFrameBase64();
-  const finalBase64  = finalDataUrl.replace(/^data:image\/png;base64,/, '');
-
-  const finalIdx = N + 1 + vcOffset;
-  zip.folder('ppt/media').file(`img${finalIdx}.png`, finalBase64, { base64: true });
-
-  // ── Final slide（完整策略矩陣總覽）：同一白底黑字版面，無步驟標示 ──
+  const finalNo = N + 1 + vcOffset;
   const finalDescText = document.getElementById('strategyDesc').value.trim();
-  const finalSlideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
-       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
-  <p:cSld>
-    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
-    <p:spTree>
-      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
-      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="0" y="0"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>
-      <p:sp>
-        <p:nvSpPr><p:cNvPr id="2" name="title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${PAD_EMU}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${titleH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
-        <p:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="4400" b="1" dirty="0"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>${escXml(titleText)}</a:t></a:r></a:p></p:txBody>
-      </p:sp>
-      <p:sp>
-        <p:nvSpPr><p:cNvPr id="3" name="desc"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm><a:off x="${PAD_EMU}" y="${H - descH}"/><a:ext cx="${W - PAD_EMU * 2}" cy="${descH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
-        <p:txBody><a:bodyPr anchor="t" wrap="square" lIns="0" rIns="0" tIns="${in2emu(0.08)}" bIns="0"><a:normAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-TW" sz="1600" dirty="0"><a:solidFill><a:srgbClr val="1a1a2e"/></a:solidFill></a:rPr><a:t>${escXml(finalDescText)}</a:t></a:r></a:p></p:txBody>
-      </p:sp>
-      <p:pic>
-        <p:nvPicPr><p:cNvPr id="4" name="img${finalIdx}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr>
-        <p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>
-        <p:spPr><a:xfrm><a:off x="${imgX}" y="${imgY}"/><a:ext cx="${imgW}" cy="${imgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
-      </p:pic>
-    </p:spTree>
-  </p:cSld>
-  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
-</p:sld>`;
+  const finalBody = titleSp(titleText) + descSp(finalDescText)
+    + buildMatrixTableXml(L, 10)
+    + buildArrowShapesXml(L, allSteps, null, 20);
 
-  zip.folder('ppt/slides').file(`slide${finalIdx}.xml`, finalSlideXml);
-  zip.folder('ppt/slides/_rels').file(`slide${finalIdx}.xml.rels`, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/img${finalIdx}.png"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
-</Relationships>`);
+  zip.folder('ppt/slides').file(`slide${finalNo}.xml`, slideShell(finalBody));
+  zip.folder('ppt/slides/_rels').file(`slide${finalNo}.xml.rels`, slideRelsXml);
 
-  // Update Content_Types and presentation: value chain page (if any) + step slides + full overview
+  // ── presentation.xml / rels / [Content_Types].xml（價值鏈頁 + 步驟頁 + 總覽頁）──
   const totalSlides = N + 1 + vcOffset;
-  const sldIdLst2 = Array.from({length: totalSlides}, (_, i) =>
+  const sldIdLst = Array.from({length: totalSlides}, (_, i) =>
     `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join('');
   zip.folder('ppt').file('presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
   xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
   xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" saveSubsetFonts="1">
   <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rIdM1"/></p:sldMasterIdLst>
-  <p:sldIdLst>${sldIdLst2}</p:sldIdLst>
+  <p:sldIdLst>${sldIdLst}</p:sldIdLst>
   <p:sldSz cx="${W}" cy="${H}" type="screen16x9"/>
   <p:notesSz cx="${H}" cy="${W}"/>
 </p:presentation>`);
 
-  const presRels2 = Array.from({length: totalSlides}, (_, i) =>
+  const presRels = Array.from({length: totalSlides}, (_, i) =>
     `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('');
   zip.folder('ppt/_rels').file('presentation.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  ${presRels2}
+  ${presRels}
   <Relationship Id="rIdM1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
 </Relationships>`);
 
-  // Update [Content_Types].xml to include final slide + image
   zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml"  ContentType="application/xml"/>
-  <Default Extension="png"  ContentType="image/png"/>
   <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
   <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
   <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
   <Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
   ${Array.from({length: totalSlides}, (_, i) => `<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}
-  ${Array.from({length: totalSlides}, (_, i) => `<Override PartName="/ppt/media/img${i+1}.png" ContentType="image/png"/>`).join('')}
 </Types>`);
 
   // ── Download ZIP as .pptx ──────────────────────────────────────────────
