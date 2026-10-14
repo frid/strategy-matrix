@@ -1055,7 +1055,75 @@ const VC_TEMPLATE_GROUPS = [
   { key: 'other',  label: '其他產業' },
   { key: 'theory', label: '理論骨架' },
 ];
+// 範本用小工具：vcAct=活動單元、vcAsset=資產單元、vcGroup=群組、vcProducts=範本通用的兩個產品
+const vcAct = (name, id) => (id ? { id, name, type: 'unit', unitKind: 'activity' } : { name, type: 'unit', unitKind: 'activity' });
+const vcAsset = name => ({ name, type: 'unit', unitKind: 'asset' });
+const vcGroup = (name, children) => ({ name, type: 'group', children });
+const vcProducts = () => ['產品一', '產品二'].map(n => vcAct(n));
 const VC_TEMPLATES = [
+  {
+    id: 'bio-meddevice', group: 'bio', name: '醫療器材製造', source: 'P3 21',
+    valueChain: {
+      primary: [
+        vcAct('市場分析'),
+        vcGroup('研發', [vcAct('產品設計'), vcAct('打樣')]),
+        vcAct('前期功能測試'),
+        vcAct('業務開發', 'md_bizdev'),
+        vcAct('試產', 'md_trial'),
+        vcGroup('採購', [vcAsset('原料'), vcAsset('關鍵零組件')]),
+        vcAct('進料品管'), vcAct('生產'), vcAct('成品品管'), vcAct('臨床測試'), vcAct('GMP認證'),
+        vcAct('產品認證－銷售許可'), vcAct('倉儲'), vcAct('物流'), vcAct('通路'), vcAct('銷售'),
+        vcAsset('品牌'), vcAct('售後服務'),
+      ],
+      support: ['人力資源', '資訊系統', '財務管理'].map(n => vcAct(n)),
+      products: vcProducts(),
+      links: [{ from: 'md_bizdev', to: 'md_trial' }],
+    },
+  },
+  {
+    id: 'bio-pharma-tw', group: 'bio', name: '藥廠在台銷售', source: 'P3 26、35',
+    valueChain: {
+      primary: [
+        vcGroup('上市前評估', ['總公司產品上市計劃', '在地市場分析', '在地醫療需求分析'].map(n => vcAct(n))),
+        vcGroup('上市前準備(在地)', ['藥品查驗登記', '在地臨床試驗', '在地藥物經濟學', '健保給付申請', '產品進口', '倉儲與物流',
+          '產品價值與定位', '病患需求再檢視', '產品策略與資源及人力規劃', '鞏固關鍵意見領袖支持'].map(n => vcAct(n))),
+        vcGroup('上市推廣銷售', ['醫院進藥', '形塑市場計劃', '行銷活動', '銷售', '銷售後服務', '病患疾病衛教'].map(n => vcAct(n))),
+      ],
+      support: ['硬體設備', '資金', '專業能力', '全球網絡關係', '公協會', '人力資源', '教育中心'].map(vcAsset),
+      products: vcProducts(),
+      links: [],
+    },
+  },
+  {
+    id: 'bio-pharmacy', group: 'bio', name: '連鎖藥局', source: 'P3 25',
+    valueChain: {
+      primary: [
+        ...['供應商管理', '採購', '物流管理', '商品管理', '行銷企劃'].map(n => vcAct(n)),
+        vcAsset('品牌形象'), vcAsset('社群網站'),
+        ...['門市管理', '處方調劑', '商品銷售', '顧客管理'].map(n => vcAct(n)),
+      ],
+      support: ['財務管理', '人力資源管理', '市場開發管理/識別規劃', '資訊系統（進銷存/POS/CRM/ERP）'].map(n => vcAct(n)),
+      products: vcProducts(),
+      links: [],
+    },
+  },
+  {
+    id: 'bio-rehab', group: 'bio', name: '連鎖復健科診所', source: 'P3 24',
+    valueChain: {
+      primary: [
+        vcGroup('總部營運規劃', [vcAct('健保申報'), vcAsset('復健醫師關係建立'), vcAsset('物理治療師關係建立'), vcAct('HR功能')]),
+        vcGroup('診療服務提供', ['診間維護管理', '待診關懷', '診所療程效率化(物理治療服務)', '診所流程效率化(看診服務)'].map(n => vcAct(n))),
+        vcGroup('顧客關係與品牌', [vcAct('CRM功能'), vcAsset('診所公司品牌聲譽')]),
+      ],
+      support: [
+        ...['診所品牌定位', 'MKT功能', '合作策略', '展店策略', '財稅規劃'].map(n => vcAct(n)),
+        vcAsset('環境營造(硬體、氣氛)'), vcAsset('醫療儀器購置'),
+        ...['醫療耗材進貨', '醫療耗材管理', '拓展其他事業', 'MIS系統(HIS系統)'].map(n => vcAct(n)),
+      ],
+      products: vcProducts(),
+      links: [],
+    },
+  },
   {
     id: 'generic', group: 'theory', name: '通用基本價值鏈', source: 'P3 14–15',
     valueChain: {
