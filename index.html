@@ -1657,6 +1657,20 @@ function renderColEditor() {
     addItemBtn.textContent = '＋ 細項';
     addItemBtn.addEventListener('click', e => {
       e.stopPropagation();
+      // ST-07：新欄插在群組中間時，後面欄位的箭頭／分隔線／群組路徑都要跟著位移
+      const insertIdx = getGroupStartIdx(gi) + group.items.length;
+      pushHistory(true);
+      arrows = arrows.map(arr => arr.map(a => ({
+        ...a,
+        from: { row: a.from.row, col: a.from.col >= insertIdx ? a.from.col + 1 : a.from.col },
+        to:   { row: a.to.row,   col: a.to.col   >= insertIdx ? a.to.col   + 1 : a.to.col },
+      })));
+      if (productSepIdx >= insertIdx) productSepIdx++;
+      if (Array.isArray(COLUMN_PATHS) && COLUMN_PATHS.length === COLUMNS.length) {
+        COLUMN_PATHS.splice(insertIdx, 0, insertIdx > 0 && group.items.length > 0
+          ? [...COLUMN_PATHS[insertIdx - 1]]
+          : (group.category && group.category.trim()) ? [group.category] : []);
+      }
       group.items.push('新欄位');
       syncColumns();
       renderColEditor();
