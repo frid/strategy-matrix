@@ -245,6 +245,11 @@
     padding: 5px 11px; border-radius: 8px; border: 1px solid var(--grid-line);
     background: white; color: var(--ink); cursor: pointer; white-space: nowrap; box-shadow: var(--shadow);
   }
+  .vc-template-select {
+    font-size: 0.76rem; font-weight: 500; font-family: inherit;
+    padding: 5px 11px; border-radius: 8px; border: 1px solid var(--grid-line);
+    background: white; color: var(--ink); cursor: pointer; box-shadow: var(--shadow);
+  }
   .vc-link-toggle.active { background: var(--col-header); color: white; border-color: var(--col-header); }
   /* 連線模式下，方塊改為十字游標，提示可點擊建立連線 */
   #valueChainEditor.vc-link-mode .vc-unit, #valueChainEditor.vc-link-mode .vc-group { cursor: crosshair; }
@@ -1043,6 +1048,28 @@ function normaliseValueChain(raw) {
 }
 
 let valueChain = makeDefaultValueChain();
+
+// ST-06a：內建價值鏈範本（只用產業名稱與通用活動名稱）。載入時深拷貝後交給 normaliseValueChain，常數本身不可被改動
+const VC_TEMPLATE_GROUPS = [
+  { key: 'bio',    label: '生醫' },
+  { key: 'other',  label: '其他產業' },
+  { key: 'theory', label: '理論骨架' },
+];
+const VC_TEMPLATES = [
+  {
+    id: 'generic', group: 'theory', name: '通用基本價值鏈', source: 'P3 14–15',
+    valueChain: {
+      primary: [
+        ...['原料', '零組件', '採購', '研發', '製造', '資訊系統', '倉儲', '運輸', '通路']
+          .map(name => ({ name, type: 'unit', unitKind: 'activity' })),
+        { name: '品牌', type: 'unit', unitKind: 'asset' },
+      ],
+      support: [],
+      products: ['產品一', '產品二', '產品三'].map(name => ({ name, type: 'unit', unitKind: 'activity' })),
+      links: [],
+    },
+  },
+];
 
 // ── 矩陣配色預設（可在矩陣格子上按右鍵切換）─────────────────────────────
 const COLOR_PALETTES = [
@@ -1855,6 +1882,35 @@ function renderValueChainEditor() {
   toolbar.appendChild(expandBtn);
   toolbar.appendChild(vcSaveBtn);
   toolbar.appendChild(vcLoadBtn);
+
+  // ST-06a：範本下拉選單（依分組 optgroup，沒有範本的分組不顯示）
+  const tplSelect = document.createElement('select');
+  tplSelect.className = 'vc-template-select';
+  tplSelect.title = '載入內建的價值鏈範本（會取代目前價值鏈）';
+  const tplPlaceholder = document.createElement('option');
+  tplPlaceholder.value = '';
+  tplPlaceholder.textContent = '📋 載入範本…';
+  tplSelect.appendChild(tplPlaceholder);
+  VC_TEMPLATE_GROUPS.forEach(g => {
+    const items = VC_TEMPLATES.filter(t => t.group === g.key);
+    if (!items.length) return;
+    const og = document.createElement('optgroup');
+    og.label = g.label;
+    items.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.source ? `${t.name}（${t.source}）` : t.name;
+      og.appendChild(opt);
+    });
+    tplSelect.appendChild(og);
+  });
+  tplSelect.addEventListener('change', () => {
+    const id = tplSelect.value;
+    tplSelect.value = '';
+    loadValueChainTemplate(id);
+  });
+  toolbar.appendChild(tplSelect);
+
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
 
@@ -3530,6 +3586,16 @@ function importValueChainJSON() {
   inp.click();
 }
 
+// 載入內建價值鏈範本（ST-06a）：整個取代目前價值鏈（含產品）；矩陣要按「展開」才更新
+function loadValueChainTemplate(id) {
+  const t = VC_TEMPLATES.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm(`載入範本「${t.name}」會取代目前整條價值鏈（含產品）；矩陣欄位要按「展開到策略矩陣」才會更新，確定嗎？`)) return;
+  valueChain = normaliseValueChain(JSON.parse(JSON.stringify(t.valueChain)));  // 深拷貝，避免改到範本常數
+  resetValueChainIds(valueChain);
+  commitValueChain();
+}
+
 function clearLocalStorage() {
   if (!confirm('確定要清除所有存檔並重設為預設值？（此操作無法復原）')) return;
   localStorage.removeItem(STORAGE_KEY);
@@ -3570,7 +3636,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
 </div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/10/13
+  最後更新日期：2026/10/14
 </div>
 </body>
 </html>
