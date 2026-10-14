@@ -394,9 +394,24 @@
     background: #fff;
     color: var(--ink);
   }
-  .vc-group.drag-over, .vc-unit.drag-over { box-shadow: -3px 0 0 var(--col-header); }
-  /* 群組內子項目改直排，插入指示線要畫在上緣（蓋掉前面橫排用的左緣直線） */
-  .vc-group-body > .vc-group.drag-over, .vc-group-body > .vc-unit.drag-over { box-shadow: 0 -3px 0 var(--col-header); }
+  /* 拖曳排序的落點預覽（ST-10）：在落點撐出一格虛線空位（大小同被拖的方塊），
+     前緣畫 4px 實色插入線＋兩端圓點；不套 clip-path，所以不會被斜切裁掉 */
+  .vc-drop-placeholder {
+    position: relative; z-index: 4; box-sizing: border-box; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; padding: 0 10px;
+    border: 2px dashed var(--col-header); border-radius: 6px; background: rgba(123,111,160,0.10);
+    color: var(--col-header); font-size: 0.74rem; font-weight: 600; pointer-events: none;
+  }
+  .vc-drop-placeholder > span { opacity: 0.55; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vc-drop-placeholder::before, .vc-drop-placeholder::after {
+    content: ''; position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--col-header);
+  }
+  .vc-drop-placeholder.vc-drop-h { border-left: 4px solid var(--col-header); }
+  .vc-drop-placeholder.vc-drop-h::before { left: -7px; top: -6px; }
+  .vc-drop-placeholder.vc-drop-h::after { left: -7px; bottom: -6px; }
+  .vc-drop-placeholder.vc-drop-v { border-top: 4px solid var(--col-header); }
+  .vc-drop-placeholder.vc-drop-v::before { top: -7px; left: -6px; }
+  .vc-drop-placeholder.vc-drop-v::after { top: -7px; right: -6px; }
   .vc-group.dragging, .vc-unit.dragging { opacity: 0.35; }
   .vc-node-head { display: flex; align-items: center; gap: 3px; }
   .vc-node-head input {
@@ -1868,8 +1883,44 @@ function moveVcNode(targetList, beforeId) {
   commitValueChain();
 }
 
-function clearVcDragOver() {
+// 只清容器的 drag-over 外框（落點預覽不動，避免拖曳中閃爍）
+function clearVcDragClass() {
   document.querySelectorAll('#valueChainEditor .drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+// 拖曳落點預覽（ST-10）：vcDropPh＝虛線空位元素，vcDropPos＝目前預覽的落點 { list, beforeId }
+let vcDropPh = null;
+let vcDropPos = null;
+
+function clearVcDragOver() {
+  clearVcDragClass();
+  if (vcDropPh && vcDropPh.parentNode) vcDropPh.parentNode.removeChild(vcDropPh);
+  vcDropPh = null;
+  vcDropPos = null;
+}
+
+// 在 parent 裡 beforeEl 之前顯示落點預覽（beforeEl 為 null＝最後）；horizontal＝橫排（用寬度），否則直排（用高度）
+function showVcPlaceholder(parent, beforeEl, list, beforeId, horizontal) {
+  vcDropPos = { list, beforeId };
+  if (!vcDropPh) {
+    vcDropPh = document.createElement('div');
+    const label = document.createElement('span');
+    const src = vcDragSrc && locateVcNode(vcDragSrc.id);
+    label.textContent = src ? src.node.name : '';
+    vcDropPh.appendChild(label);
+  }
+  const ph = vcDropPh;
+  const srcEl = vcDragSrc && document.querySelector('#valueChainEditor [data-vc-id="' + vcDragSrc.id + '"]');
+  ph.className = 'vc-drop-placeholder ' + (horizontal ? 'vc-drop-h' : 'vc-drop-v');
+  ph.style.width = horizontal && srcEl ? srcEl.offsetWidth + 'px' : '';
+  ph.style.height = srcEl ? srcEl.offsetHeight + 'px' : '';
+  if (ph.parentNode === parent && ph.nextSibling === beforeEl) return;
+  parent.insertBefore(ph, beforeEl);
+}
+
+// 容器排列方向：column 開頭＝直排，否則橫排
+function isVcHorizontal(container) {
+  return !getComputedStyle(container).flexDirection.startsWith('column');
 }
 
 // 讓「放到最後」的容器（群組內容區、整區空白處）接受拖放
@@ -1879,15 +1930,25 @@ function bindVcDropArea(el, zone, getList, ownerId) {
     e.stopPropagation();
     if (!canVcDrop(zone, ownerId)) return;
     e.preventDefault();
-    clearVcDragOver();
+    clearVcDragClass();
     el.classList.add('drag-over');
+    // 游標在已有的方塊／預覽空位附近（含間隙）＝維持目前位置；真正的空白處才放到最後
+    if (vcDropPh && vcDropPh.parentNode === el) {
+      const near = Array.from(el.children).some(c => {
+        const r = c.getBoundingClientRect();
+        return e.clientX >= r.left - 12 && e.clientX <= r.right + 12 && e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+      });
+      if (near) return;
+    }
+    showVcPlaceholder(el, null, getList(), null, isVcHorizontal(el));
   });
   el.addEventListener('drop', e => {
     e.preventDefault();
     e.stopPropagation();
+    const pos = vcDropPos;
     clearVcDragOver();
     if (!canVcDrop(zone, ownerId)) return;
-    moveVcNode(getList(), null);
+    moveVcNode(pos ? pos.list : getList(), pos ? pos.beforeId : null);
   });
 }
 
@@ -2002,14 +2063,29 @@ function buildVcNode(node, zone) {
     e.stopPropagation();
     if (!canVcDrop(zone, node.id)) return;
     e.preventDefault();
-    clearVcDragOver();
-    el.classList.add('drag-over');
+    clearVcDragClass();
+    // 依游標位置決定插在前面或後面：橫排看 X、直排看 Y（ST-10）
+    const parent = el.parentNode, rect = el.getBoundingClientRect();
+    const horizontal = isVcHorizontal(parent);
+    const after = horizontal ? e.clientX > rect.left + rect.width / 2 : e.clientY > rect.top + rect.height / 2;
+    const target = locateVcNode(node.id);
+    if (!target) return;
+    let beforeEl = el, beforeId = node.id;
+    if (after) {
+      beforeEl = el.nextElementSibling;
+      if (beforeEl && beforeEl === vcDropPh) beforeEl = beforeEl.nextElementSibling;
+      beforeId = beforeEl && beforeEl.dataset.vcId ? beforeEl.dataset.vcId : null;
+      if (!beforeId) beforeEl = null;
+    }
+    showVcPlaceholder(parent, beforeEl, target.list, beforeId, horizontal);
   });
   el.addEventListener('drop', e => {
     e.preventDefault();
     e.stopPropagation();
+    const pos = vcDropPos;
     clearVcDragOver();
     if (!canVcDrop(zone, node.id)) return;
+    if (pos) { moveVcNode(pos.list, pos.beforeId); return; }
     const target = locateVcNode(node.id);
     if (target) moveVcNode(target.list, node.id);
   });
