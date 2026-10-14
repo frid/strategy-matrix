@@ -1125,6 +1125,58 @@ const VC_TEMPLATES = [
     },
   },
   {
+    id: 'bio-aesthetic', group: 'bio', name: '連鎖醫美診所', source: 'P3 23',
+    valueChain: {
+      primary: [
+        vcAct('公關接待'), vcAct('諮詢'), vcAct('診斷', 'ae_diag'),
+        vcGroup('醫療服務', [
+          vcGroup('西醫醫療服務', ['整形手術', '注射', '雷射', '抗老化', '皮膚科', '亞健康'].map(n => vcAct(n))),
+          { id: 'ae_cm', name: '中醫醫療服務', type: 'group', children: [vcAct('中醫門診', 'ae_cmclinic')] },
+        ]),
+        vcGroup('術後照護', [
+          vcGroup('術後修護', ['雷射術後修護', '整形手術術後修護'].map(n => vcAct(n))),
+          vcGroup('中醫術後照顧', [vcAct('中醫調理', 'ae_cmcare')]),
+        ]),
+        vcGroup('醫學美容', [
+          vcGroup('醫學美容療程', ['點滴', '換藥', '高壓氧'].map(n => vcAct(n))),
+          vcAct('儀器美容'), vcAct('一般設備美容'),
+        ]),
+        vcGroup('周邊商品', ['商品概念企劃', '包裝設計', '委託直購', '口服商品販售', '保養品商品販售'].map(n => vcAct(n))),
+      ],
+      support: [
+        ...['採購', '醫師招募訓練管理', '非醫師招募訓練管理', '展店'].map(n => vcAct(n)),
+        vcAsset('品牌形象'),
+        ...['行銷管理', '財務管理', '資訊系統'].map(n => vcAct(n)),
+      ],
+      products: ['臉部手術', '體雕手術', '周邊產品'].map(n => vcAct(n)),
+      links: [{ from: 'ae_diag', to: 'ae_cm' }, { from: 'ae_cmclinic', to: 'ae_cmcare' }],
+    },
+  },
+  {
+    id: 'bio-dental-agent', group: 'bio', name: '牙科醫療設備代理商', source: 'P3 27–28',
+    valueChain: {
+      primary: [
+        vcGroup('產品導入', ['產品開發', '代理爭取', '代理合約', '醫材登記'].map(n => vcAct(n))),
+        vcGroup('資訊系統', ['採購', '進口', '倉儲', '人資', '財務', '定價'].map(n => vcAct(n))),
+        vcGroup('上市準備', [vcAsset('在地品牌'), ...['行銷提案', '教育訓練', '上市發表'].map(n => vcAct(n))]),
+        vcGroup('客戶開發', [vcAct('學術行銷', 'dt_academic'), ...['牙醫課程', '牙科展會', '設備試用服務'].map(n => vcAct(n))]),
+        vcGroup('行銷與客戶服務', [
+          ...['業務銷售與客戶關係掌握', '協銷分潤', '網路行銷', '客製化行銷', '租賃服務'].map(n => vcAct(n)),
+          vcAct('售後服務與使用訓練', 'dt_aftersales'), vcAsset('信用口碑'),
+        ]),
+        // 公司特有競爭優勢能力：全部是資產；教育中心、維修中心當連線起點
+        vcGroup('公司特有競爭優勢能力', [
+          { id: 'dt_edu', name: '導航植牙教育中心', type: 'unit', unitKind: 'asset' },
+          { id: 'dt_repair', name: '原廠認證維修中心', type: 'unit', unitKind: 'asset' },
+          ...['認證維修服務', '在地商標競爭優勢', '學術行銷成功經驗'].map(vcAsset),
+        ]),
+      ],
+      support: [],
+      products: ['牙科開業統包服務', '傳統牙科植體耗材', '植牙導航', '數位設備（AR/CBCT）', '醫科影像設備'].map(n => vcAct(n)),
+      links: [{ from: 'dt_edu', to: 'dt_academic' }, { from: 'dt_repair', to: 'dt_aftersales' }],
+    },
+  },
+  {
     id: 'generic', group: 'theory', name: '通用基本價值鏈', source: 'P3 14–15',
     valueChain: {
       primary: [
