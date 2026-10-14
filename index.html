@@ -1177,6 +1177,80 @@ const VC_TEMPLATES = [
     },
   },
   {
+    id: 'oth-ipc', group: 'other', name: '工業電腦', source: 'P3 31–32',
+    valueChain: {
+      primary: [
+        vcGroup('市場開發', ['需求調查', '產品規劃'].map(n => vcAct(n))),
+        vcGroup('研發', ['模組化設計', '產品設計', '打樣', '軟體開發與元件'].map(n => vcAct(n))),
+        vcGroup('試產', ['功能測試', 'MFi 認證'].map(n => vcAct(n))),
+        vcGroup('採購', ['供應商議價', '供應商管理'].map(n => vcAct(n))),
+        vcGroup('原料', ['關鍵零組件', '一般零組件'].map(vcAsset)),
+        vcGroup('製造', ['生產管理', '品質管理', '庫存管理'].map(n => vcAct(n))),
+        vcAct('運輸物流'), vcAct('行銷'), vcAsset('品牌'),
+        vcGroup('銷售與通路', ['海外據點', 'VAR/SI', '經銷商', '直銷'].map(n => vcAct(n))),
+        vcGroup('客戶導入', ['測試', '議價', '下單'].map(n => vcAct(n))),
+        vcGroup('售後服務', ['技術支援', '維修', 'CRM'].map(n => vcAct(n))),
+      ],
+      support: ['資訊管理', '人力資源', '財務管理'].map(n => vcAct(n)),
+      products: vcProducts(),
+      links: [],
+    },
+  },
+  {
+    id: 'oth-influencer', group: 'other', name: '醫師網紅經紀', source: 'P3 29–30',
+    valueChain: {
+      primary: [
+        vcGroup('白袍網紅引進', [
+          ...['產品開發', '瞭解需求', '定價簽約', '創意企劃包裝', '網紅媒體露出', '建立平台'].map(n => vcAct(n)),
+          vcAsset('個人品牌'),
+        ]),
+        vcGroup('經紀服務資源', ['網紅培訓', '定價諮詢', '企劃後製', '廣告投放', '法規諮詢'].map(n => vcAct(n))),
+        vcGroup('品牌方開發', [
+          ...['業配接洽開發', '客戶需求評估', '報價簽約'].map(n => vcAct(n)),
+          vcAsset('商譽口碑'), vcAsset('品牌'),
+        ]),
+      ],
+      support: ['財務規劃', '資訊網通', '人力資源'].map(n => vcAct(n)),
+      products: [vcAct('廣告業配')],
+      links: [],
+    },
+  },
+  {
+    id: 'oth-material', group: 'other', name: '原物料製造', source: 'P3 43–44',
+    valueChain: {
+      primary: [
+        vcGroup('顧客溝通', ['掌握大型客戶', '業務開發', '掌握料源資訊', '掌握商情', '協助子公司業務開發'].map(n => vcAct(n))),
+        vcGroup('研發流程', ['新材料研發', '新技術研發', '新工法研發', '標章與認證'].map(n => vcAct(n))),
+        vcGroup('訂單流程', ['料源成本掌握', '定價機制', '付款條件'].map(n => vcAct(n))),
+        vcGroup('採購流程', ['原料採購', '設備採購'].map(n => vcAct(n))),
+        vcGroup('進料檢驗', ['原料檢驗', '品管配比機制'].map(n => vcAct(n))),
+        vcGroup('生產流程', ['產能規模', '能耗成本控制', '操作／維護', '生產設備', '儲倉設施'].map(n => vcAct(n))),
+        vcGroup('製程檢驗', [vcAct('線上品管')]),
+        vcGroup('品管流程', ['製程', '產品檢驗', '品質系統'].map(n => vcAct(n))),
+        vcGroup('產品儲存', ['發貨據點', '場站庫存調度'].map(n => vcAct(n))),
+        vcGroup('出貨流程', ['發貨車道', '交貨地規劃', '計劃性發貨', '運輸車隊'].map(n => vcAct(n))),
+        vcGroup('顧客', [vcAct('客戶關係管理')]),
+        vcAsset('商譽'),
+      ],
+      support: ['資訊管理', '人力資源', '財務管理與風控', '資訊系統', 'ESG／碳盤查'].map(n => vcAct(n)),
+      products: vcProducts(),
+      links: [],
+    },
+  },
+  {
+    id: 'oth-franchise', group: 'other', name: '連鎖加盟', source: 'P3 45',
+    valueChain: {
+      primary: [
+        vcGroup('展店', ['開發企劃', '物件開拓', '加盟開拓', '開店準備'].map(n => vcAct(n))),
+        vcGroup('營運', ['商品企劃', '生產製造營運', '物流配送', '行銷—銷售計畫', '行銷—廣告策略', '銷售—營運支付', '銷售—顧客服務'].map(n => vcAct(n))),
+        vcAsset('品牌口碑'),
+      ],
+      support: ['基礎建設', '設備', '人資', '採購', '資訊', '財務', 'ESG'].map(n => vcAct(n)),
+      products: [vcAct('產品／服務')],
+      links: [],
+    },
+  },
+  {
     id: 'generic', group: 'theory', name: '通用基本價值鏈', source: 'P3 14–15',
     valueChain: {
       primary: [
