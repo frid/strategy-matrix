@@ -274,14 +274,14 @@
   @media (max-width: 800px) {
     .vc-zones { grid-template-columns: minmax(0, 1fr); grid-template-areas: "support" "activities"; }
     .vc-support-label, .vc-primary-label, .vc-margin-arrow { display: none; }
-    .vc-activities-row { flex-direction: column; overflow-x: visible; }
+    .vc-activities-row { flex-direction: column; }
   }
   .vc-zone-support { grid-area: support; }
   /* 主要活動容器（ST-01i 起產品不在圖內，主要活動可用整列寬度）；
-     欄位很多時整列水平捲動，但個別方塊不換行、不被壓縮裁字 */
+     欄位很多時方塊自動換到下一列（ST-08），不再水平捲動 */
   .vc-activities-row {
     grid-area: activities; display: flex; align-items: stretch; gap: 10px;
-    overflow-x: auto; min-width: 0;
+    min-width: 0;
   }
   .vc-activities-row > .vc-zone-primary { flex: 1 1 auto; min-width: 0; }
   .vc-zone { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -303,9 +303,9 @@
   .vc-zone-support .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
 
   /* 主要活動：同一列並排方塊；每個方塊依文字內容自然寬度（flex: 0 0 auto），
-     不強制換行也不互相擠壓裁字，欄位太多時由外層 .vc-activities-row 整列水平捲動 */
+     不互相擠壓裁字，一列放不下時方塊換到下一列（ST-08，列距 row-gap） */
   .vc-zone-primary .vc-zone-body {
-    flex-direction: row; flex-wrap: nowrap; align-items: stretch;
+    flex-direction: row; flex-wrap: wrap; align-items: stretch; row-gap: 10px;
     padding: 0; border: none; background: transparent;
   }
   .vc-zone-primary .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
@@ -314,7 +314,7 @@
   }
   /* 群組：寬度固定最小值（可被長名稱撐開），內容由上往下排，頂端對齊同一列的其他群組／單元 */
   .vc-zone-primary > .vc-zone-body > .vc-group {
-    flex: 0 0 260px; min-width: 0; justify-content: flex-start; text-align: center; white-space: nowrap;
+    flex: 0 0 200px; min-width: 0; justify-content: flex-start; text-align: center; white-space: nowrap;
   }
 
   /* 右側 Margin／利潤 箭頭：純裝飾、固定文字，不可互動、不參與連線與拖放，隨「大箭頭背景」開關顯示 */
