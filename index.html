@@ -1409,7 +1409,7 @@ let competitors = [
 ];
 let activeIdx = 0;
 
-// arrows[compIdx] = [ {from: {row,col}, to: {row,col}}, ... ]
+// arrows[compIdx] = [ {from: {row,col}, to: {row,col}, note}, ... ]
 let arrows = [[], []];
 
 let pendingCell = null; // { row, col, el }
@@ -1517,6 +1517,7 @@ function renderColEditor() {
           !(a.from.col >= removeStart && a.from.col < removeStart + removeCount) &&
           !(a.to.col   >= removeStart && a.to.col   < removeStart + removeCount)
         ).map(a => ({
+          ...a,
           from: { row: a.from.row, col: a.from.col >= removeStart + removeCount ? a.from.col - removeCount : a.from.col },
           to:   { row: a.to.row,   col: a.to.col   >= removeStart + removeCount ? a.to.col   - removeCount : a.to.col   },
         }))
@@ -1580,6 +1581,7 @@ function renderColEditor() {
         pushHistory();
         arrows = arrows.map(arr => arr.filter(a => a.from.col !== flatIdx && a.to.col !== flatIdx)
           .map(a => ({
+            ...a,
             from: { row: a.from.row, col: a.from.col > flatIdx ? a.from.col - 1 : a.from.col },
             to:   { row: a.to.row,   col: a.to.col   > flatIdx ? a.to.col   - 1 : a.to.col   },
           }))
@@ -1633,6 +1635,7 @@ function renderColEditor() {
         g.items.splice(ii, 0, movedItem);
 
         arrows = arrows.map(arr => arr.map(a => ({
+          ...a,
           from: { row: a.from.row, col: oldToNew[a.from.col] ?? a.from.col },
           to:   { row: a.to.row,   col: oldToNew[a.to.col]   ?? a.to.col },
         })));
@@ -1709,6 +1712,7 @@ function renderColEditor() {
       COLUMN_GROUPS.splice(gi, 0, moved);
 
       arrows = arrows.map(arr => arr.map(a => ({
+        ...a,
         from: { row: a.from.row, col: oldToNew[a.from.col] ?? a.from.col },
         to:   { row: a.to.row,   col: oldToNew[a.to.col]   ?? a.to.col },
       })));
