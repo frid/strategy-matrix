@@ -1153,7 +1153,7 @@ const VC_TEMPLATES = [
     },
   },
   {
-    id: 'bio-dental-agent', group: 'bio', name: '牙科醫療設備代理商', source: 'P3 27–28',
+    id: 'bio-dental-agent', group: 'bio', name: '醫療設備代理', source: 'P3 27–28',
     valueChain: {
       primary: [
         vcGroup('產品導入', ['產品開發', '代理爭取', '代理合約', '醫材登記'].map(n => vcAct(n))),
@@ -2019,7 +2019,7 @@ function renderValueChainEditor() {
     items.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
-      opt.textContent = t.source ? `${t.name}（${t.source}）` : t.name;
+      opt.textContent = t.name;
       og.appendChild(opt);
     });
     tplSelect.appendChild(og);
