@@ -5,7 +5,7 @@ description: >-
   只 stage 本任務的檔、commit、push 分支。當 task-next 走到收尾、或使用者說
   「收尾」「commit」「/task-release」時使用。不會合併回 main——使用者明確說「merge」才另外做。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Task Release — 任務收尾
@@ -91,6 +91,17 @@ git push -u origin "$(git branch --show-current)"
 
 1. 先讓使用者確認要合併的 commit 清單：`git log --oneline main..<branch>`。
 2. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
+3. **清掉已合併的 worktree**（讓 tmux `prefix+g` 選單不再列出已完成項目）。合併並 push 成功後，在主 checkout（repo 根目錄，不是該 worktree 裡）執行：
+
+   ```bash
+   git -C ".claude/worktrees/<name>" status --porcelain           # 有未 commit 變更 → 停下問使用者，不要 --force
+   git worktree remove ".claude/worktrees/<name>"
+   git worktree prune
+   ```
+
+   - 目前 session 本身就在該 worktree 裡 → 改用 `ExitWorktree`（action: `remove`）。
+   - 只移除 worktree 目錄，**分支保留**（本機與 origin 都不刪）。
+   - worktree 是 locked（別的 session 還在用）→ 不移除，回報給使用者。
 
 ---
 
@@ -98,4 +109,5 @@ git push -u origin "$(git branch --show-current)"
 
 | 版號 | 日期 | 變更 |
 |---|---|---|
+| 1.1.0 | 2026-10-15 | 合併回 main 後加一步：`git worktree remove` 清掉已合併的 worktree |
 | 1.0.0 | 2026-09-28 | 建立：參考 QMSWeb `qms-release`，拿掉版號／burndown／DB 閘門，改成單檔網頁專案版 |
