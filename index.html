@@ -383,14 +383,14 @@
   .vc-products-body > .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: #e6bcbc; }
   .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
   .vc-unit.vc-asset { background: #fff8e8; border-color: #e8c87a; }
-  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
-  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-act,
-  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head input, .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act {
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head :is(input, textarea), .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act {
     color: #fff;
   }
-  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head input:focus,
-  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head input:focus,
-  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head input:focus {
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):focus,
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):focus,
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head :is(input, textarea):focus {
     background: #fff;
     color: var(--ink);
   }
@@ -414,15 +414,30 @@
   .vc-drop-placeholder.vc-drop-v::after { top: -7px; right: -6px; }
   .vc-group.dragging, .vc-unit.dragging { opacity: 0.35; }
   .vc-node-head { display: flex; align-items: center; gap: 3px; }
-  .vc-node-head input {
+  .vc-node-head :is(input, textarea) {
     border: none; border-bottom: 1px dashed transparent; background: transparent; font-family: inherit;
     font-size: 0.74rem; color: var(--ink); outline: none; min-width: 2em; padding: 1px 2px;
   }
-  .vc-group > .vc-node-head input { font-weight: 700; border-bottom-color: var(--col-header); }
+  /* 主要活動區名稱（ST-09）：textarea 自動換行、無縮放把手／捲軸，高度由 JS 依內容撐開 */
+  .vc-node-head textarea.vc-name-wrap {
+    resize: none; overflow: hidden; display: block; white-space: normal; word-break: break-all;
+    line-height: 1.35; box-sizing: content-box; width: 0; flex: 1 1 0; min-width: 0;
+  }
+  .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap { text-align: center; }
+  /* 主要活動群組內：恢復換行，子項標題列對齊首行，標籤／動作鈕貼齊第一行；
+     左右負邊距 18px 拿回群組 30px 內距的寬度（群組標題位置不變） */
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-group-body {
+    white-space: normal; margin-left: -18px; margin-right: -18px;
+  }
+  .vc-zone-primary .vc-group-body > .vc-unit { text-align: left; align-items: flex-start; }
+  .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head { align-items: flex-start; }
+  .vc-zone-primary .vc-group > .vc-node-head { white-space: normal; }
+  .vc-zone-primary .vc-node-head > .vc-kind, .vc-zone-primary .vc-node-head > .vc-act { margin-top: 2px; }
+  .vc-group > .vc-node-head :is(input, textarea) { font-weight: 700; border-bottom-color: var(--col-header); }
   /* 名稱 input 優先取得空間，只有真的放不下時（flex-shrink）才縮小，不要一開始就被 .vc-kind／.vc-act 擠掉 */
-  .vc-group-body > .vc-unit > .vc-node-head > input { flex: 1 1 auto; min-width: 0; max-width: 100%; }
-  .vc-group > .vc-node-head > input { flex: 1 1 auto; min-width: 0; max-width: 100%; }
-  .vc-node-head input:focus { border-bottom: 1px solid var(--col-header); background: white; }
+  .vc-group-body > .vc-unit > .vc-node-head > :is(input, textarea) { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+  .vc-group > .vc-node-head > :is(input, textarea) { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+  .vc-node-head :is(input, textarea):focus { border-bottom: 1px solid var(--col-header); background: white; }
   .vc-kind {
     font-size: 0.58rem; padding: 0 4px; border-radius: 3px; cursor: pointer; white-space: nowrap;
     background: var(--cell-hover); color: var(--col-header);
@@ -1952,8 +1967,18 @@ function bindVcDropArea(el, zone, getList, ownerId) {
   });
 }
 
-// 名稱輸入框寬度隨字數調整
+// 名稱輸入框尺寸調整：input 寬度隨字數；主要活動區的 textarea（可換行）高度隨內容撐開（ST-09）
 function sizeVcInput(inp) {
+  if (inp.tagName === 'TEXTAREA') {
+    // 主要活動區最外層單元（不在群組內）維持依字數的自然寬度，不換行
+    if (inp.closest('.vc-unit') && !inp.closest('.vc-group-body')) {
+      inp.style.width = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
+      inp.style.flex = '0 0 auto';
+    }
+    inp.style.height = 'auto';
+    inp.style.height = inp.scrollHeight + 'px';
+    return;
+  }
   inp.style.width = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
 }
 
@@ -1978,7 +2003,7 @@ function buildVcNode(node, zone) {
   // 連線模式：點方塊建立/取消連線（點在 input／✕／活動-資產 標籤上時，那些控制項自己已 stopPropagation，不會走到這裡）
   el.addEventListener('click', e => {
     if (!vcLinkMode) return;
-    if (e.target.closest('input')) return;
+    if (e.target.closest('input, textarea')) return;
     e.stopPropagation();
     handleVcLinkClick(node.id);
   });
@@ -1987,23 +2012,28 @@ function buildVcNode(node, zone) {
   const head = document.createElement('div');
   head.className = 'vc-node-head';
 
-  const inp = document.createElement('input');
-  inp.type = 'text';
+  // 主要活動區（群組標題＋子項）名稱用 textarea 讓長名稱自動換行（ST-09）；其他區維持單行 input
+  const wrapName = zone === 'primary';
+  const inp = document.createElement(wrapName ? 'textarea' : 'input');
+  if (wrapName) { inp.rows = 1; inp.className = 'vc-name-wrap'; } else inp.type = 'text';
   inp.value = node.name;
   inp.maxLength = 20;
   inp.placeholder = isGroup ? '群組名稱' : '單元名稱';
   inp.title = node.name;
   sizeVcInput(inp);
   inp.addEventListener('mousedown', e => e.stopPropagation());
-  inp.addEventListener('input', () => sizeVcInput(inp));
+  inp.addEventListener('input', () => {
+    if (wrapName && /[\r\n]/.test(inp.value)) inp.value = inp.value.replace(/[\r\n]+/g, '');
+    sizeVcInput(inp);
+  });
   inp.addEventListener('change', () => {
-    node.name = inp.value.trim() || node.name;
+    node.name = inp.value.replace(/[\r\n]+/g, '').trim() || node.name;
     inp.value = node.name;
     inp.title = node.name;
     sizeVcInput(inp);
     saveState();
   });
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
   head.appendChild(inp);
 
   if (!isGroup) {
@@ -2349,9 +2379,12 @@ function renderValueChainEditor() {
   }
   editor.appendChild(linkList);
 
+  // textarea 要等元素掛上畫面後才量得到 scrollHeight，所以這裡統一調整高度（ST-09）
+  editor.querySelectorAll('textarea.vc-name-wrap').forEach(sizeVcInput);
+
   // 新增的節點：直接進入改名
   if (vcFocusId) {
-    const inp = editor.querySelector(`[data-vc-id="${vcFocusId}"] input`);
+    const inp = editor.querySelector(`[data-vc-id="${vcFocusId}"] input, [data-vc-id="${vcFocusId}"] textarea`);
     vcFocusId = null;
     if (inp) { inp.focus(); inp.select(); }
   }
@@ -3910,7 +3943,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
 </div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/10/14
+  最後更新日期：2026/10/15
 </div>
 </body>
 </html>
