@@ -52,6 +52,8 @@
     padding: 28px 20px;
   }
 
+  .manual-link { font-size: 0.8rem; font-weight: 500; letter-spacing: 0; color: var(--col-header); text-decoration: none; margin-left: 10px; vertical-align: middle; }
+  .manual-link:hover { text-decoration: underline; }
   h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px; }
   .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   .header-left { flex: 1; }
@@ -788,7 +790,7 @@
 
 <div class="header-row">
   <div class="header-left">
-    <h1>策略矩陣分析工具</h1>
+    <h1>策略矩陣分析工具 <a class="manual-link" href="manual.html" target="_blank" rel="noopener">📖 操作手冊</a></h1>
     <p class="subtitle">策略矩陣（Strategic Matrix）是由政治大學企管系名譽及講座教授司徒達賢老師所創的事業策略分析工具，主要用於將複雜的競爭策略轉化為直觀、結構化的視覺地圖。</p>
   </div>
 </div>
@@ -3935,15 +3937,10 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
     <div class="progress-label" id="progressLabel">準備中...</div>
   </div>
 </div>
-<div style="max-width: 800px; margin: 24px auto 0; padding: 0 16px;">
-  <h2 style="text-align:center; font-size: 1rem; color: var(--ink); margin-bottom: 12px;">📺 教學影片</h2>
-  <div style="position: relative; width: 100%; padding-top: 56.25%;">
-    <iframe src="https://www.youtube.com/embed/ltB_lDFJ2yo?si=PrA2eeeYmSJ142BT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px;"></iframe>
-  </div>
-</div>
 <div style="text-align:center; padding: 18px 0 12px; font-size: 0.72rem; color: #aaaaaa; letter-spacing: 0.03em;">
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發<br>
-  最後更新日期：2026/10/15
+  最後更新日期：2026/10/15<br>
+  <a class="manual-link" style="margin-left:0; font-size:0.8rem;" href="manual.html" target="_blank" rel="noopener">📖 操作手冊</a>
 </div>
 </body>
 </html>

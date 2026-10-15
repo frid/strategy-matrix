@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>策略矩陣分析工具 操作手冊</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ef;
+    --ink: #1a1a2e;
+    --ink-light: #6b6b8a;
+    --col-header: #7b6fa0;
+    --grid-line: #ddd8f0;
+    --row-desc-bg: #f0eaf8;
+    --shadow: 0 2px 12px rgba(100,80,160,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.8;
+    padding: 24px 16px 40px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  .back { display: inline-block; font-size: 0.9rem; color: var(--col-header); text-decoration: none; font-weight: 500; margin-bottom: 12px; }
+  .back:hover { text-decoration: underline; }
+  h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .lead { color: var(--ink-light); font-size: 0.95rem; margin-bottom: 20px; }
+
+  .panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+  }
+  .toc h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--col-header); margin-bottom: 6px; }
+  .toc ol { columns: 2; column-gap: 28px; padding-left: 1.6em; font-size: 0.95rem; }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--col-header); text-decoration: underline; }
+
+  section.panel { scroll-margin-top: 12px; }
+  h2.sec { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--grid-line); }
+  h3 { font-size: 1rem; font-weight: 700; color: var(--col-header); margin: 14px 0 4px; }
+  p, li { font-size: 0.95rem; }
+  p { margin: 6px 0; }
+  ul, ol.steps { margin: 6px 0 6px 1.4em; }
+  li { margin: 3px 0; }
+  .btn {
+    display: inline-block; background: var(--row-desc-bg); border: 1px solid var(--grid-line);
+    border-radius: 6px; padding: 0 7px; font-size: 0.88rem; font-weight: 500; white-space: nowrap; line-height: 1.6;
+  }
+  code { font-family: 'DM Mono', monospace; background: var(--row-desc-bg); border-radius: 4px; padding: 0 5px; font-size: 0.88rem; }
+  figure { margin: 12px 0; }
+  figure img { max-width: 100%; height: auto; display: block; border: 1px solid var(--grid-line); border-radius: 8px; background: white; }
+  figure.narrow img { max-width: min(420px, 100%); }
+  figcaption { font-size: 0.82rem; color: var(--ink-light); margin-top: 4px; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a82e; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: 0.92rem; }
+  .video { position: relative; width: 100%; padding-top: 56.25%; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 8px; }
+  table.faq { border-collapse: collapse; width: 100%; }
+  dl dt { font-weight: 700; margin-top: 12px; font-size: 0.95rem; }
+  dl dd { margin-left: 0; font-size: 0.95rem; }
+  .foot { text-align: center; font-size: 0.78rem; color: #aaa; margin-top: 24px; }
+
+  @media (max-width: 640px) {
+    body { padding: 16px 10px 32px; }
+    h1 { font-size: 1.5rem; }
+    .panel { padding: 14px 14px; }
+    .toc ol { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="index.html">← 回到策略矩陣工具</a>
+<h1>策略矩陣分析工具 操作手冊</h1>
+<p class="lead">本手冊示範如何用本工具畫出一張策略矩陣。範例使用虛構的醫材公司「見安醫材」；內文中的「按鈕名稱」與畫面上的文字完全相同，方便對照。</p>
+
+<nav class="panel toc">
+  <h2>目錄</h2>
+  <ol>
+    <li><a href="#video">教學影片</a></li>
+    <li><a href="#quick">快速開始</a></li>
+    <li><a href="#title">策略名稱與說明</a></li>
+    <li><a href="#vc">價值鏈編輯</a></li>
+    <li><a href="#template">載入範本</a></li>
+    <li><a href="#links">價值鏈連線</a></li>
+    <li><a href="#products">產品面板</a></li>
+    <li><a href="#expand">展開到策略矩陣</a></li>
+    <li><a href="#ideas">策略構想</a></li>
+    <li><a href="#arrows">畫箭頭、補充說明、排序、復原、清除</a></li>
+    <li><a href="#industry">產業矩陣切換與右鍵配色</a></li>
+    <li><a href="#pptx">匯出 PPTX</a></li>
+    <li><a href="#save">存檔／載入／重設</a></li>
+    <li><a href="#faq">常見問題</a></li>
+  </ol>
+</nav>
+
+<section class="panel" id="video">
+  <h2 class="sec">📺 教學影片</h2>
+  <p>想先看一遍整體操作，可以直接看影片。</p>
+  <div class="video">
+    <iframe src="https://www.youtube.com/embed/ltB_lDFJ2yo?si=PrA2eeeYmSJ142BT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+</section>
+
+<section class="panel" id="quick">
+  <h2 class="sec">1. 快速開始（五步完成一張策略矩陣）</h2>
+  <ol class="steps">
+    <li><b>填策略名稱與說明</b>：在頁面最上方的「策略名稱」輸入框打上名稱。</li>
+    <li><b>編輯價值鏈</b>：用「📋 載入範本…」選一個接近你產業的範本，再改名、增刪方塊；也可以從空白開始自己加。</li>
+    <li><b>按 <span class="btn">📐 展開到策略矩陣</span></b>：價值鏈的每個單元會變成矩陣的一欄，確認對話框後按「確定」。</li>
+    <li><b>設定策略構想</b>：在「策略構想」區改名、新增（最多 8 個），點選要畫的那一個。</li>
+    <li><b>畫箭頭</b>：在矩陣上點起點格（變黃）、再點終點格，就畫出一條箭頭；完成後可按 <span class="btn">📊 匯出 PPTX</span> 或 <span class="btn">💾 存檔</span>。</li>
+  </ol>
+  <figure>
+    <img src="manual/img/13-matrix.png" alt="完成的策略矩陣範例">
+    <figcaption>完成的策略矩陣：左側是價值鏈單元（欄），右側兩欄是產品，彩色箭頭是各個策略構想。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="title">
+  <h2 class="sec">2. 策略名稱與說明</h2>
+  <p>頁面最上方的「策略名稱與說明」區有兩個欄位：</p>
+  <ul>
+    <li><b>策略名稱</b>：會用在存檔檔名（<code>&lt;策略名稱&gt;_存檔.json</code>、<code>&lt;策略名稱&gt;_價值鏈.json</code>）與匯出的 PPTX 標題。</li>
+    <li><b>說明</b>：可以用格子代號寫成一段文字，例如「…為連鎖診所通路製造高階超音波設備(A24)…」。</li>
+  </ul>
+  <figure>
+    <img src="manual/img/01-header-title.png" alt="頁首與策略名稱與說明">
+    <figcaption>頁首標題旁有「📖 操作手冊」連結（就是本頁）；下方是策略名稱與說明。輸入後會自動暫存。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="vc">
+  <h2 class="sec">3. 價值鏈編輯</h2>
+  <p>價值鏈分成三個區：上方的<b>支援活動</b>、中間的<b>主要活動</b>、下方的<b>產品</b>。展開到矩陣時，這些單元會成為矩陣的欄位。</p>
+  <figure>
+    <img src="manual/img/02-value-chain.png" alt="價值鏈編輯區">
+    <figcaption>價值鏈編輯區（載入「醫療器材製造」範本後）。右側綠色大箭頭是「Margin／利潤」背景。</figcaption>
+  </figure>
+
+  <h3>新增與刪除</h3>
+  <ul>
+    <li>支援活動區最後的 <span class="btn">＋ 單元</span>：加一個支援活動（支援活動區只能放單元，不能放群組）。</li>
+    <li>主要活動區最後的 <span class="btn">＋ 單元</span>、<span class="btn">＋ 群組</span>：加一個單元或一個群組（群組是把相關的子項歸在同一大類下，如「研發」下有「產品設計」「打樣」）。</li>
+    <li>每個方塊上的 <span class="btn">＋同層</span>：在它旁邊加一個同層的新方塊；群組還有 <span class="btn">＋子項</span>，在群組內加子項。</li>
+    <li>方塊上的 <span class="btn">✕</span>：刪除。刪除有內容的群組會先跳出確認視窗。</li>
+  </ul>
+
+  <h3>改名</h3>
+  <p>直接點方塊上的名稱就能修改，按 Enter 或點別處即確定（名稱最多 20 字；過長會自動換行）。</p>
+
+  <h3>活動／資產</h3>
+  <p>每個單元右側有「活動」或「資產」標籤，點一下就切換。資產方塊以淡黃色顯示，代表這個單元是企業擁有的資源（如品牌）而非一個流程步驟。</p>
+  <figure class="narrow">
+    <img src="manual/img/04-vc-node-group.png" alt="群組方塊">
+    <figcaption>群組「研發」與它的兩個子項。</figcaption>
+  </figure>
+
+  <h3>拖曳排序</h3>
+  <ul>
+    <li>按住方塊拖到另一個方塊上：放在目標的前半就插到它前面，放在後半就插到它後面；畫面上會出現虛線空位預覽。</li>
+    <li>拖到群組的空白處＝放進該群組的最後面。</li>
+    <li>不能跨區（例如主要活動不能拖到支援活動）。</li>
+  </ul>
+
+  <h3>大箭頭背景</h3>
+  <p>價值鏈工具列右側的「大箭頭背景」勾選框，可顯示／隱藏右側「Margin／利潤」的大箭頭背景（只影響價值鏈的外觀）。</p>
+
+  <figure>
+    <img src="manual/img/03-vc-toolbar.png" alt="價值鏈工具列">
+    <figcaption>價值鏈工具列：連線模式、展開到策略矩陣、存／載價值鏈、載入範本、大箭頭背景。</figcaption>
+  </figure>
+  <div class="note">價值鏈的編輯<b>不能</b>用「↩ 復原」還原，請小心刪除；若擔心改壞，可先按 <span class="btn">💾 存價值鏈</span> 備份。</div>
+</section>
+
+<section class="panel" id="template">
+  <h2 class="sec">4. 載入範本</h2>
+  <p>價值鏈工具列的 <span class="btn">📋 載入範本…</span> 下拉選單，內建以下範本，選一個即可套用：</p>
+  <ul>
+    <li><b>生醫</b>：醫療器材製造、藥廠在台銷售、連鎖藥局、連鎖復健科診所、連鎖醫美診所、醫療設備代理</li>
+    <li><b>其他產業</b>：工業電腦、醫師網紅經紀、原物料製造、連鎖加盟</li>
+    <li><b>理論骨架</b>：通用基本價值鏈</li>
+  </ul>
+  <p>載入範本會<b>取代目前整條價值鏈（含產品）</b>，因此會先跳出確認視窗。載入後矩陣不會自動更新，要再按「📐 展開到策略矩陣」才會套用。範本只是起點，載入後可自由改名、增刪。</p>
+  <p>另外 <span class="btn">💾 存價值鏈</span> 會把目前價值鏈存成 <code>&lt;策略名稱&gt;_價值鏈.json</code>，<span class="btn">📂 載價值鏈</span> 可讀回，方便在不同專案間重複使用同一條價值鏈。</p>
+</section>
+
+<section class="panel" id="links">
+  <h2 class="sec">5. 價值鏈連線</h2>
+  <p>價值鏈連線用來標示兩個方塊之間的順序或關係（例如「產品設計 → 試產」）。</p>
+  <ol class="steps">
+    <li>按 <span class="btn">🔗 連線模式</span> 開啟（按鈕變成紫底白字，提示文字改變）。</li>
+    <li>點第一個方塊（起點，變成黃色）。</li>
+    <li>再點第二個方塊（終點），就建立一條連線。若再點同一個方塊則取消起點。</li>
+    <li>做完再按一次「🔗 連線模式」關閉，回到平常的編輯狀態。</li>
+  </ol>
+  <figure>
+    <img src="manual/img/05-vc-link-pending.png" alt="連線模式，起點變黃">
+    <figcaption>連線模式下，點了「市場分析」，它變成黃色，等待點選終點。</figcaption>
+  </figure>
+  <p>已建立的連線會畫成細箭頭，並列在價值鏈下方的「連線清單」，點 <span class="btn">✕</span> 可刪除。同一對方塊（相同方向）不能重複連線，重複時會跳出提示。</p>
+  <figure>
+    <img src="manual/img/06-vc-links.png" alt="已建立連線的價值鏈">
+    <figcaption>連線完成：價值鏈上出現細箭頭，下方有連線清單。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="products">
+  <h2 class="sec">6. 產品面板</h2>
+  <p>價值鏈下方的「產品」區，放的是這張矩陣要分析的產品（或產品線）；展開後會成為矩陣<b>右側的產品欄</b>。</p>
+  <ul>
+    <li><span class="btn">＋ 產品</span>：新增一個產品。</li>
+    <li>點名稱可改名；<span class="btn">✕</span> 刪除；可拖曳排序。</li>
+    <li>連線模式下，產品也能點選來建立連線。</li>
+  </ul>
+  <figure>
+    <img src="manual/img/07-vc-products.png" alt="產品面板與連線清單">
+    <figcaption>產品面板（上）與連線清單（下）。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="expand">
+  <h2 class="sec">7. 展開到策略矩陣</h2>
+  <p>按價值鏈工具列的 <span class="btn">📐 展開到策略矩陣</span>，會把價值鏈的所有單元依序變成矩陣的欄位（價值鏈至少要有 2 個單元，否則會提示無法展開）。</p>
+  <figure class="narrow">
+    <img src="manual/img/08-expand-dialog.png" alt="展開到策略矩陣對話框">
+    <figcaption>展開前的確認對話框。</figcaption>
+  </figure>
+  <h3>對話框內容</h3>
+  <ul>
+    <li><b>支援活動放：</b>選「最前面（預設）」或「主活動後面」，決定支援活動欄位排在矩陣的左側或接在主要活動之後。</li>
+    <li><b>欄位數：</b>顯示展開前 → 展開後的欄位數。</li>
+    <li><b>會被刪除的箭頭：</b>若已畫的箭頭指到價值鏈裡已不存在的欄位，那些箭頭會被刪除，這裡會列出來。</li>
+    <li><b>格子代號有變的：</b>欄位增減或換順序後，格子代號（如 A05）可能改變，箭頭會跟著搬到同名欄位。</li>
+  </ul>
+  <p>按「確定」套用，「取消」則什麼都不改。</p>
+  <figure class="narrow">
+    <img src="manual/img/09-expand-result.png" alt="展開完成">
+    <figcaption>展開完成的結果視窗；按「關閉」即可。</figcaption>
+  </figure>
+  <div class="note">展開可以用 <span class="btn">↩ 復原</span> 還原，所以可以放心嘗試。</div>
+</section>
+
+<section class="panel" id="ideas">
+  <h2 class="sec">8. 策略構想</h2>
+  <p>一張策略矩陣可以同時比較多個「策略構想」，每個構想用一種顏色的箭頭表示。</p>
+  <figure>
+    <img src="manual/img/10-competitors.png" alt="策略構想列">
+    <figcaption>策略構想列：目前選取的構想外框會加粗。</figcaption>
+  </figure>
+  <ul>
+    <li><b>選取：</b>點標籤的空白處，設為「目前策略」，之後畫的箭頭都屬於它。</li>
+    <li><b>改名：</b>點名稱直接修改（最多 14 字）。</li>
+    <li><b>刪除：</b>點 <span class="btn">✕</span>，至少要保留 1 個。</li>
+    <li><b>新增：</b>在「新增策略名稱」輸入框打上名稱後，按 <span class="btn">＋ 新增</span> 或 Enter，最多 8 個。</li>
+  </ul>
+</section>
+
+<section class="panel" id="arrows">
+  <h2 class="sec">9. 畫箭頭、補充說明、排序、復原、清除</h2>
+  <h3>畫箭頭</h3>
+  <p>確認操作列的 <span class="btn">✏️ 繪製箭頭</span> 是選取狀態，然後：</p>
+  <ol class="steps">
+    <li>點矩陣上的起點格，該格變成黃色。</li>
+    <li>再點終點格，就畫出一條帶箭頭的連線，顏色為目前策略的顏色。</li>
+    <li>若想取消起點，再點一次黃色的格子。</li>
+  </ol>
+  <p>要純粹瀏覽、避免誤點時，切換到 <span class="btn">👁 檢視模式</span>。</p>
+  <figure>
+    <img src="manual/img/14-draw-pending.png" alt="繪製中的起點格">
+    <figcaption>起點格 A18 變成黃色，狀態列提示「請點終點」。</figcaption>
+  </figure>
+
+  <h3>箭頭清單與補充說明</h3>
+  <p>「策略矩陣展開」區會列出所有箭頭，格式為「策略名：A04 → A05」。</p>
+  <ul>
+    <li><b>補充說明…</b>輸入框：寫下這條箭頭的意義，匯出 PPTX 時會放進該箭頭的步驟頁。</li>
+    <li><b>⠿ 拖曳</b>：調整順序，只能在同一個策略內排序（順序會影響 PPTX 步驟頁的先後）。</li>
+    <li><b>✕</b>：刪除這條箭頭。</li>
+  </ul>
+  <figure>
+    <img src="manual/img/11-arrow-list.png" alt="圖例與箭頭清單">
+    <figcaption>圖例（各策略的顏色）與已繪製的箭頭清單。</figcaption>
+  </figure>
+
+  <h3>操作列</h3>
+  <figure>
+    <img src="manual/img/12-action-bar.png" alt="操作列">
+    <figcaption>操作列：模式切換、策略矩陣切換、復原、清除、匯出、存檔、載入、重設。</figcaption>
+  </figure>
+  <ul>
+    <li><span class="btn">↩ 復原</span>：還原上一個動作，最多 80 步。可復原新增／刪除／排序箭頭、刪除策略、清除、展開到策略矩陣；<b>價值鏈的編輯不能復原</b>。</li>
+    <li><span class="btn">清除目前策略</span>：清掉目前選取策略的所有箭頭，<b>不會詢問</b>，但可以用「↩ 復原」救回。</li>
+    <li><span class="btn">🗑 清除全部</span>：清掉所有策略的所有箭頭，會先確認。</li>
+  </ul>
+</section>
+
+<section class="panel" id="industry">
+  <h2 class="sec">10. 產業矩陣切換與右鍵配色</h2>
+  <h3>產業矩陣切換</h3>
+  <p>操作列的 <span class="btn">策略矩陣</span> 按鈕按一下會切成「策略矩陣＋產業矩陣」，矩陣左側的列標籤改為產業矩陣用語：關聯、市場、垂直、規模、地理、KSF's（再按一次切回）。</p>
+  <figure>
+    <img src="manual/img/16-industry-matrix.png" alt="策略矩陣＋產業矩陣">
+    <figcaption>切換後左側列標籤變為「關聯／市場／垂直／規模／地理／KSF's」。</figcaption>
+  </figure>
+
+  <h3>右鍵配色</h3>
+  <p>在矩陣的格子或欄標題上按<b>右鍵</b>，會出現配色選單，共四種：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白。選一個即可套用。</p>
+  <figure>
+    <img src="manual/img/15-palette-menu.png" alt="右鍵配色選單">
+    <figcaption>在格子上按右鍵出現的配色選單。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="pptx">
+  <h2 class="sec">11. 匯出 PPTX</h2>
+  <p>按 <span class="btn">📊 匯出 PPTX</span>，工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
+  <ol class="steps">
+    <li>價值鏈頁。</li>
+    <li>每一條箭頭一張步驟頁（顯示該步驟的矩陣位置，並帶入你寫的「補充說明」）。</li>
+    <li>總覽頁。</li>
+  </ol>
+  <p>匯出過程會顯示進度視窗，完成後瀏覽器會下載檔案。想讓簡報更好講，建議先替每條箭頭寫好補充說明、排好順序。</p>
+</section>
+
+<section class="panel" id="save">
+  <h2 class="sec">12. 存檔／載入／重設</h2>
+  <ul>
+    <li><span class="btn">💾 存檔</span>：把整張策略矩陣（價值鏈、欄位、策略構想、箭頭、配色）存成 <code>&lt;策略名稱&gt;_存檔.json</code>。</li>
+    <li><span class="btn">📂 載入</span>：選擇之前存的 JSON 檔還原。</li>
+    <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態；會先確認，且無法復原。</li>
+  </ul>
+  <h3>瀏覽器自動存檔</h3>
+  <p>工具會在你操作時，自動把目前內容存在這台電腦的瀏覽器裡（localStorage），下次用同一個瀏覽器開啟網頁時會自動還原。但這只是「暫存」：換電腦、換瀏覽器、使用無痕視窗，或清除瀏覽器資料後，內容都會不見。</p>
+  <div class="note">重要的作品請務必按「💾 存檔」存成檔案，並自行保管。</div>
+</section>
+
+<section class="panel" id="faq">
+  <h2 class="sec">13. 常見問題</h2>
+  <dl>
+    <dt>Q：價值鏈改錯了，可以按「↩ 復原」嗎？</dt>
+    <dd>不行。「↩ 復原」只管矩陣這一側的動作（箭頭、策略、清除、展開）。價值鏈的編輯不能復原；建議大改前先按「💾 存價值鏈」備份。</dd>
+
+    <dt>Q：策略構想最多幾個？</dt>
+    <dd>最多 8 個，名稱最多 14 個字；至少要保留 1 個。</dd>
+
+    <dt>Q：可以復原幾步？</dt>
+    <dd>最多 80 步。</dd>
+
+    <dt>Q：我改了價值鏈，為什麼矩陣沒有跟著變？</dt>
+    <dd>價值鏈與矩陣是分開的，改完要再按「📐 展開到策略矩陣」才會更新。</dd>
+
+    <dt>Q：展開後有些箭頭不見了？</dt>
+    <dd>如果箭頭指向的欄位名稱在價值鏈裡已經不存在，展開時就會刪除那條箭頭（對話框會先列出）。不想要的話按「取消」，或展開後按「↩ 復原」。</dd>
+
+    <dt>Q：重新開啟網頁，我的資料不見了？</dt>
+    <dd>自動存檔只存在瀏覽器內。換瀏覽器／電腦、無痕模式、清除瀏覽器資料、或按了「🔄 重設」都會消失。重要資料請用「💾 存檔」另存檔案。</dd>
+
+    <dt>Q：載入範本後，矩陣為什麼沒變？</dt>
+    <dd>載入範本只換價值鏈；矩陣要按「📐 展開到策略矩陣」才會更新。</dd>
+
+    <dt>Q：手機或平板可以用嗎？</dt>
+    <dd>可以瀏覽，但畫箭頭、拖曳排序在電腦上比較順手，建議用電腦操作。</dd>
+  </dl>
+</section>
+
+<p class="foot"><a class="back" href="index.html">← 回到策略矩陣工具</a></p>
+</div>
+</body>
+</html>
