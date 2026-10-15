@@ -63,6 +63,8 @@ await sleep(2500);
 await ev(`window.confirm = () => true; window.alert = () => {}; localStorage.clear(); true`);
 
 // 頁面內的小幫手：依名稱找價值鏈節點、依欄名找欄位索引、建立連線
+// 截圖期間讓「專案」區不要 sticky，避免蓋住其他區塊（只在這個頁面暫時注入，不改 index.html）
+await ev(`(() => { const st = document.createElement('style'); st.textContent = '.project-panel { position: static !important; }'; document.head.appendChild(st); return true; })()`);
 await ev(`window.__byName = n => { let hit=null; const walk = l => l.forEach(x => { if (x.name === n && !hit) hit = x; if (x.children) walk(x.children); }); walk(valueChain.primary); walk(valueChain.support); walk(valueChain.products); return hit; };
  window.__colIdx = n => COLUMNS.indexOf(n);
  window.__L = (a,b) => { vcLinkMode = true; handleVcLinkClick(__byName(a).id); handleVcLinkClick(__byName(b).id); vcLinkMode = false; };
@@ -78,6 +80,8 @@ await ev(`valueChain.products[0].name = '高階超音波設備'; valueChain.prod
 const vcPanel = `document.getElementById('valueChainEditor').closest('.panel')`;
 // 01 頁首＋策略名稱與說明
 await shot('01-header-title', `[document.querySelector('.header-row'), document.getElementById('strategyTitle').closest('.panel')]`);
+// 01b 專案區塊
+await shot('01b-project-panel', `[document.querySelector('.project-panel').previousElementSibling, document.querySelector('.project-panel')]`);
 // 02 價值鏈整體（尚未連線）
 await shot('02-value-chain', `[${vcPanel}.previousElementSibling, ${vcPanel}]`);
 // 03 價值鏈工具列
@@ -124,10 +128,11 @@ await shot('13-matrix', `[document.querySelector('.matrix-wrapper'), document.qu
 await ev(`setMode('draw'); onCellClick('A', __colIdx('倉儲'), document.getElementById('cell-A-' + __colIdx('倉儲'))); true`);
 await shot('14-draw-pending', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
 await ev(`cancelPending(); true`);
-// 14 右鍵配色選單
-await ev(`(() => { const c = document.getElementById('cell-C-3').getBoundingClientRect(); openPaletteMenu(c.left + 10, c.top + 10); return true; })()`);
-await shot('15-palette-menu', `[document.getElementById('paletteMenu'), document.querySelector('.matrix-wrapper')]`);
-await ev(`document.getElementById('paletteMenu').classList.remove('open'); true`);
+// 14 換成「莫蘭迪柔和」配色（價值鏈＋矩陣），截完切回預設配色
+await ev(`applyPalette(COLOR_PALETTES.findIndex(p => p.name === '莫蘭迪柔和')); true`);
+await shot('15a-palette-morandi-vc', vcPanel);
+await shot('15b-palette-morandi-matrix', `document.querySelector('.matrix-wrapper')`);
+await ev(`applyPalette(0); true`);
 // 15 產業矩陣
 await ev(`if (!showIndustryLabels) toggleIndustryMatrix(); true`);
 await shot('16-industry-matrix', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);

@@ -88,6 +88,7 @@
     <li><a href="#video">教學影片</a></li>
     <li><a href="#quick">快速開始</a></li>
     <li><a href="#title">策略名稱與說明</a></li>
+    <li><a href="#project">專案（存檔、匯出、配色、重設）</a></li>
     <li><a href="#vc">價值鏈編輯</a></li>
     <li><a href="#template">載入範本</a></li>
     <li><a href="#links">價值鏈連線</a></li>
@@ -95,7 +96,7 @@
     <li><a href="#expand">展開到策略矩陣</a></li>
     <li><a href="#ideas">策略構想</a></li>
     <li><a href="#arrows">畫箭頭、補充說明、排序、復原、清除</a></li>
-    <li><a href="#industry">產業矩陣切換與右鍵配色</a></li>
+    <li><a href="#industry">產業矩陣切換與配色</a></li>
     <li><a href="#pptx">匯出 PPTX</a></li>
     <li><a href="#save">存檔／載入／重設</a></li>
     <li><a href="#faq">常見問題</a></li>
@@ -117,7 +118,7 @@
     <li><b>編輯價值鏈</b>：用「📋 載入範本…」選一個接近你產業的範本，再改名、增刪方塊；也可以從空白開始自己加。</li>
     <li><b>按 <span class="btn">📐 展開到策略矩陣</span></b>：價值鏈的每個單元會變成矩陣的一欄，確認對話框後按「確定」。</li>
     <li><b>設定策略構想</b>：在「策略構想」區改名、新增（最多 8 個），點選要畫的那一個。</li>
-    <li><b>畫箭頭</b>：在矩陣上點起點格（變黃）、再點終點格，就畫出一條箭頭；完成後可按 <span class="btn">📊 匯出 PPTX</span> 或 <span class="btn">💾 存檔</span>。</li>
+    <li><b>畫箭頭</b>：在矩陣上點起點格（變黃）、再點終點格，就畫出一條箭頭；完成後可到頁面上方的「專案」區按 <span class="btn">📊 匯出 PPTX</span> 或 <span class="btn">💾 存檔</span>。</li>
   </ol>
   <figure>
     <img src="manual/img/13-matrix.png" alt="完成的策略矩陣範例">
@@ -138,8 +139,24 @@
   </figure>
 </section>
 
+<section class="panel" id="project">
+  <h2 class="sec">3. 專案（存檔、匯出、配色、重設）</h2>
+  <p>「策略名稱與說明」下方的「專案」區，放的是整個專案層級的操作。這一區在頁面往下捲動時會<b>固定在視窗頂端</b>，隨時都能存檔或匯出。</p>
+  <figure>
+    <img src="manual/img/01b-project-panel.png" alt="專案區">
+    <figcaption>「專案」區：存檔、載入、匯出 PPTX、配色、重設。</figcaption>
+  </figure>
+  <ul>
+    <li><span class="btn">💾 存檔</span>：把整張策略矩陣存成 JSON 檔（詳見「存檔／載入／重設」）。</li>
+    <li><span class="btn">📂 載入</span>：讀回之前存的 JSON 檔。</li>
+    <li><span class="btn">📊 匯出 PPTX</span>：產生可編輯的 PowerPoint（詳見「匯出 PPTX」）。</li>
+    <li><span class="btn">🎨 配色</span>：下拉選單，切換價值鏈、策略矩陣與匯出 PPTX 的配色（詳見「產業矩陣切換與配色」）。</li>
+    <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態。</li>
+  </ul>
+</section>
+
 <section class="panel" id="vc">
-  <h2 class="sec">3. 價值鏈編輯</h2>
+  <h2 class="sec">4. 價值鏈編輯</h2>
   <p>價值鏈分成三個區：上方的<b>支援活動</b>、中間的<b>主要活動</b>、下方的<b>產品</b>。展開到矩陣時，這些單元會成為矩陣的欄位。</p>
   <figure>
     <img src="manual/img/02-value-chain.png" alt="價值鏈編輯區">
@@ -182,7 +199,7 @@
 </section>
 
 <section class="panel" id="template">
-  <h2 class="sec">4. 載入範本</h2>
+  <h2 class="sec">5. 載入範本</h2>
   <p>價值鏈工具列的 <span class="btn">📋 載入範本…</span> 下拉選單，內建以下範本，選一個即可套用：</p>
   <ul>
     <li><b>生醫</b>：醫療器材製造、藥廠在台銷售、連鎖藥局、連鎖復健科診所、連鎖醫美診所、醫療設備代理</li>
@@ -194,7 +211,7 @@
 </section>
 
 <section class="panel" id="links">
-  <h2 class="sec">5. 價值鏈連線</h2>
+  <h2 class="sec">6. 價值鏈連線</h2>
   <p>價值鏈連線用來標示兩個方塊之間的順序或關係（例如「產品設計 → 試產」）。</p>
   <ol class="steps">
     <li>按 <span class="btn">🔗 連線模式</span> 開啟（按鈕變成紫底白字，提示文字改變）。</li>
@@ -214,7 +231,7 @@
 </section>
 
 <section class="panel" id="products">
-  <h2 class="sec">6. 產品面板</h2>
+  <h2 class="sec">7. 產品面板</h2>
   <p>價值鏈下方的「產品」區，放的是這張矩陣要分析的產品（或產品線）；展開後會成為矩陣<b>右側的產品欄</b>。</p>
   <ul>
     <li><span class="btn">＋ 產品</span>：新增一個產品。</li>
@@ -228,7 +245,7 @@
 </section>
 
 <section class="panel" id="expand">
-  <h2 class="sec">7. 展開到策略矩陣</h2>
+  <h2 class="sec">8. 展開到策略矩陣</h2>
   <p>按價值鏈工具列的 <span class="btn">📐 展開到策略矩陣</span>，會把價值鏈的所有單元依序變成矩陣的欄位（價值鏈至少要有 2 個單元，否則會提示無法展開）。</p>
   <figure class="narrow">
     <img src="manual/img/08-expand-dialog.png" alt="展開到策略矩陣對話框">
@@ -250,7 +267,7 @@
 </section>
 
 <section class="panel" id="ideas">
-  <h2 class="sec">8. 策略構想</h2>
+  <h2 class="sec">9. 策略構想</h2>
   <p>一張策略矩陣可以同時比較多個「策略構想」，每個構想用一種顏色的箭頭表示。</p>
   <figure>
     <img src="manual/img/10-competitors.png" alt="策略構想列">
@@ -265,7 +282,7 @@
 </section>
 
 <section class="panel" id="arrows">
-  <h2 class="sec">9. 畫箭頭、補充說明、排序、復原、清除</h2>
+  <h2 class="sec">10. 畫箭頭、補充說明、排序、復原、清除</h2>
   <h3>畫箭頭</h3>
   <p>確認操作列的 <span class="btn">✏️ 繪製箭頭</span> 是選取狀態，然後：</p>
   <ol class="steps">
@@ -294,7 +311,7 @@
   <h3>操作列</h3>
   <figure>
     <img src="manual/img/12-action-bar.png" alt="操作列">
-    <figcaption>操作列：模式切換、策略矩陣切換、復原、清除、匯出、存檔、載入、重設。</figcaption>
+    <figcaption>操作列：模式切換、策略矩陣切換、復原、清除目前策略、清除全部（最右邊是目前狀態文字）。存檔、載入、匯出、重設已移到「專案」區。</figcaption>
   </figure>
   <ul>
     <li><span class="btn">↩ 復原</span>：還原上一個動作，最多 80 步。可復原新增／刪除／排序箭頭、刪除策略、清除、展開到策略矩陣；<b>價值鏈的編輯不能復原</b>。</li>
@@ -304,7 +321,7 @@
 </section>
 
 <section class="panel" id="industry">
-  <h2 class="sec">10. 產業矩陣切換與右鍵配色</h2>
+  <h2 class="sec">11. 產業矩陣切換與配色</h2>
   <h3>產業矩陣切換</h3>
   <p>操作列的 <span class="btn">策略矩陣</span> 按鈕按一下會切成「策略矩陣＋產業矩陣」，矩陣左側的列標籤改為產業矩陣用語：關聯、市場、垂直、規模、地理、KSF's（再按一次切回）。</p>
   <figure>
@@ -312,27 +329,37 @@
     <figcaption>切換後左側列標籤變為「關聯／市場／垂直／規模／地理／KSF's」。</figcaption>
   </figure>
 
-  <h3>右鍵配色</h3>
-  <p>在矩陣的格子或欄標題上按<b>右鍵</b>，會出現配色選單，共四種：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白。選一個即可套用。</p>
+  <h3>配色</h3>
+  <p>配色在頁面上方「專案」區的 <span class="btn">🎨 配色</span> 下拉選單，共六組：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白、莫蘭迪柔和、森林大地。選一個即可套用。</p>
+  <ul>
+    <li><b>換色範圍：</b>價值鏈、策略矩陣與匯出的 PPTX 會一起換色；策略構想（各條箭頭）的顏色不變。</li>
+    <li><b>顏色對應：</b>價值鏈主要活動群組內的子項，底色與字色和矩陣的細項欄一致；矩陣上屬於支援活動的欄位，表頭使用支援活動的顏色（預設為橘色系）。</li>
+    <li><b>會被記住：</b>你選的配色會記在瀏覽器裡，下次開啟仍是同一組，也會寫進「💾 存檔」的 JSON 檔。</li>
+  </ul>
   <figure>
-    <img src="manual/img/15-palette-menu.png" alt="右鍵配色選單">
-    <figcaption>在格子上按右鍵出現的配色選單。</figcaption>
+    <img src="manual/img/15a-palette-morandi-vc.png" alt="莫蘭迪柔和配色的價值鏈">
+    <figcaption>換成「莫蘭迪柔和」配色後的價值鏈。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/15b-palette-morandi-matrix.png" alt="莫蘭迪柔和配色的策略矩陣">
+    <figcaption>同一組配色下的策略矩陣；箭頭顏色維持不變。</figcaption>
   </figure>
 </section>
 
 <section class="panel" id="pptx">
-  <h2 class="sec">11. 匯出 PPTX</h2>
-  <p>按 <span class="btn">📊 匯出 PPTX</span>，工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
+  <h2 class="sec">12. 匯出 PPTX</h2>
+  <p>按「專案」區的 <span class="btn">📊 匯出 PPTX</span>，工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
   <ol class="steps">
     <li>價值鏈頁。</li>
     <li>每一條箭頭一張步驟頁（顯示該步驟的矩陣位置，並帶入你寫的「補充說明」）。</li>
     <li>總覽頁。</li>
   </ol>
-  <p>匯出過程會顯示進度視窗，完成後瀏覽器會下載檔案。想讓簡報更好講，建議先替每條箭頭寫好補充說明、排好順序。</p>
+  <p>匯出過程會顯示進度視窗，完成後瀏覽器會下載檔案；簡報會使用你目前選的配色。想讓簡報更好講，建議先替每條箭頭寫好補充說明、排好順序。</p>
 </section>
 
 <section class="panel" id="save">
-  <h2 class="sec">12. 存檔／載入／重設</h2>
+  <h2 class="sec">13. 存檔／載入／重設</h2>
+  <p>這三個按鈕都在頁面上方的「專案」區：</p>
   <ul>
     <li><span class="btn">💾 存檔</span>：把整張策略矩陣（價值鏈、欄位、策略構想、箭頭、配色）存成 <code>&lt;策略名稱&gt;_存檔.json</code>。</li>
     <li><span class="btn">📂 載入</span>：選擇之前存的 JSON 檔還原。</li>
@@ -344,7 +371,7 @@
 </section>
 
 <section class="panel" id="faq">
-  <h2 class="sec">13. 常見問題</h2>
+  <h2 class="sec">14. 常見問題</h2>
   <dl>
     <dt>Q：價值鏈改錯了，可以按「↩ 復原」嗎？</dt>
     <dd>不行。「↩ 復原」只管矩陣這一側的動作（箭頭、策略、清除、展開）。價值鏈的編輯不能復原；建議大改前先按「💾 存價值鏈」備份。</dd>
