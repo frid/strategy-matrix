@@ -774,6 +774,11 @@
   .arrow-item.drag-over { outline: 2px dashed var(--col-header); outline-offset: -2px; background: var(--cell-hover) !important; }
   /* ST-14b：箭頭的策略要素區（chip／建議提示／選擇面板） */
   .arrow-elems { flex-basis: 100%; padding-left: 36px; font-size: 0.70rem; color: var(--ink-light); }
+  .sentence-box { margin-top: 12px; border-top: 1px dashed var(--grid-line); padding-top: 8px; }
+  .sentence-box summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .sentence-list { margin: 8px 0 8px 20px; padding: 0; font-size: 13px; line-height: 1.7; }
+  .sentence-list li.empty { list-style: none; opacity: .6; }
+  .sentence-actions { display: flex; gap: 8px; }
   .arrow-elems-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
   .arrow-elems-tag { color: var(--ink-light); }
   .elem-chip { border: 1px solid var(--grid-line); border-radius: 10px; padding: 0 6px; color: var(--ink); background: white; white-space: nowrap; cursor: default; }
@@ -878,6 +883,15 @@
 <div class="panel" id="arrowListPanel">
   <div class="panel-title">已繪製的箭頭（點 ✕ 可刪除）</div>
   <div class="arrow-list" id="arrowList"></div>
+  <!-- ST-14c：策略句型（依箭頭自動產生） -->
+  <details class="sentence-box" id="sentenceBox">
+    <summary>📝 策略句型</summary>
+    <ol class="sentence-list" id="sentenceList"></ol>
+    <div class="sentence-actions">
+      <button type="button" class="btn-ghost" id="sentenceCopyBtn" onclick="copyStrategySentences()">📋 複製</button>
+      <button type="button" class="btn-ghost" onclick="fillStrategySentencesToDesc()">⬇ 填入說明</button>
+    </div>
+  </details>
 </div>
 
 <!-- Column editor (content swapped under 價值單元欄位管理)；ST-01d 起欄位改由價值鏈「展開到策略矩陣」產生，此區先隱藏（程式保留）-->
@@ -3109,6 +3123,7 @@ function renderArrowList() {
       noteInp.addEventListener('mousedown', e => e.stopPropagation());
       noteInp.addEventListener('input', () => {
         arrows[ci][ai].note = noteInp.value;
+        renderStrategySentences();
         saveState();
       });
 
@@ -3172,6 +3187,104 @@ function renderArrowList() {
     empty.textContent = '尚未繪製任何箭頭';
     list.appendChild(empty);
   }
+  renderStrategySentences();
+}
+
+// ── ST-14c：策略句型產生器 ────────────────────────────────────────────────
+// 格子預設文字：「製造的規模(D07)」；產品欄的 A 列用「特色」
+function cellDefaultText(cell) {
+  const row = ROWS.find(r => r.id === cell.row);
+  const colName = COLUMNS[cell.col] || `欄${cell.col + 1}`;
+  const isProduct = cell.col >= productSepIdx;
+  const rowName = row ? ((isProduct && row.id === 'A') ? '特色' : row.leftLabel) : cell.row;
+  return `${colName}的${rowName}`;
+}
+function sentenceCellKey(c) { return `${c.row}-${c.col}`; }
+// 起點描述：若別的箭頭終點是此格且有 note → 沿用該 note（鏈式）；否則用預設文字
+function sentenceFromText(cell, list) {
+  const k = sentenceCellKey(cell);
+  const hit = list.find(a => sentenceCellKey(a.to) === k && (a.note || '').trim());
+  return `${hit ? hit.note.trim() : cellDefaultText(cell)}(${cellCode(cell)})`;
+}
+function sentenceToText(group) {
+  const withNote = group.find(a => (a.note || '').trim());
+  const cell = group[0].to;
+  return `${withNote ? withNote.note.trim() : cellDefaultText(cell)}(${cellCode(cell)})`;
+}
+function sentenceElemsSuffix(group) {
+  const ids = [];
+  group.forEach(a => (a.elements || []).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
+  return ids.length ? `〔${ids.join('、')}〕` : '';
+}
+// 單支箭頭的句子（PPTX 步驟頁用；不含要素尾巴）
+function arrowSentence(arrow, ci) {
+  const list = arrows[ci] || [arrow];
+  return `因為 ${sentenceFromText(arrow.from, list)}，使 ${sentenceToText([arrow])}`;
+}
+// 一個策略構想的所有句子（匯流＋一層鏈式）
+function buildStrategySentences(ci) {
+  const list = (arrows[ci] || []);
+  if (!list.length) return [];
+  // 依終點分組（保持首次出現順序）
+  const groups = [];
+  const byKey = {};
+  list.forEach(a => {
+    const k = sentenceCellKey(a.to);
+    if (!byKey[k]) { byKey[k] = []; groups.push(byKey[k]); }
+    byKey[k].push(a);
+  });
+  // 鏈式：某組的終點 = 另一組「唯一的」起點 → 後者接在前者後面（只接一層，consumed 防循環）
+  const consumed = new Set();
+  const chainOf = new Map();
+  groups.forEach(g => {
+    if (consumed.has(g) || chainOf.has(g)) return;
+    const tk = sentenceCellKey(g[0].to);
+    const next = groups.find(h => h !== g && !consumed.has(h) && !chainOf.has(h)
+      && h.length === 1 && sentenceCellKey(h[0].from) === tk);
+    if (next) { chainOf.set(g, next); consumed.add(next); }
+  });
+  const out = [];
+  groups.forEach(g => {
+    if (consumed.has(g)) return;
+    const froms = g.map(a => sentenceFromText(a.from, list));
+    let s = `因為 ${froms.join(' 與 ')}，使 ${sentenceToText(g)}`;
+    let elemGroup = g;
+    const nx = chainOf.get(g);
+    if (nx) { s += `，進而使 ${sentenceToText(nx)}`; elemGroup = g.concat(nx); }
+    out.push(s + sentenceElemsSuffix(elemGroup));
+  });
+  return out;
+}
+
+function renderStrategySentences() {
+  const ol = document.getElementById('sentenceList');
+  if (!ol) return;
+  ol.innerHTML = '';
+  const ss = buildStrategySentences(activeIdx);
+  if (!ss.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = '（目前策略構想尚無箭頭）';
+    ol.appendChild(li);
+    return;
+  }
+  ss.forEach(t => { const li = document.createElement('li'); li.textContent = t + '。'; ol.appendChild(li); });
+}
+function strategySentencesText() { return buildStrategySentences(activeIdx).map(t => t + '。').join('\n'); }
+function copyStrategySentences() {
+  const txt = strategySentencesText();
+  if (!txt) return;
+  const btn = document.getElementById('sentenceCopyBtn');
+  const ok = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = '📋 複製'; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => alert('複製失敗，請手動選取'));
+  else alert('此瀏覽器不支援自動複製');
+}
+function fillStrategySentencesToDesc() {
+  const txt = strategySentencesText();
+  if (!txt) return;
+  const ta = document.getElementById('strategyDesc');
+  ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, '') + '\n' + txt : txt;
+  ta.dispatchEvent(new Event('input'));
 }
 
 // ── ST-14b：箭頭清單每筆的「要素」區（chip＋建議提示＋選擇面板）────────────────
@@ -4011,7 +4124,7 @@ async function exportPptx() {
       <p:txBody>
         <a:bodyPr anchor="t" wrap="square" lIns="0" rIns="0" tIns="${in2emu(0.08)}" bIns="0"><a:normAutofit/></a:bodyPr>
         <a:lstStyle/>
-        <a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-TW" sz="1600" dirty="0"><a:solidFill><a:srgbClr val="1a1a2e"/></a:solidFill></a:rPr><a:t>${escXml(text)}</a:t></a:r></a:p>
+        ${String(text).split('\n').map(line => `<a:p><a:pPr algn="l"/><a:r><a:rPr lang="zh-TW" sz="1600" dirty="0"><a:solidFill><a:srgbClr val="1a1a2e"/></a:solidFill></a:rPr><a:t>${escXml(line)}</a:t></a:r></a:p>`).join('')}
       </p:txBody>
     </p:sp>`;
 
@@ -4037,7 +4150,7 @@ async function exportPptx() {
     const slideNo = i + 1 + vcOffset;
 
     // 每一步驟顯示的是該箭頭自己的補充說明，而非整體策略說明（策略說明僅保留在最後總覽頁）
-    const stepNote   = (allSteps[i].arrow.note || '').trim();
+    const stepNote   = (allSteps[i].arrow.note || '').trim() || arrowSentence(allSteps[i].arrow, allSteps[i].ci);
     const compName   = competitors[allSteps[i].ci].name;
     const stepPrefix = `（Step ${i + 1} / ${N}）${compName}`;
     // ST-14b：箭頭有標策略要素 → 接在補充說明後面
@@ -4058,7 +4171,14 @@ async function exportPptx() {
   fill.style.width = '92%';
 
   const finalNo = N + 1 + vcOffset;
-  const finalDescText = document.getElementById('strategyDesc').value.trim();
+  let finalDescText = document.getElementById('strategyDesc').value.trim();
+  // ST-14c：總覽頁附策略句型（所有策略構想；最多 8 句）
+  const allSentences = competitors.flatMap((_, ci) => buildStrategySentences(ci).map(t => t + '。'));
+  if (allSentences.length) {
+    const shown = allSentences.slice(0, 8);
+    if (allSentences.length > 8) shown.push('…');
+    finalDescText += (finalDescText ? '\n' : '') + '策略句型：\n' + shown.join('\n');
+  }
   const finalBody = titleSp(titleText) + descSp(finalDescText)
     + buildMatrixTableXml(L, 10)
     + buildArrowShapesXml(L, allSteps, null, 20);
