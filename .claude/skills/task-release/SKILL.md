@@ -123,6 +123,16 @@ git log --oneline -1
 4. 在主 checkout：`git checkout main && git pull && git merge --no-ff dev && git tag -a vX.Y.Z -m "..." && git push origin main --tags`。
 5. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
 
+## 可改用 tools/release-task.sh
+
+步驟 0（預檢）、1（TODO 勾選）、2（頁尾日期）、4（stage 白名單＋commit）、5（push＋ls-remote）可用一支腳本做完：
+
+```
+tools/release-task.sh <代號> "<完成摘要>" [--no-footer] [--no-push]
+```
+
+步驟 3（decisions／pending-checks）要人判斷，仍須先手動寫好再跑腳本，腳本不碰它們的內容。
+
 ---
 
 ## 版本紀錄

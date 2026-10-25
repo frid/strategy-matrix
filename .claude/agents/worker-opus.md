@@ -42,3 +42,5 @@ model: opus
 自測：<腳本路徑、跑了什麼、結果；截圖路徑>
 超出計畫／需使用者本機確認：<條列或「無」>
 ```
+
+- 寫測試腳本時優先 `import { launch } from '../cdp-harness.mjs'`（`tools/cdp-harness.mjs`，開頁／載範例／stub 對話框／截圖／攔下載／收 console error），舊存檔 fixture 在 `tests/fixtures/`。
