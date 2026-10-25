@@ -542,6 +542,25 @@
   .btn-undo:disabled { opacity: 0.38; cursor: not-allowed; }
 
   .action-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  /* 短版策略矩陣（ST-03）：工具列核取方塊、表頭隱藏鈕、已隱藏欄 chip 列 */
+  .short-view-toggle {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; cursor: pointer;
+    padding: 5px 10px; background: white; border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow);
+  }
+  #matrixTable thead th.has-col-hide { position: relative; }
+  #matrixTable thead th .col-hide-btn {
+    position: absolute; top: 2px; right: 2px; writing-mode: horizontal-tb;
+    font-size: 0.7rem; line-height: 1; padding: 1px 3px; border-radius: 3px; cursor: pointer;
+    background: rgba(255,255,255,0.85); color: #b03030; font-weight: normal; opacity: 0.6;
+  }
+  #matrixTable thead th .col-hide-btn:hover { opacity: 1; background: #ffffff; }
+  .hidden-cols-bar { display: none; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.76rem; color: var(--ink-light); margin: 6px 0 10px; }
+  .hidden-cols-bar.show { display: flex; }
+  .hidden-col-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 10px; background: white; border: 1px solid var(--grid-line); color: var(--ink); }
+  .hidden-col-chip .chip-x { cursor: pointer; color: #b03030; opacity: 0.6; }
+  .hidden-col-chip .chip-x:hover { opacity: 1; }
+  .hidden-cols-bar .show-all-link { cursor: pointer; text-decoration: underline; color: var(--col-header); }
+  .arrow-hidden-note { font-size: 0.72em; color: var(--ink-light); opacity: 0.75; margin-left: 4px; }
   .status {
     font-size: 0.74rem; color: var(--ink-light);
     padding: 5px 11px; background: white; border-radius: 8px;
@@ -939,6 +958,8 @@
     <button class="mode-btn" id="modeViewBtn" onclick="setMode('view')">👁 檢視模式</button>
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
+  <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
+  <button class="btn-ghost" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
   <button class="btn-ghost" onclick="clearCompetitor()">清除目前策略</button>
   <button class="btn-ghost" onclick="clearAll()">🗑 清除全部</button>
@@ -952,6 +973,7 @@
     <table id="matrixTable"></table>
   </div>
 </div>
+<div class="hidden-cols-bar" id="hiddenColsBar"></div>
 
 <p class="instructions">
   ✏️ <b>繪製模式：</b>點第一格（起點，變黃色）→ 再點第二格（終點）→ 自動畫出帶箭頭的連線<br>
@@ -1000,6 +1022,30 @@ let COLUMN_ROLES = {};
 function getColumnRole(ci) {
   const name = COLUMNS[ci];
   return Object.prototype.hasOwnProperty.call(COLUMN_ROLES, name) ? vcRoleInfo(COLUMN_ROLES[name]) : null;
+}
+// 短版策略矩陣（ST-03）：只留跟產品特色有關的欄位。hiddenCols＝{ 欄名: true }，跟 COLUMN_ROLES 一樣以欄名對應，
+// 欄位搬移不錯位；shortView 關閉時表格照常全顯示，但 hiddenCols 保留。產品欄（productSepIdx 以右）永遠不隱藏
+let shortView = false;
+let hiddenCols = {};
+function isColHidden(ci) {
+  return shortView && ci < productSepIdx && ci < COLUMNS.length && hiddenCols[COLUMNS[ci]] === true;
+}
+// 目前可見欄的「原始欄索引」陣列；表格、畫線、PPTX 共用（格子代號仍用原始索引，不重新編號）
+function visibleColIdx() {
+  return COLUMNS.map((_, ci) => ci).filter(ci => !isColHidden(ci));
+}
+// 箭頭任一端落在隱藏欄 → 不畫（資料不刪）
+function arrowTouchesHiddenCol(arrow) {
+  return isColHidden(arrow.from.col) || isColHidden(arrow.to.col);
+}
+// 多層表頭：可見欄 fromCi 的群組（第 level 層）能否延伸到可見欄 toCi——中間被隱藏的欄也必須同群組、且不跨產品欄分隔線
+function colGroupContinues(paths, fromCi, toCi, level) {
+  const p = paths[fromCi];
+  for (let c = fromCi + 1; c <= toCi; c++) {
+    if (c === productSepIdx || paths[c].length <= level) return false;
+    for (let k = 0; k <= level; k++) if (paths[c][k] !== p[k]) return false;
+  }
+  return true;
 }
 function rolesToColumnRoleMap(names, roles) {
   const map = {};
@@ -1824,6 +1870,80 @@ function buildPaletteSelect() {
   sel.value = String(colorPaletteIdx);
 }
 
+// ── 短版策略矩陣（ST-03）──────────────────────────────────────────────────
+function syncShortViewControls() {
+  const chk = document.getElementById('shortViewChk');
+  if (chk) chk.checked = shortView;
+}
+function afterShortViewChange() {
+  cancelPending();
+  syncShortViewControls();
+  rebuildTable();
+  saveState();
+}
+function toggleShortView(on) {
+  pushHistory();
+  shortView = !!on;
+  afterShortViewChange();
+}
+function hideColumn(ci) {
+  if (ci >= productSepIdx || ci >= COLUMNS.length) return;  // 產品欄不可隱藏
+  pushHistory();
+  hiddenCols = { ...hiddenCols, [COLUMNS[ci]]: true };
+  afterShortViewChange();
+}
+function unhideColumn(name) {
+  pushHistory();
+  hiddenCols = { ...hiddenCols };
+  delete hiddenCols[name];
+  afterShortViewChange();
+}
+function showAllColumns() {
+  pushHistory();
+  hiddenCols = {};
+  afterShortViewChange();
+}
+// 所有策略構想都沒有箭頭起訖的投入欄 → 加入 hiddenCols，並開啟短版
+function autoHideUnusedCols() {
+  const used = new Set();
+  arrows.forEach(list => list.forEach(a => { used.add(a.from.col); used.add(a.to.col); }));
+  pushHistory();
+  hiddenCols = { ...hiddenCols };
+  COLUMNS.forEach((name, ci) => { if (ci < productSepIdx && !used.has(ci)) hiddenCols[name] = true; });
+  shortView = true;
+  afterShortViewChange();
+}
+// 表格下方「已隱藏 N 欄」chip 列（只在短版開啟且有隱藏欄時顯示）
+function renderHiddenColsBar() {
+  const bar = document.getElementById('hiddenColsBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  const names = [];
+  COLUMNS.forEach((name, ci) => { if (isColHidden(ci) && !names.includes(name)) names.push(name); });
+  bar.classList.toggle('show', names.length > 0);
+  if (!names.length) return;
+  const lead = document.createElement('span');
+  lead.textContent = `✂ 已隱藏 ${names.length} 欄：`;
+  bar.appendChild(lead);
+  names.forEach(name => {
+    const chip = document.createElement('span');
+    chip.className = 'hidden-col-chip';
+    chip.appendChild(document.createTextNode(name));
+    const x = document.createElement('span');
+    x.className = 'chip-x';
+    x.textContent = '×';
+    x.title = '恢復顯示此欄';
+    x.addEventListener('click', () => unhideColumn(name));
+    chip.appendChild(x);
+    bar.appendChild(chip);
+  });
+  const all = document.createElement('span');
+  all.className = 'show-all-link';
+  all.textContent = '全部顯示';
+  all.addEventListener('click', showAllColumns);
+  bar.appendChild(all);
+}
+
 function toggleIndustryMatrix() {
   showIndustryLabels = !showIndustryLabels;
   const btn = document.getElementById('industryToggleBtn');
@@ -1850,9 +1970,9 @@ let history = [];
 
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
-  const snap = withColumns
-    ? { arrows, cols: { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx } }
-    : arrows;
+  // ST-03：快照一律帶短版矩陣狀態（view）；舊格式（純陣列）undo 時照樣相容
+  const snap = { arrows, view: { shortView, hiddenCols } };
+  if (withColumns) snap.cols = { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx };
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
   document.getElementById('undoBtn').disabled = false;
@@ -1861,21 +1981,30 @@ function pushHistory(withColumns = false) {
 function undo() {
   if (!history.length) return;
   const snap = JSON.parse(history.pop());
-  let colsChanged = false;
+  let colsChanged = false, viewChanged = false;
   if (Array.isArray(snap)) {
     arrows = snap;
   } else {
     arrows = snap.arrows;
-    COLUMN_GROUPS = snap.cols.COLUMN_GROUPS;
-    COLUMN_PATHS  = snap.cols.COLUMN_PATHS;
-    COLUMN_ROLES  = snap.cols.COLUMN_ROLES || {};
-    productSepIdx = snap.cols.productSepIdx;
-    syncColumns();
-    colsChanged = true;
+    if (snap.cols) {
+      COLUMN_GROUPS = snap.cols.COLUMN_GROUPS;
+      COLUMN_PATHS  = snap.cols.COLUMN_PATHS;
+      COLUMN_ROLES  = snap.cols.COLUMN_ROLES || {};
+      productSepIdx = snap.cols.productSepIdx;
+      syncColumns();
+      colsChanged = true;
+    }
+    if (snap.view) {
+      const v = { shortView: !!snap.view.shortView, hiddenCols: snap.view.hiddenCols || {} };
+      viewChanged = JSON.stringify(v) !== JSON.stringify({ shortView, hiddenCols });
+      shortView  = v.shortView;
+      hiddenCols = v.hiddenCols;
+    }
   }
   if (!history.length) document.getElementById('undoBtn').disabled = true;
   cancelPending();
-  if (colsChanged) { renderColEditor(); buildTable(); }
+  if (colsChanged) renderColEditor();
+  if (colsChanged || viewChanged) { syncShortViewControls(); buildTable(); }
   drawLines();
   renderArrowList();
   updateStatus();
@@ -3159,21 +3288,17 @@ function buildTable() {
   // ── thead：X軸欄頭（黃底 #FFFF00、深藍字 #00008B、粗體）──
   // 多層表頭（ST-01d）：表頭列數＝最深群組路徑層數＋1。每一層中，相鄰且上層路徑相同的欄位合併成一格群組（colspan，橫排）；
   // 路徑較淺的欄位，其欄名從該層往下跨列（rowspan）補滿。沒有任何群組時維持原本單列結構（向下相容，畫面不變）
+  // 短版策略矩陣（ST-03）：只跑可見欄（原始索引）；群組 colspan 依實際顯示欄數重算，全隱藏的群組自然不出現
   const thead = document.createElement('thead');
   const paths = getColumnPaths();
-  const depth = paths.reduce((m, p) => Math.max(m, p.length), 0);
+  const vis   = visibleColIdx();
+  const depth = vis.reduce((m, ci) => Math.max(m, paths[ci].length), 0);
   const headRows = Array.from({ length: depth + 1 }, () => document.createElement('tr'));
   const markProduct = (th, ci) => {
     if (ci === productSepIdx) { th.classList.add('product-separator'); th.style.borderLeft = '3px solid #000000'; }
     if (ci >= productSepIdx) th.classList.add('product-col-header');
     else if (isSupportColumnPath(paths[ci])) th.classList.add('support-col-header'); // ST-12a：支援活動欄用支援色
   };
-  // 兩欄在第 level 層是否屬於同一個群組（路徑前 level+1 段都相同）
-  const sameGroup = (a, b, level) => {
-    for (let k = 0; k <= level; k++) if (a[k] !== b[k]) return false;
-    return true;
-  };
-
   // 左上角 corner 儲存格（淺青綠底，配合 Y 軸列標籤）
   const cornerL = document.createElement('th');
   cornerL.className = 'col-header-corner';
@@ -3182,20 +3307,21 @@ function buildTable() {
   headRows[0].appendChild(cornerL);
 
   for (let level = 0; level <= depth; level++) {
-    let ci = 0;
-    while (ci < COLUMNS.length) {
+    let k = 0;
+    while (k < vis.length) {
+      const ci = vis[k];
       const p = paths[ci];
       if (p.length > level) {
-        // 群組儲存格：橫排文字，跨越同群組的相鄰欄位（不跨越產品欄分隔線）
-        let end = ci + 1;
-        while (end < COLUMNS.length && end !== productSepIdx && paths[end].length > level && sameGroup(paths[end], p, level)) end++;
+        // 群組儲存格：橫排文字，跨越同群組的相鄰（可見）欄位（不跨越產品欄分隔線）
+        let end = k + 1;
+        while (end < vis.length && colGroupContinues(paths, ci, vis[end], level)) end++;
         const groupTh = document.createElement('th');
         groupTh.className = 'col-header-group';
         groupTh.textContent = p[level];
-        groupTh.colSpan = end - ci;
+        groupTh.colSpan = end - k;
         markProduct(groupTh, ci);
         headRows[level].appendChild(groupTh);
-        ci = end;
+        k = end;
       } else {
         if (p.length === level) {
           // 欄名儲存格：直排；沒有群組的欄位用 col-header（跟舊版單層一樣），有群組的用 col-header-leaf；往下跨列補滿
@@ -3210,11 +3336,21 @@ function buildTable() {
             tag.title = role.title;
             th.appendChild(tag);
           }
+          // ST-03：短版開啟時，投入欄表頭右上角加「✕」可隱藏該欄（產品欄沒有）
+          if (shortView && ci < productSepIdx) {
+            const hideBtn = document.createElement('span');
+            hideBtn.className = 'col-hide-btn';
+            hideBtn.textContent = '✕';
+            hideBtn.title = '在短版矩陣中隱藏此欄';
+            hideBtn.addEventListener('click', e => { e.stopPropagation(); hideColumn(ci); });
+            th.classList.add('has-col-hide');
+            th.appendChild(hideBtn);
+          }
           if (depth + 1 - level > 1) th.rowSpan = depth + 1 - level;
           markProduct(th, ci);
           headRows[level].appendChild(th);
         }
-        ci++;
+        k++;
       }
     }
   }
@@ -3241,8 +3377,8 @@ function buildTable() {
     tdL.textContent = showIndustryLabels ? row.leftLabel : row.rightLabel;
     tr.appendChild(tdL);
 
-    // 16 個資料儲存格（座標碼格式：A01、B12、F16）
-    COLUMNS.forEach((_, ci) => {
+    // 16 個資料儲存格（座標碼格式：A01、B12、F16）；短版只建可見欄，代號仍用原始欄索引
+    vis.forEach(ci => {
       const td = document.createElement('td');
       // cell 類別保留以相容 drawLines、setMode 等既有邏輯
       td.className = 'matrix-cell cell';
@@ -3274,6 +3410,7 @@ function buildTable() {
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
+  renderHiddenColsBar();
 }
 
 // ── Cell Click — free arrow drawing ───────────────────────────────────────
@@ -3317,6 +3454,7 @@ function cancelPending() {
 
 // ── Draw Lines + Arrows ───────────────────────────────────────────────────
 function getCellCenter(rowId, colIdx) {
+  if (isColHidden(colIdx)) return null;  // ST-03：隱藏欄沒有格子
   const td = document.getElementById(`cell-${rowId}-${colIdx}`);
   if (!td) return null;
   const container = document.getElementById('matrixContainer');
@@ -3358,6 +3496,7 @@ function drawLines() {
   arrows.forEach((compArrows, ci) => {
     const comp = competitors[ci];
     compArrows.forEach(arrow => {
+      if (arrowTouchesHiddenCol(arrow)) return;  // ST-03：任一端在隱藏欄 → 不畫（資料保留）
       const p1 = getCellCenter(arrow.from.row, arrow.from.col);
       const p2 = getCellCenter(arrow.to.row, arrow.to.col);
       if (!p1 || !p2) return;
@@ -3419,6 +3558,12 @@ function renderArrowList() {
       const fromLabel = `${arrow.from.row}${String(arrow.from.col+1).padStart(2,'0')}`;
       const toLabel   = `${arrow.to.row}${String(arrow.to.col+1).padStart(2,'0')}`;
       label.textContent = `${comp.name}：${fromLabel} → ${toLabel}`;
+      if (arrowTouchesHiddenCol(arrow)) {  // ST-03：短版中看不到這支箭頭
+        const hn = document.createElement('span');
+        hn.className = 'arrow-hidden-note';
+        hn.textContent = '（含隱藏欄）';
+        label.appendChild(hn);
+      }
 
       const noteInp = document.createElement('input');
       noteInp.type = 'text';
@@ -3900,6 +4045,7 @@ function drawLinesForFrame(allSteps, activeStep) {
     const color     = isActive ? competitors[step.ci].color : colorToLight(competitors[step.ci].color);
     const markerType = isActive ? 'full' : 'light';
 
+    if (arrowTouchesHiddenCol(step.arrow)) return;  // ST-03：含隱藏欄的箭頭不畫
     const p1 = getCellCenter(step.arrow.from.row, step.arrow.from.col);
     const p2 = getCellCenter(step.arrow.to.row,   step.arrow.to.col);
     if (!p1 || !p2) return;
@@ -4010,8 +4156,12 @@ function pptxTc(opts) {
 // 回傳 { tblX, tblY, tblW, tblH, labelW, colW, headH, bodyRowH, depth, paths, colXCenter(), rowYCenter() }
 function matrixLayout(areaX, areaY, areaW, areaH) {
   const paths  = getColumnPaths();
-  const depth  = paths.reduce((m, p) => Math.max(m, p.length), 0);
-  const nCols  = COLUMNS.length;
+  // ST-03：短版只排可見欄；vis＝可見欄原始索引，pos＝原始索引 → 第幾個可見欄
+  const vis    = visibleColIdx();
+  const pos    = {};
+  vis.forEach((ci, k) => { pos[ci] = k; });
+  const depth  = vis.reduce((m, ci) => Math.max(m, paths[ci].length), 0);
+  const nCols  = vis.length;
 
   const labelW = Math.max(in2emu(0.22), Math.min(in2emu(0.5), Math.round(areaW * 0.035)));
   const colW   = Math.floor((areaW - labelW * 2) / Math.max(nCols, 1));
@@ -4028,8 +4178,8 @@ function matrixLayout(areaX, areaY, areaW, areaH) {
   const tblY = areaY + Math.round((areaH - tblH) / 2);
 
   return {
-    tblX, tblY, tblW, tblH, labelW, colW, headH, groupRowH, leafRowH, bodyRowH, depth, paths, nCols,
-    colXCenter: ci => tblX + labelW + colW * ci + Math.round(colW / 2),
+    tblX, tblY, tblW, tblH, labelW, colW, headH, groupRowH, leafRowH, bodyRowH, depth, paths, nCols, vis, pos,
+    colXCenter: ci => tblX + labelW + colW * pos[ci] + Math.round(colW / 2),
     rowYCenter: ri => tblY + headH + bodyRowH * ri + Math.round(bodyRowH / 2),
   };
 }
@@ -4039,32 +4189,29 @@ function matrixLayout(areaX, areaY, areaW, areaH) {
 // 只是 DrawingML 用 gridSpan/hMerge 與 rowSpan/vMerge 表示延續格。
 function buildMatrixTableXml(L, shapeId) {
   const P = pptxPalette();
-  const { depth, paths, nCols } = L;
+  const { depth, paths, nCols, vis } = L;
 
-  // 先把每個表頭格算進 (level, ci) 網格，再逐列輸出，避免延續格漏掉
+  // 先把每個表頭格算進 (level, k) 網格（k＝第幾個可見欄，ST-03），再逐列輸出，避免延續格漏掉
   const grid = Array.from({ length: depth + 1 }, () => new Array(nCols).fill(null));
-  const sameGroup = (a, b, level) => {
-    for (let k = 0; k <= level; k++) if (a[k] !== b[k]) return false;
-    return true;
-  };
   for (let level = 0; level <= depth; level++) {
-    let ci = 0;
-    while (ci < nCols) {
+    let k = 0;
+    while (k < nCols) {
+      const ci = vis[k];
       const p = paths[ci];
       if (p.length > level) {
-        let end = ci + 1;
-        while (end < nCols && end !== productSepIdx && paths[end].length > level && sameGroup(paths[end], p, level)) end++;
-        grid[level][ci] = { text: p[level], gridSpan: end - ci, isGroup: true, ci };
-        for (let k = ci + 1; k < end; k++) grid[level][k] = { hMerge: true, ci: k };
-        ci = end;
+        let end = k + 1;
+        while (end < nCols && colGroupContinues(paths, ci, vis[end], level)) end++;
+        grid[level][k] = { text: p[level], gridSpan: end - k, isGroup: true, ci };
+        for (let j = k + 1; j < end; j++) grid[level][j] = { hMerge: true, ci: vis[j] };
+        k = end;
       } else {
         if (p.length === level) {
           const rs = depth + 1 - level;
           const role = getColumnRole(ci);  // ST-14i：特殊價值單元標記，同畫面表頭
-          grid[level][ci] = { text: COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
-          for (let l = level + 1; l <= depth; l++) grid[l][ci] = { vMerge: true, ci };
+          grid[level][k] = { text: COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
+          for (let l = level + 1; l <= depth; l++) grid[l][k] = { vMerge: true, ci };
         }
-        ci++;
+        k++;
       }
     }
   }
@@ -4076,8 +4223,9 @@ function buildMatrixTableXml(L, shapeId) {
     if (level === 0) tcs += pptxTc({ rowSpan: depth + 1, fill: P.cornerBg, color: P.cornerText });
     else             tcs += pptxTc({ vMerge: true, fill: P.cornerBg, color: P.cornerText });
 
-    for (let ci = 0; ci < nCols; ci++) {
-      const g = grid[level][ci];
+    for (let k = 0; k < nCols; k++) {
+      const ci = vis[k];
+      const g = grid[level][k];
       const isProd = ci >= productSepIdx;
       const isSup  = !isProd && isSupportColumnPath(paths[ci]); // ST-12a：支援活動欄用支援色
       const isGrp  = !!(g && g.isGroup);
@@ -4105,7 +4253,7 @@ function buildMatrixTableXml(L, shapeId) {
   // 資料列：左右列標籤 + 每格座標碼（藍色粗體底線，per 規範）
   const bodyTrs = ROWS.map(row => {
     let tcs = pptxTc({ text: showIndustryLabels ? row.leftLabel : row.rightLabel, bold: true, sz: 1000, fill: P.rowLabelBg, color: P.rowLabelText });
-    COLUMNS.forEach((_, ci) => {
+    vis.forEach(ci => {
       tcs += pptxTc({
         text: `${row.id}${String(ci + 1).padStart(2, '0')}`,
         bold: true, underline: true, sz: 1100, color: P.codeText,
@@ -4118,7 +4266,7 @@ function buildMatrixTableXml(L, shapeId) {
   }).join('');
 
   const gridCols = `<a:gridCol w="${L.labelW}"/>`
-    + COLUMNS.map(() => `<a:gridCol w="${L.colW}"/>`).join('')
+    + vis.map(() => `<a:gridCol w="${L.colW}"/>`).join('')
     + `<a:gridCol w="${L.labelW}"/>`;
 
   return `
@@ -4168,7 +4316,7 @@ function buildArrowShapesXml(L, allSteps, activeStep, startId) {
     const ri1 = ROWS.findIndex(r => r.id === step.arrow.from.row);
     const ri2 = ROWS.findIndex(r => r.id === step.arrow.to.row);
     if (ri1 < 0 || ri2 < 0) return;
-    if (step.arrow.from.col >= L.nCols || step.arrow.to.col >= L.nCols) return;
+    if (L.pos[step.arrow.from.col] === undefined || L.pos[step.arrow.to.col] === undefined) return;  // 欄不存在或已隱藏（ST-03）
 
     const p1 = { x: L.colXCenter(step.arrow.from.col), y: L.rowYCenter(ri1) };
     const p2 = { x: L.colXCenter(step.arrow.to.col),   y: L.rowYCenter(ri2) };
@@ -4340,7 +4488,9 @@ async function exportPptx() {
   await new Promise(r => setTimeout(r, 30));
 
   const zip = new JSZip();
-  const N   = allSteps.length;
+  // ST-03：短版開啟時，含隱藏欄的箭頭整步跳過（總覽頁也不畫）；句型照舊
+  const pptSteps = allSteps.filter(s => !arrowTouchesHiddenCol(s.arrow));
+  const N   = pptSteps.length;
 
   // EMU helpers (1 inch = 914400 EMU, slide = 9144000 x 5143500)
   const W = 9144000, H = 5143500; // 10" x 5.625"
@@ -4459,17 +4609,17 @@ async function exportPptx() {
     const slideNo = i + 1 + vcOffset;
 
     // 每一步驟顯示的是該箭頭自己的補充說明，而非整體策略說明（策略說明僅保留在最後總覽頁）
-    const stepNote   = (allSteps[i].arrow.note || '').trim() || arrowSentence(allSteps[i].arrow, allSteps[i].ci);
-    const compName   = competitors[allSteps[i].ci].name;
+    const stepNote   = (pptSteps[i].arrow.note || '').trim() || arrowSentence(pptSteps[i].arrow, pptSteps[i].ci);
+    const compName   = competitors[pptSteps[i].ci].name;
     const stepPrefix = `（Step ${i + 1} / ${N}）${compName}`;
     // ST-14b：箭頭有標策略要素 → 接在補充說明後面
-    const stepElems  = (allSteps[i].arrow.elements || []).map(elementLabel).join('、');
+    const stepElems  = (pptSteps[i].arrow.elements || []).map(elementLabel).join('、');
     const stepText   = stepNote + (stepElems ? `〔要素：${stepElems}〕` : '');
     const descLine   = stepText ? stepPrefix + '　' + stepText : stepPrefix;
 
     const body = titleSp(titleText) + descSp(descLine)
       + buildMatrixTableXml(L, 10)
-      + buildArrowShapesXml(L, allSteps, i, 20);
+      + buildArrowShapesXml(L, pptSteps, i, 20);
 
     zip.folder('ppt/slides').file(`slide${slideNo}.xml`, slideShell(body));
     zip.folder('ppt/slides/_rels').file(`slide${slideNo}.xml.rels`, slideRelsXml);
@@ -4490,7 +4640,7 @@ async function exportPptx() {
   }
   const finalBody = titleSp(titleText) + descSp(finalDescText)
     + buildMatrixTableXml(L, 10)
-    + buildArrowShapesXml(L, allSteps, null, 20);
+    + buildArrowShapesXml(L, pptSteps, null, 20);
 
   zip.folder('ppt/slides').file(`slide${finalNo}.xml`, slideShell(finalBody));
   zip.folder('ppt/slides/_rels').file(`slide${finalNo}.xml.rels`, slideRelsXml);
@@ -4560,6 +4710,8 @@ function saveState() {
       COLUMN_GROUPS: JSON.parse(JSON.stringify(COLUMN_GROUPS)),
       COLUMN_PATHS:  JSON.parse(JSON.stringify(getColumnPaths())),
       COLUMN_ROLES:  JSON.parse(JSON.stringify(COLUMN_ROLES)),
+      shortView,
+      hiddenCols:    JSON.parse(JSON.stringify(hiddenCols)),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
@@ -4603,6 +4755,12 @@ function loadState() {
       Object.keys(state.COLUMN_ROLES).forEach(name => {
         if (vcRoleInfo(state.COLUMN_ROLES[name])) COLUMN_ROLES[name] = state.COLUMN_ROLES[name];
       });
+    }
+    // 短版策略矩陣（ST-03）：舊存檔沒有 → 關閉、無隱藏欄
+    shortView = state.shortView === true;
+    hiddenCols = {};
+    if (state.hiddenCols && typeof state.hiddenCols === 'object' && !Array.isArray(state.hiddenCols)) {
+      Object.keys(state.hiddenCols).forEach(name => { if (state.hiddenCols[name] === true) hiddenCols[name] = true; });
     }
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
@@ -4774,6 +4932,7 @@ buildPaletteSelect();
 buildExampleSelect();
 applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
+syncShortViewControls();
 window.addEventListener('resize', drawLines);
 window.addEventListener('resize', drawVcLinks);
 renderColEditor();
