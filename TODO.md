@@ -10,6 +10,7 @@
 - [x] ST-16 操作手冊與 README 補 ST-03 短版矩陣、ST-14a 策略點面板、ST-14i 單元角色、ST-14f 策略模組等新功能（含截圖）（完成 2026-10-25：manual.html 擴為 26 章、新增 9 節與 10 張截圖、目錄編號與內文對齊；README 補流程導引與策略分析小節、角色、走線、範例內容、PPTX 新頁）
 - [x] ST-17 範例專案補策略點描述（cellNotes）：網路書店 A 公司、晶圓代工 T 公司各填 6–8 格（含 C 列 ○✕◐、F 列優勢基礎），讓面板、進度與 PPTX 策略點描述頁有內容 [S 352–368]（完成 2026-10-25：書店 8 格、T 公司 7 格，loadExampleProject 載入 cellNotes）
 - [ ] ST-18 PPTX 價值鏈頁沒畫「主要活動 → 產品」的連線（rectById 只登記主要活動方塊；ST-15 驗證時發現）
+- [ ] ST-19 代理流程工具鏈：tools/cdp-harness.mjs（開頁、載範例、stub 對話框、截元素、攔 Blob、收 console error）、tests/fixtures/ 舊版 strategyMatrix_v4 存檔、tools/release-task.sh 收尾腳本；讓 verifier 不必每次重寫測試腳本（2026-10-25 流程回顧）
 - [x] ST-07 修正：欄位管理「＋ 細項」把新欄插在群組中間，但沒重算箭頭位置（後面群組的箭頭會錯一欄），也沒更新 productSepIdx、沒 pushHistory（ST-04 時發現，index.html 約 1657 行）（完成 2026-10-25）
   - 備註（2026-10-25）：修的是已隱藏的舊欄位編輯器（renderColEditor），可降優先度
 - [x] ST-14 依《策略管理新論》Ch8／Ch9 補齊策略矩陣分析的完整引導（描述 → 驗證 → 執行）（全部子項完成 2026-10-25）；規劃依據與頁碼見 doc/reference/策略管理新論-Ch8Ch9-八步流程與功能差距.md
