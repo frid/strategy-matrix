@@ -6,7 +6,7 @@ description: >-
   當 task-next 走到收尾、或使用者說「收尾」「commit」「/task-release」時使用。
   不會自動合併——使用者說「merge」（或授權批次模式的「沒問題就 merge」）才併入 dev、說「release」才上 main。
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Task Release — 任務收尾
@@ -37,6 +37,7 @@ git diff --stat
 - 完成項在行尾加 `（完成 YYYY-MM-DD：<一句做了什麼、關鍵決定、摘要檔路徑>）`。
 - 父項還沒全做完：只勾完成的子項，父項維持 `[~]`；全部子項完成才勾父項。
 - 做的過程中（含 verifier 發現的）新待辦 → 照 TODO.md「# 規則」編號後加進去。
+- **日常收尾只勾不搬**：完成項留在原功能區塊；搬到 `## Complete` 由 release 統一處理（見下方「Release 到 main」步驟 3）。
 
 ---
 
@@ -119,9 +120,14 @@ git log --oneline -1
 0. 在 dev 工作目錄執行 `tools/release-check.sh`，以 exit code 判定（印 PASS 才能繼續）。FAIL 一律停下回報，不以 AI 讀截圖或主觀判讀代替。
 1. `doc/pending-checks.md` 還有未勾項目 → 列給使用者，由使用者決定是否仍 release。
 2. 確認版號：使用者指定，或提議上一個 tag 的 patch +1（`git tag --sort=-v:refname | head -1`；沒有 tag 時提議 v1.0.0）。
-3. `git log --oneline main..dev` 給使用者看要上線的內容。
-4. 在主 checkout：`git checkout main && git pull && git merge --no-ff dev && git tag -a vX.Y.Z -m "..." && git push origin main --tags`。
-5. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
+3. **TODO.md 完成項歸檔**（在 dev 工作目錄，版號確定後做）：
+   - 把各功能區塊中頂層 `[x]` 的項目（含其縮排子項與備註）剪下，依原順序貼到 `## Complete` 區**頂端**（最新 release 在最上面）；每個搬動的頂層項目行尾補 `（release vX.Y.Z）`。
+   - 父項仍為 `[ ]`／`[~]`、或還有未完成子項的整組**不搬**。
+   - 改檔用 python 或 Edit；改完前後比對 `[x]` 行數一致，確認沒漏沒重複。
+   - commit 到 dev：`release vX.Y.Z：TODO.md 完成項歸檔到 Complete`（加 Co-Authored-By），push dev。
+4. `git log --oneline main..dev` 給使用者看要上線的內容。
+5. 在主 checkout：`git checkout main && git pull && git merge --no-ff dev && git tag -a vX.Y.Z -m "..." && git push origin main --tags`。
+6. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
 
 ---
 
@@ -129,6 +135,7 @@ git log --oneline -1
 
 | 版號 | 日期 | 變更 |
 |---|---|---|
+| 1.4.0 | 2026-10-25 | release 步驟 3：TODO.md 已完成項目搬到 `## Complete` 並標 release 版號；日常收尾只勾不搬 |
 | 1.3.0 | 2026-10-25 | 加 decisions.md／pending-checks.md 更新；批次模式 merge 步驟與鎖檔處理；一波結束寫 dev-log、建議 release；release 前檢查 pending-checks；納入 tools/selftest |
 | 1.2.0 | 2026-10-25 | release 前加本機自動測試閘門 tools/release-check.sh |
 | 1.1.0 | 2026-10-25 | 三層分支：merge→dev、release→main＋tag |
