@@ -28,3 +28,7 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 
 ### 文件
 - [ ] ST-14m／16 本機開 manual.html，點目錄各節確認捲動與圖片；tools/capture-manual.mjs 能重新跑出全部截圖。
+
+## 2026-10-25 ST-18
+- [ ] ST-18 用 PowerPoint 開書店範例 PPTX：slide1 的「產品」列與方塊文字色、客服→中文書籍三段連接器是否連續不斷。
+- [ ] ST-18 載入「仲介型經營流程」範本匯出：列數多、unitH 被壓縮後方塊文字是否仍清楚。

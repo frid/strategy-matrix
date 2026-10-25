@@ -1738,11 +1738,11 @@ const EXAMPLE_PROJECTS = [
     valueChain: {
       primary: [
         vcAsset('出版社關係'), vcAct('選書企劃'), vcAct('採購'), vcAct('資訊系統'), vcAct('網站平台'),
-        vcAsset('顧客資料庫'), vcAct('倉儲'), vcAct('訂單處理'), vcAct('物流運輸'), vcAsset('品牌'), vcAct('客服'),
+        vcAsset('顧客資料庫'), vcAct('倉儲'), vcAct('訂單處理'), vcAct('物流運輸'), vcAsset('品牌'), vcAct('客服', 'bk_cs'),
       ],
       support: [],
-      products: ['中文書籍', '專業書籍', '影音商品'].map(n => vcAct(n)),
-      links: [],
+      products: [vcAct('中文書籍', 'bk_p1'), vcAct('專業書籍', 'bk_p2'), vcAct('影音商品', 'bk_p3')],
+      links: [{ id: 'bk_l1', from: 'bk_cs', to: 'bk_p1' }],  // ST-18：示範「主要活動 → 產品」連線
     },
     // ST-14h：第三個構想＝潛在競爭者（示範），依 S 372 的競爭局面改寫：大型連鎖書店開網站，挾資訊投資、規模與採購談判力；非書上原圖
     competitors: [{ name: '現行策略', color: COLORS[0], kind: 'current' }, { name: '未來方向', color: COLORS[1], kind: 'future' },
@@ -6277,6 +6277,7 @@ function pptxPalette() {
     prodHeadBg:  pptxHex(vars['--mx-product-header-bg'], 'D98C8C'),
     prodHeadText:pptxHex(vars['--mx-product-header-text'], '4A0000'),
     prodCellBg:  pptxHex(vars['--mx-product-cell-bg'], 'F6DCDC'),
+    vcProductText: pptxHex(vars['--ink'], '1A1A2E'),  // ST-18：價值鏈產品方塊文字（畫面端沿用 --ink）
     codeText:    pptxHex(vars['--mx-code-text'], '0000FF'),
     // 價值鏈（ST-12）：漸層取主色 *-bg；fallback＝原本寫死的預設色
     vcPrimaryBg:  pptxHex(vars['--vc-primary-bg'], '1F7AC4'),
@@ -6535,8 +6536,10 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
 
   // 每一欄需要幾個「單元高」：群組＝標題 + 子項數；單元＝1
   const colRows = primary.map(n => (n.type === 'group' ? 1 + n.children.length : 1));
-  const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1]));
-  const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1);
+  const products = valueChain.products.filter(n => n.type === 'unit');  // ST-18：產品列（一列，等寬橫排）
+  const prodGapH = in2emu(0.14);               // 主要活動與產品列之間留較寬的通道，連線橫走用
+  const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1])) + (products.length ? 1 : 0);
+  const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1) - (products.length ? prodGapH : 0);
   const unitH  = Math.max(in2emu(0.2), Math.min(in2emu(0.42), Math.floor(availH / Math.max(totalRows, 1))));
 
   // 一個方塊
@@ -6591,12 +6594,14 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
   const childH = Math.round(unitH * 0.78);
   const pad    = in2emu(0.04);
 
+  let primaryBottom = primaryTop;
   primary.forEach((n, i) => {
     const x = contentX + (colW + gap) * i;
     if (n.type === 'group') {
       const kids   = n.children.filter(c => c.type === 'unit' || c.type === 'group');
       const groupH = pad * 2 + unitH + kids.length * (childH + pad);
       xml += box(n, x, primaryTop, colW, groupH, boxPrst, P.vcPrimaryBg, P.vcPrimaryText, true, 1000);
+      primaryBottom = Math.max(primaryBottom, primaryTop + groupH);
       let ky = primaryTop + pad + unitH;
       kids.forEach(k => {
         const kFill = k.unitKind === 'asset' ? P.vcAssetBg : P.vcChildBg;
@@ -6608,8 +6613,22 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
       const fill = n.unitKind === 'asset' ? P.vcAssetBg : P.vcPrimaryBg;
       const txt  = n.unitKind === 'asset' ? P.vcAssetText : P.vcPrimaryText;
       xml += box(n, x, primaryTop, colW, unitH, boxPrst, fill, txt, true, 1000);
+      primaryBottom = Math.max(primaryBottom, primaryTop + unitH);
     }
   });
+
+  // ── 產品列（ST-18）：主要活動區底部；左側「產品」標籤，右側產品等寬橫排，讓「→ 產品」的連線有終點 ──
+  if (products.length) {
+    const prodTop = primaryBottom + prodGapH;
+    const pN = products.length;
+    const pW = Math.floor((contentW - gap * (pN - 1)) / pN);
+    xml += textLabel('產品', areaX, prodTop, labelW, unitH, 800, '8A8AA0', true, 'ctr', 'eaVert');
+    products.forEach((n, i) => {
+      const isAsset = n.unitKind === 'asset';
+      xml += box(n, contentX + (pW + gap) * i, prodTop, pW, unitH, 'roundRect',
+        isAsset ? P.vcAssetBg : P.prodCellBg, isAsset ? P.vcAssetText : P.vcProductText, true, 1000);
+    });
+  }
 
   // ── 右側 Margin／利潤 綠色大箭頭（隨「大箭頭背景」開關顯示，純裝飾）──
   if (arrowBg) {
