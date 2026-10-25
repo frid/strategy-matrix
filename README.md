@@ -108,11 +108,18 @@ strategy-matrix/
 ├── manual.html         # 操作手冊（頁面由 index.html 連結）
 ├── manual/img/         # 操作手冊用的截圖
 ├── tools/
-│   └── capture-manual.mjs  # 重新拍攝操作手冊截圖的腳本
+│   ├── capture-manual.mjs  # 重新拍攝操作手冊截圖的腳本
+│   └── release-check.sh    # release 前本機測試（Playwright 冒煙測試）
 ├── doc/reference/      # 參考資料整理（講義重點、流程摘要、Ch8/Ch9 八步流程等）
 ├── TODO.md             # 待辦事項與進度
 └── README.md           # 說明文件
 ```
+
+---
+
+## 🧪 本機測試
+
+release 前在 repo 根目錄執行 `tools/release-check.sh`（第一次會自動 `npm install` 並安裝 Playwright Chromium）。內容：載入 `index.html` 檢查無 JS 錯誤、關鍵元素與 CDN 函式庫、逐一載入範例專案，並對內嵌 JS 做 `node --check`。印出 `RELEASE CHECK: PASS` 且 exit code 為 0 才可 release。不使用 GitHub Actions。
 
 ---
 
