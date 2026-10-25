@@ -4,10 +4,14 @@
 
 ## Git 規則
 
-- 主分支是 `main`（不是 `master`）。
-- 修改一律在新的 branch / worktree 上做，不要直接改 `main`。
-- **使用者明確說「merge」才可以合併回 `main`。** 在那之前只能 commit / push 分支。
-- `main` 一更新就會自動部署到 GitHub Pages，所以合併前要先讓使用者確認。
+三層分支：`worktree／feature` → `dev` → `main`。
+
+- `main`：正式版，一更新就自動部署到 GitHub Pages。**只在 release 時**從 `dev` 合併過來，並打版號 tag（`vX.Y.Z`）。
+- `dev`：開發整合分支。worktree 做完、驗證過的任務先合併到這裡。
+- 修改一律在新的 worktree／feature branch 上做（從 `dev` 分出），不要直接改 `dev` 或 `main`。
+- **使用者說「merge」→ 合併到 `dev`**（worktree branch → dev，合併後可刪該 branch）。
+- **使用者說「release」→ 從 `dev` 合併到 `main` 並打 tag**；版號由使用者指定，沒指定就提議一個（patch +1）再確認。
+- 沒聽到上面兩個字之前，只能 commit / push 分支。
 
 ## 參考資料
 
