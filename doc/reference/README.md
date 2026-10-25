@@ -5,6 +5,7 @@
 - 原始教材（PDF／PPTX／錄音逐字稿）放在 **課程資料夾**，不進 git。
 - 要引用時先在這裡登記來源，再把重點摘要成同目錄的 `*.md`，內文標頁碼：`[S 頁碼]` 指《策略管理新論》、`[P3 頁碼]` 指講義 3（依此類推 `[P1]`～`[P4]`）、`[M0917 頁碼]` 指上課備忘（M＋月日）。
 - `TODO.md` 的任務只指向摘要 `.md`，不直接指向 PDF。
+- 教科書 PDF 是掃描檔，`Read` 讀不到文字：先 `gs -sDEVICE=png16m -r110 -dFirstPage=<n> -dLastPage=<m> -o "$CLAUDE_JOB_DIR/tmp/<前綴>-%02d.png" <pdf>` 轉圖再 Read。頁碼對照（2026-10-25 核對）：**Ch8 PDF 第 n 頁＝S(267+n)；Ch9 PDF 第 n 頁＝S(341+n)**，引用前仍以頁面上印的頁號為準。
 - Claude 要找資料：先讀這份索引 → 本機路徑直接開 PDF；本機沒有的（例如老師分享雲端的 `.lnk` 捷徑）改用 Google Drive 連接器搜 `title contains '關鍵字'`。
 
 ## 位置
