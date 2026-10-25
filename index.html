@@ -6224,6 +6224,7 @@ function pptxLightHex(hex) {
 }
 
 // 單一表格儲存格。opts: { text, bold, sz, color, fill, gridSpan, rowSpan, hMerge, vMerge, vert, thickLeft, underline }
+// ST-14l：另可給 paras（[{ text, bold, color, sz }]，多段文字，蓋過 text）、algn（預設 ctr）、anchor（預設 ctr）；不給時輸出與原本相同
 function pptxTc(opts) {
   const o = opts || {};
   const attrs =
@@ -6235,11 +6236,21 @@ function pptxTc(opts) {
   const run = text
     ? `<a:r><a:rPr lang="zh-TW" sz="${o.sz || 1000}" b="${o.bold ? 1 : 0}"${o.underline ? ' u="sng"' : ''} dirty="0"><a:solidFill><a:srgbClr val="${o.color || '000000'}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(text)}</a:t></a:r>`
     : `<a:endParaRPr lang="zh-TW" sz="${o.sz || 1000}"/>`;
+  const algn = o.algn || 'ctr', anchor = o.anchor || 'ctr';
+  const parasXml = Array.isArray(o.paras) && o.paras.length
+    ? o.paras.map(q => {
+        const t = String(q.text || '').trim();
+        const sz = q.sz || o.sz || 1000;
+        return `<a:p><a:pPr algn="${algn}"/>` + (t
+          ? `<a:r><a:rPr lang="zh-TW" sz="${sz}" b="${q.bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${q.color || o.color || '000000'}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(t)}</a:t></a:r>`
+          : `<a:endParaRPr lang="zh-TW" sz="${sz}"/>`) + '</a:p>';
+      }).join('')
+    : `<a:p><a:pPr algn="${algn}"/>${run}</a:p>`;
   // 細黑框；產品欄分隔線（productSepIdx）左邊加粗，對應畫面上的 3px 粗線
   const thin = `<a:solidFill><a:srgbClr val="000000"/></a:solidFill>`;
   const lnL = `<a:lnL w="${o.thickLeft ? 28575 : 6350}" cap="flat">${thin}</a:lnL>`;
-  return `<a:tc${attrs}><a:txBody><a:bodyPr${o.vert ? ` vert="${o.vert}"` : ''} anchor="ctr" lIns="18000" rIns="18000" tIns="18000" bIns="18000"><a:normAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="ctr"/>${run}</a:p></a:txBody>`
-    + `<a:tcPr anchor="ctr"${o.vert ? ` vert="${o.vert}"` : ''}>${lnL}<a:lnR w="6350" cap="flat">${thin}</a:lnR><a:lnT w="6350" cap="flat">${thin}</a:lnT><a:lnB w="6350" cap="flat">${thin}</a:lnB>`
+  return `<a:tc${attrs}><a:txBody><a:bodyPr${o.vert ? ` vert="${o.vert}"` : ''} anchor="${anchor}" lIns="18000" rIns="18000" tIns="18000" bIns="18000"><a:normAutofit/></a:bodyPr><a:lstStyle/>${parasXml}</a:txBody>`
+    + `<a:tcPr anchor="${anchor}"${o.vert ? ` vert="${o.vert}"` : ''}>${lnL}<a:lnR w="6350" cap="flat">${thin}</a:lnR><a:lnT w="6350" cap="flat">${thin}</a:lnT><a:lnB w="6350" cap="flat">${thin}</a:lnB>`
     + `<a:solidFill><a:srgbClr val="${o.fill || 'FFFFFF'}"/></a:solidFill></a:tcPr></a:tc>`;
 }
 
@@ -6375,7 +6386,8 @@ function buildMatrixTableXml(L, shapeId) {
 }
 
 // ── 直線連接器（箭頭）：給定兩點，產生一支帶箭頭頭的 p:cxnSp ──────────────
-function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu, arrow = true) {
+// ST-14l：dash＝true 時加 <a:prstDash val="dash"/>（虛線；對陣點頁的競爭者箭頭）
+function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu, arrow = true, dash = false) {
   const x = Math.min(p1.x, p2.x), y = Math.min(p1.y, p2.y);
   const cx = Math.abs(p2.x - p1.x), cy = Math.abs(p2.y - p1.y);
   const flipH = p2.x < p1.x ? ' flipH="1"' : '';
@@ -6386,7 +6398,7 @@ function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu, arrow = true) 
         <p:spPr>
           <a:xfrm${flipH}${flipV}><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>
           <a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom>
-          <a:ln w="${widthEmu}" cap="flat"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill>${arrow ? '<a:tailEnd type="triangle" w="lg" len="lg"/>' : ''}</a:ln>
+          <a:ln w="${widthEmu}" cap="flat"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill>${dash ? '<a:prstDash val="dash"/>' : ''}${arrow ? '<a:tailEnd type="triangle" w="lg" len="lg"/>' : ''}</a:ln>
         </p:spPr>
       </p:cxnSp>`;
 }
@@ -6547,6 +6559,300 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
   });
 
   return xml;
+}
+
+// ══ ST-14l：PPTX 分析頁（策略點描述／模組／前提 SWOT／對陣點／行動計畫／前提控制）══════════════
+// 都放在總覽頁之後、只匯出目前策略構想（activeIdx）；某類沒資料就跳過，匯出後提示「未匯出：…」
+const PPTX_SLIDE_W = 9144000, PPTX_SLIDE_H = 5143500;  // 同 exportPptx 的 W/H（10" × 5.625"）
+const PPTX_FONT = '<a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/>';
+
+// 分析頁共用版面：標題列、內容起點、頁尾說明列
+function pptxPageLayout() {
+  const W = PPTX_SLIDE_W, H = PPTX_SLIDE_H, pad = in2emu(0.28);
+  const titleH = in2emu(0.55);
+  return { W, H, pad, titleH, top: pad + titleH + in2emu(0.06), footH: in2emu(0.32), contentW: W - pad * 2, bottom: H - pad };
+}
+
+// 文字框；paras＝[{ text, bold, sz, color }]；opts: { algn（預設 l）, anchor（預設 t）, sz, color }
+function pptxTextBoxXml(id, name, x, y, w, h, paras, opts) {
+  const o = opts || {};
+  const algn = o.algn || 'l';
+  const ps = (paras || []).map(q => {
+    const t = String(q.text ?? '');
+    const sz = q.sz || o.sz || 1200;
+    return `<a:p><a:pPr algn="${algn}"/>` + (t
+      ? `<a:r><a:rPr lang="zh-TW" sz="${sz}" b="${q.bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${q.color || o.color || '1A1A2E'}"/></a:solidFill>${PPTX_FONT}</a:rPr><a:t>${escXml(t)}</a:t></a:r>`
+      : `<a:endParaRPr lang="zh-TW" sz="${sz}"/>`) + '</a:p>';
+  }).join('');
+  return `
+    <p:sp>
+      <p:nvSpPr><p:cNvPr id="${id}" name="${escXml(name)}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
+      <p:txBody><a:bodyPr anchor="${o.anchor || 't'}" wrap="square" lIns="0" rIns="0" tIns="0" bIns="0"><a:normAutofit/></a:bodyPr><a:lstStyle/>${ps || '<a:p><a:endParaRPr lang="zh-TW"/></a:p>'}</p:txBody>
+    </p:sp>`;
+}
+
+// 頁面標題（置中粗體）＋右上角小字「策略構想：{名稱}〔本／未／競〕」
+function pptxPageHeaderXml(title, tag) {
+  const G = pptxPageLayout();
+  const tagW = in2emu(3.6);
+  return pptxTextBoxXml(2, 'title', G.pad, G.pad, G.contentW, G.titleH, [{ text: title, bold: true, sz: 2400, color: '000000' }], { algn: 'ctr', anchor: 'ctr' })
+    + (tag ? pptxTextBoxXml(4, 'tag', G.W - G.pad - tagW, in2emu(0.06), tagW, in2emu(0.24), [{ text: tag, sz: 900, color: '6B6B80' }], { algn: 'r' }) : '');
+}
+function pptxCompTag(ci) {
+  const c = competitors[ci];
+  return c ? `策略構想：${c.name}〔${STRATEGY_KIND_MAP[compKind(ci)].short}〕` : '';
+}
+function pptxClip(s, n) {
+  const a = Array.from(String(s || '').trim());
+  return a.length > n ? a.slice(0, n).join('') + '…' : a.join('');
+}
+function pptxChunk(list, n) {
+  const out = [];
+  for (let i = 0; i < list.length; i += n) out.push(list.slice(i, i + n));
+  return out;
+}
+function pptxPagedTitle(base, k, total) { return total > 1 ? `${base} (${k + 1}/${total})` : base; }
+
+// 原生表格框；colWs＝各欄寬（EMU），trs＝[{ h, cells: [pptxTc(...) 字串…] }]
+function pptxTableFrameXml(id, name, x, y, colWs, trs) {
+  const w = colWs.reduce((a, b) => a + b, 0), h = trs.reduce((a, r) => a + r.h, 0);
+  return `
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="${id}" name="${escXml(name)}"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl>
+            <a:tblPr firstRow="1" bandRow="0"/>
+            <a:tblGrid>${colWs.map(c => `<a:gridCol w="${c}"/>`).join('')}</a:tblGrid>
+            ${trs.map(r => `<a:tr h="${r.h}">${r.cells.join('')}</a:tr>`).join('')}
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>`;
+}
+// 表頭＋資料列 → trs。rows＝[[cell…]]，cell 可為字串或 pptxTc 的 opts 物件；opts: { sz, headH, rowH, algns }
+function pptxDataTableTrs(headers, rows, opts) {
+  const o = opts || {};
+  const P = pptxPalette();
+  const sz = o.sz || 900;
+  const head = { h: o.headH || in2emu(0.3), cells: headers.map(t => pptxTc({ text: t, bold: true, sz, fill: P.groupBg, color: P.groupText })) };
+  const body = rows.map(r => ({ h: o.rowH || in2emu(0.3), cells: r.map((c, k) => {
+    const base = { sz, algn: (o.algns && o.algns[k]) || 'l' };
+    return pptxTc(c && typeof c === 'object' ? { ...base, ...c } : { ...base, text: String(c ?? '') });
+  }) }));
+  return [head, ...body];
+}
+// 欄寬比例 → EMU
+function pptxColWidths(totalW, weights) {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  return weights.map(w => Math.floor(totalW * w / sum));
+}
+
+// 「標題＋表格」頁（回傳 shape tree 內容，由 exportPptx 的 slideShell 包起來）
+// opts: { tag, weights, footer（字串或字串陣列，放頁尾）, sz, headH, rowH, algns }
+function buildTableSlideXml(title, headers, rows, opts) {
+  const o = opts || {};
+  const G = pptxPageLayout();
+  const colWs = pptxColWidths(G.contentW, o.weights || headers.map(() => 1));
+  const footer = o.footer
+    ? pptxTextBoxXml(5, 'footer', G.pad, G.bottom - G.footH, G.contentW, G.footH, [].concat(o.footer).map(t => ({ text: t, sz: 1000 })), { anchor: 'b' })
+    : '';
+  return pptxPageHeaderXml(title, o.tag) + pptxTableFrameXml(10, title, G.pad, G.top, colWs, pptxDataTableTrs(headers, rows, o)) + footer;
+}
+
+// 依 styleOf(step, idx) → { color, width, dash } | null 畫箭頭（幾何同 buildArrowShapesXml；後畫的在上層）
+function buildStyledArrowsXml(L, steps, styleOf, startId) {
+  let id = startId;
+  let xml = '';
+  steps.forEach((step, idx) => {
+    const st = styleOf(step, idx);
+    if (!st) return;
+    const ri1 = ROWS.findIndex(r => r.id === step.arrow.from.row);
+    const ri2 = ROWS.findIndex(r => r.id === step.arrow.to.row);
+    if (ri1 < 0 || ri2 < 0) return;
+    if (L.pos[step.arrow.from.col] === undefined || L.pos[step.arrow.to.col] === undefined) return;  // 欄不存在或已隱藏（ST-03）
+    const p1 = { x: L.colXCenter(step.arrow.from.col), y: L.rowYCenter(ri1) };
+    const p2 = { x: L.colXCenter(step.arrow.to.col),   y: L.rowYCenter(ri2) };
+    if (p1.x === p2.x && p1.y === p2.y) return;
+    xml += pptxConnector(id++, `箭頭 ${idx + 1}`, p1, p2, st.color, st.width, true, !!st.dash);
+  });
+  return xml;
+}
+
+// 1. 策略點描述頁：可見欄 × A–F 有描述的格子，每頁 12 列
+function pptxCellNoteSlides(ci) {
+  const P = pptxPalette();
+  const rows = [];
+  ROWS.forEach(row => visibleColIdx().forEach(col => {
+    const n = getCellNote(col, row.id);
+    if (!cellNoteHasContent(n)) return;
+    let extra = '';
+    if (row.id === 'C' && n.vi) { const v = VI_OPTIONS.find(x => x.k === n.vi); extra = v ? `${v.sym} ${v.label}` : ''; }
+    if (row.id === 'F' && n.bases.length) extra = n.bases.join('、');
+    rows.push([{ text: cellCode({ row: row.id, col }), bold: true, color: P.codeText }, `${COLUMNS[col]} × ${row.label}`, pptxClip(n.text, 80), extra]);
+  }));
+  if (!rows.length) return { bodies: [], skip: '策略點描述頁（無描述）' };
+  const pages = pptxChunk(rows, 12);
+  return { bodies: pages.map((pg, k) => buildTableSlideXml(pptxPagedTitle('策略點描述', k, pages.length),
+    ['代號', '欄 × 列', '描述', 'C 列 ○✕◐／F 列優勢基礎'], pg,
+    { tag: pptxCompTag(ci), weights: [0.7, 2.2, 5, 1.8], algns: ['ctr', 'l', 'l', 'ctr'], rowH: in2emu(0.28), sz: 900 })) };
+}
+
+// 2. 模組頁：每個模組一張；左半矩陣（模組成員原色加粗、其他箭頭淡色細線）、右半模組名／說明／句型
+function pptxModuleSlides(ci) {
+  const mods = modules[ci] || [];
+  if (!mods.length) return { bodies: [], skip: '模組頁（無模組）' };
+  const G = pptxPageLayout();
+  const all = arrows[ci] || [];
+  const list = all.filter(a => !arrowTouchesHiddenCol(a));
+  const leftW = Math.round(G.contentW * 0.58);
+  const L = matrixLayout(G.pad, G.top, leftW, G.bottom - G.top);
+  const color = pptxHex(competitors[ci].color, '000000'), light = pptxLightHex(competitors[ci].color);
+  const rx = G.pad + leftW + in2emu(0.2), rw = G.W - G.pad - rx;
+  return { bodies: mods.map(m => {
+    const inM = a => m.arrowIds.includes(a.id);
+    const steps = list.filter(a => !inM(a)).concat(list.filter(inM)).map(arrow => ({ ci, arrow }));  // 成員最後畫（在上層）
+    const sub = all.filter(inM);
+    const sents = sub.length ? sentencesForArrows(sub, all).map(sentenceLine) : [];
+    const shown = sents.slice(0, 8);
+    if (sents.length > 8) shown.push('…');
+    const paras = [{ text: m.name, bold: true, sz: 1600, color: '000000' }];
+    String(m.note || '').trim().split('\n').filter(t => t.trim()).forEach(t => paras.push({ text: t, sz: 1100 }));
+    paras.push({ text: sub.length ? `成員箭頭 ${sub.length} 條：${sub.map(actionArrowCode).join('、')}` : '（尚未圈選箭頭）', sz: 1000, color: '6B6B80' });
+    if (shown.length) {
+      paras.push({ text: '' }, { text: '策略句型', bold: true, sz: 1100 });
+      shown.forEach(t => paras.push({ text: t, sz: 1000 }));
+    }
+    return pptxPageHeaderXml(`策略模組：${m.name}`, pptxCompTag(ci))
+      + buildMatrixTableXml(L, 10)
+      + buildStyledArrowsXml(L, steps, s => inM(s.arrow) ? { color, width: 57150 } : { color: light, width: 19050 }, 20)
+      + pptxTextBoxXml(6, '模組說明', rx, G.top, rw, G.bottom - G.top, paras);
+  }) };
+}
+
+// 3. 前提／SWOT 頁：2×2 四象限＋統計列＋待驗證／因果認知小表
+function pptxSwotSlides(ci) {
+  const d = collectPremiseSwot(ci);
+  if (!d.total) return { bodies: [], skip: '前提／SWOT 頁（無前提）' };
+  const G = pptxPageLayout();
+  const MAXQ = 6, MAXS = 5;
+  const QUAD_FILL = { S: 'E2F0D9', W: 'FBE5D6', O: 'DDEBF7', T: 'FCE4EC' };
+  const quadCell = q => {
+    const items = d[q.k];
+    const paras = [{ text: `${q.label}（${q.from}）`, bold: true, sz: 1000 }];
+    items.slice(0, MAXQ).forEach(it => paras.push({ text: `• ${pptxClip(it.text, 40)}（${it.code}）`, sz: 900 }));
+    if (items.length > MAXQ) paras.push({ text: `…另 ${items.length - MAXQ} 項`, sz: 900, color: '6B6B80' });
+    if (!items.length) paras.push({ text: '（無）', sz: 900, color: '9A9AAA' });
+    return pptxTc({ paras, algn: 'l', anchor: 't', fill: QUAD_FILL[q.k] });
+  };
+  const side = [...d.unsure.map(it => ['待驗證', it]), ...d.causal.map(it => ['因果認知', it])];
+  const quadH = side.length ? in2emu(1.05) : in2emu(1.6);
+  const half = Math.floor(G.contentW / 2);
+  const quadTrs = [
+    { h: quadH, cells: [quadCell(SWOT_QUADS[0]), quadCell(SWOT_QUADS[1])] },
+    { h: quadH, cells: [quadCell(SWOT_QUADS[2]), quadCell(SWOT_QUADS[3])] },
+  ];
+  let xml = pptxPageHeaderXml('策略前提與 SWOT', pptxCompTag(ci))
+    + pptxTableFrameXml(10, 'SWOT', G.pad, G.top, [half, half], quadTrs);
+  const statY = G.top + quadH * 2 + in2emu(0.06);
+  const statH = in2emu(0.26);
+  xml += pptxTextBoxXml(5, '前提統計', G.pad, statY, G.contentW, statH, [{
+    text: `前提 ${d.total} 項：成立 ${d.ok}｜待驗證 ${d.unsureN}｜不成立 ${d.no}　（S ${d.S.length}・W ${d.W.length}・O ${d.O.length}・T ${d.T.length}；待驗證 ${d.unsure.length}・因果認知 ${d.causal.length}）`,
+    sz: 1000 }], { anchor: 'ctr' });
+  if (side.length) {
+    const status = k => (PREMISE_STATUS.find(s => s.k === k) || {}).label || '';
+    const rows = side.slice(0, MAXS).map(([cat, it]) => [cat, PREMISE_TYPE_MAP[it.type].label, pptxClip(it.text, 50), status(it.status), it.code]);
+    if (side.length > MAXS) rows.push(['…', '', `另 ${side.length - MAXS} 項未列出`, '', '']);
+    xml += pptxTableFrameXml(11, '待驗證與因果認知前提', G.pad, statY + statH + in2emu(0.04), pptxColWidths(G.contentW, [1, 1.2, 5, 0.8, 1.4]),
+      pptxDataTableTrs(['分類', '前提類型', '前提', '成立度', '來源箭頭'], rows, { sz: 800, headH: in2emu(0.24), rowH: in2emu(0.24), algns: ['ctr', 'ctr', 'l', 'ctr', 'ctr'] }));
+  }
+  return { bodies: [xml] };
+}
+
+// 4. 對陣點頁：矩陣疊圖（本公司構想實線、競爭者構想虛線）＋對陣點表（每頁 10 列）
+function pptxClashSlides() {
+  if (!hasRivalStrategy()) return { bodies: [], skip: '對陣點頁（無競爭者構想）' };
+  const points = collectClashPoints();
+  if (!points.length) return { bodies: [], skip: '對陣點頁（無對陣點）' };
+  const G = pptxPageLayout();
+  const leftW = Math.round(G.contentW * 0.55);
+  const L = matrixLayout(G.pad, G.top, leftW, G.bottom - G.top);
+  const isRival = ci => compKind(ci) === 'rival';
+  const steps = [];
+  [false, true].forEach(rv => arrows.forEach((list, ci) => {
+    if (!competitors[ci] || isRival(ci) !== rv) return;
+    (list || []).filter(a => !arrowTouchesHiddenCol(a)).forEach(arrow => steps.push({ ci, arrow }));
+  }));
+  const arrowsXml = buildStyledArrowsXml(L, steps, s => ({ color: pptxHex(competitors[s.ci].color, '000000'), width: 38100, dash: isRival(s.ci) }), 20);
+  const involved = new Set(points.flatMap(p => [...p.ours, ...p.rivals].map(x => x.ci)));
+  const tag = '策略構想：' + competitors.map((c, ci) => involved.has(ci) ? `${c.name}〔${STRATEGY_KIND_MAP[compKind(ci)].short}〕` : null).filter(Boolean).join('、');
+  const st = clashStats(points);
+  const P = pptxPalette();
+  const rx = G.pad + leftW + in2emu(0.15), rw = G.W - G.pad - rx;
+  const rows = points.map(p => {
+    const n = clashNotes[p.key] || { resp: '', text: '' };
+    const r = CLASH_RESPONSES.find(x => x.k === n.resp);
+    return [{ text: `${cellCode(p)} ${pptxClip(COLUMNS[p.col], 8)}`, bold: true, color: P.codeText }, `${p.oursN} 條`, `${p.rivalsN} 條`, r ? r.text : '未定', pptxClip(n.text, 40)];
+  });
+  const pages = pptxChunk(rows, 10);
+  return { bodies: pages.map((pg, k) => pptxPageHeaderXml(pptxPagedTitle('對陣點（本公司 vs 競爭者）', k, pages.length), tag)
+    + buildMatrixTableXml(L, 10) + arrowsXml
+    + pptxTableFrameXml(11, '對陣點', rx, G.top, pptxColWidths(rw, [1.5, 0.8, 0.8, 0.8, 2]),
+        pptxDataTableTrs(['代號', '本公司', '競爭者', '回應', '理由'], pg, { sz: 800, headH: in2emu(0.26), rowH: in2emu(0.3), algns: ['l', 'ctr', 'ctr', 'ctr', 'l'] }))
+    + pptxTextBoxXml(5, 'footer', rx, G.bottom - in2emu(0.5), rw, in2emu(0.5), [
+        { text: `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`, sz: 1000 },
+        { text: '矩陣：實線＝本公司構想、虛線＝競爭者構想', sz: 900, color: '6B6B80' }], { anchor: 'b' })) };
+}
+
+// 5. 行動計畫頁：每頁 10 列
+function pptxActionSlides(ci) {
+  const list = actionPlans[ci] || [];
+  if (!list.length) return { bodies: [], skip: '行動計畫頁（無行動項目）' };
+  const mods = modules[ci] || [];
+  const rows = list.map((a, i) => {
+    const arrow = findArrowById(ci, a.arrowId);
+    const m = mods.find(x => x.id === a.moduleId);
+    const st = ACTION_STATUS.find(s => s.k === a.status);
+    return [String(i + 1), pptxClip(a.title, 40), arrow ? actionArrowCode(arrow) : (m ? `模組：${pptxClip(m.name, 10)}` : ''),
+      pptxClip(a.owner, 12), pptxClip(a.dept, 10), a.start || a.end ? `${a.start || '?'}～${a.end || '?'}` : '',
+      st ? st.label : '', actionIsCrossDept(ci, a).any ? '✓' : ''];
+  });
+  const s = actionStats(ci);
+  const pages = pptxChunk(rows, 10);
+  return { bodies: pages.map((pg, k) => buildTableSlideXml(pptxPagedTitle('行動計畫', k, pages.length),
+    ['＃', '行動項目', '來源箭頭', '負責單元', '部門', '期程（開始～結束）', '狀態', '跨部門'], pg,
+    { tag: pptxCompTag(ci), weights: [0.4, 3, 1.2, 1.3, 1, 1.9, 0.8, 0.7], algns: ['ctr', 'l', 'ctr', 'l', 'l', 'ctr', 'ctr', 'ctr'],
+      rowH: in2emu(0.32), sz: 900, footer: `行動項目 ${s.total} 項：完成 ${s.done}｜跨部門協調 ${s.cross}` })) };
+}
+
+// 6. 前提控制（監測）頁：只列關鍵前提（沒有關鍵前提就列全部），每頁 10 列；燈號用色塊＋文字
+function pptxControlSlides(ci) {
+  const all = collectControlRows(ci);
+  if (!all.length) return { bodies: [], skip: '前提控制頁（無前提）' };
+  const keyRows = all.filter(r => r.ctl && r.ctl.key);
+  const use = keyRows.length ? keyRows : all;
+  const LIGHT_STYLE = { green: { fill: 'C6EFCE', color: '006100' }, yellow: { fill: 'FFEB9C', color: '9C5700' }, red: { fill: 'FFC7CE', color: '9C0006' } };
+  const rows = use.map(r => {
+    const c = r.ctl || {};
+    const l = CTL_LIGHTS.find(x => x.k === c.light);
+    const status = (PREMISE_STATUS.find(s => s.k === r.premise.status) || {}).label || '';
+    return [c.key ? '★' : '', PREMISE_TYPE_MAP[r.premise.type].label, pptxClip(r.premise.text, 40) || '（未填內容）', status,
+      pptxClip(c.indicator, 30), l ? { text: l.text, bold: true, ...LIGHT_STYLE[l.k] } : '', c.nextReview || '', pptxClip(c.lastNote, 30)];
+  });
+  const st = controlStats(all);
+  const footer = `關鍵前提 ${st.key} 項：綠 ${st.green}｜黃 ${st.yellow}｜紅 ${st.red}｜未設 ${st.unset}｜逾期未檢視 ${st.overdue}`
+    + (keyRows.length ? '' : '　（尚未標記關鍵前提，列出全部前提）');
+  const pages = pptxChunk(rows, 10);
+  return { bodies: pages.map((pg, k) => buildTableSlideXml(pptxPagedTitle('策略前提控制（監測）', k, pages.length),
+    ['★', '類型', '前提', '成立度', '觀察指標', '燈號', '下次檢視日', '備註'], pg,
+    { tag: pptxCompTag(ci), weights: [0.35, 1, 2.8, 0.7, 1.9, 0.55, 1.05, 1.7], algns: ['ctr', 'ctr', 'l', 'ctr', 'l', 'ctr', 'ctr', 'l'],
+      rowH: in2emu(0.32), sz: 900, footer })) };
+}
+
+// 依序組出全部分析頁；回傳 { bodies: [shape tree…], skipped: ['模組頁（無模組）', …] }
+function buildAnalysisSlides(ci) {
+  const parts = [pptxCellNoteSlides(ci), pptxModuleSlides(ci), pptxSwotSlides(ci), pptxClashSlides(), pptxActionSlides(ci), pptxControlSlides(ci)];
+  return { bodies: parts.flatMap(p => p.bodies), skipped: parts.filter(p => p.skip).map(p => p.skip) };
 }
 
 // ── Export PPTX (self-contained, no external lib) ────────────────────────
@@ -6736,8 +7042,18 @@ async function exportPptx() {
   zip.folder('ppt/slides').file(`slide${finalNo}.xml`, slideShell(finalBody));
   zip.folder('ppt/slides/_rels').file(`slide${finalNo}.xml.rels`, slideRelsXml);
 
-  // ── presentation.xml / rels / [Content_Types].xml（價值鏈頁 + 步驟頁 + 總覽頁）──
-  const totalSlides = N + 1 + vcOffset;
+  // ── ST-14l：分析頁（目前策略構想；某類沒資料就跳過，匯出後提示）──────
+  label.textContent = '製作分析頁...';
+  fill.style.width = '95%';
+  const analysis = buildAnalysisSlides(activeIdx);
+  analysis.bodies.forEach((body, k) => {
+    const no = finalNo + 1 + k;
+    zip.folder('ppt/slides').file(`slide${no}.xml`, slideShell(body));
+    zip.folder('ppt/slides/_rels').file(`slide${no}.xml.rels`, slideRelsXml);
+  });
+
+  // ── presentation.xml / rels / [Content_Types].xml（價值鏈頁 + 步驟頁 + 總覽頁 + 分析頁）──
+  const totalSlides = N + 1 + vcOffset + analysis.bodies.length;
   const sldIdLst = Array.from({length: totalSlides}, (_, i) =>
     `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join('');
   zip.folder('ppt').file('presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -6783,6 +7099,15 @@ async function exportPptx() {
   URL.revokeObjectURL(url);
 
   overlay.classList.remove('active');
+  // 不擋人的提示：寫到矩陣區狀態列，約 8 秒後恢復（updateStatus 重算目前狀態）
+  const exportMsg = `📤 已匯出 ${totalSlides} 張` + (analysis.skipped.length ? `；未匯出：${analysis.skipped.join('、')}` : '');
+  console.info(exportMsg);
+  const statusEl = document.getElementById('statusText');
+  if (statusEl) {
+    statusEl.textContent = exportMsg;
+    clearTimeout(exportPptx.statusTimer);
+    exportPptx.statusTimer = setTimeout(updateStatus, 8000);
+  }
 }
 
 function escXml(str) {
