@@ -965,6 +965,20 @@
   .action-table tr.action-group-row td { background: var(--cell-hover); font-weight: 600; }
   .premise-seg button.on.todo { background: #9e9e9e; color: white; } .premise-seg button.on.doing { background: #e0a020; color: white; } .premise-seg button.on.done { background: #2ca05a; color: white; }
 
+  /* ST-14k：策略前提控制表 */
+  .ctl-table th, .ctl-table td { border: 1px solid var(--grid-line); padding: 2px 4px; vertical-align: middle; }
+  .ctl-table input[type=text] { width: 100%; min-width: 120px; border: 1px solid transparent; border-radius: 4px; padding: 1px 4px; font-family: inherit; font-size: 0.72rem; color: var(--ink); background: transparent; outline: none; }
+  .ctl-table input[type=text]:hover { border-color: var(--grid-line); }
+  .ctl-table input[type=text]:focus { border-color: var(--col-header); background: white; }
+  .ctl-table input[type=date] { border: 1px solid transparent; border-radius: 4px; padding: 1px 4px; font-family: inherit; font-size: 0.72rem; color: var(--ink); background: transparent; outline: none; }
+  .ctl-table input[type=date]:hover { border-color: var(--grid-line); }
+  .ctl-table td.ctl-text { min-width: 200px; cursor: pointer; }
+  .ctl-table td.ctl-text:hover { text-decoration: underline; }
+  .ctl-table td.ctl-overdue input[type=date] { color: #d64545; font-weight: 600; }
+  .ctl-table tr.ctl-red td { background: #fdf0f0; }
+  .premise-seg button.on.green { background: #2ca05a; color: white; } .premise-seg button.on.yellow { background: #e0a020; color: white; } .premise-seg button.on.red { background: #d64545; color: white; }
+  .premise-key-star { color: #e0a020; font-weight: 600; margin-right: 2px; }
+
   /* Column separator pin marker */
   .col-pin { font-size: 0.80rem; cursor: pointer; opacity: 0.22; line-height: 1; padding: 0 2px; user-select: none; }
   .col-pin:hover { opacity: 0.75; color: #d64545; }
@@ -1087,6 +1101,18 @@
     <div id="actionBody"></div>
     <div class="sentence-actions">
       <button type="button" class="btn-ghost" id="actionCopyBtn" onclick="copyActionPlan()">📋 複製</button>
+    </div>
+  </details>
+  <!-- ST-14k：策略前提控制表（關鍵前提 → 觀察指標、燈號、下次檢視日） -->
+  <details class="sentence-box premise-box" id="controlBox">
+    <summary>🚦 策略前提控制表（<span id="controlBoxComp">目前策略構想</span>）</summary>
+    <div class="action-toolbar">
+      <label><input type="checkbox" id="ctlOnlyKeyChk" onchange="toggleCtlOnlyKey(this.checked)"> 只顯示關鍵前提</label>
+    </div>
+    <div id="controlBody"></div>
+    <div class="sentence-actions">
+      <button type="button" class="btn-ghost" id="controlCopyBtn" onclick="copyControlTable()">📋 複製</button>
+      <button type="button" class="btn-ghost" onclick="exportControlCsv()">⬇ 匯出 CSV</button>
     </div>
   </details>
   <!-- ST-14c：策略句型（依箭頭自動產生） -->
@@ -1672,7 +1698,8 @@ const VC_TEMPLATES = [
 // ST-14g：premises＝exPremise(...) 陣列；內容依 [S 369–375] 書上前提討論，成立度為示範值（書上沒有下判斷）
 const exArrow = (fromRow, fromCol, toRow, toCol, note, elements = [], premises = []) =>
   ({ from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol }, note, elements, premises });
-const exPremise = (type, text, status) => ({ type, text, status });
+// ST-14k：第 4 參數 ctl＝{ key, indicator, light, nextReview, lastNote }（示範值）
+const exPremise = (type, text, status, ctl) => (ctl ? { type, text, status, ctl } : { type, text, status });
 const EXAMPLE_PROJECTS = [
   {
     id: 'bookstore-a', name: '網路書店 A 公司', source: 'S 352–360',
@@ -1699,15 +1726,18 @@ const EXAMPLE_PROJECTS = [
         exArrow('A', '資訊系統', 'A', '顧客資料庫', '資訊系統支援顧客資料', ['1-7']),
         exArrow('C', '資訊系統', 'A', '資訊系統', '自建系統形成服務特色', ['3-1']),
         exArrow('F', '資訊系統', 'A', '資訊系統', '資訊能力是核心優勢', ['6-2', '6-8'], [
-          exPremise('cond', '資訊系統有獨特能力，且不容易被模仿 [S 370]', 'ok'),
-          exPremise('env', '沒有資訊能力更強、規模更大的同業出現（對陣點 F04／D04／A04）[S 372]', 'no'),
+          exPremise('cond', '資訊系統有獨特能力，且不容易被模仿 [S 370]', 'ok',
+            { key: true, indicator: '競爭者推出同類查書／推薦功能的時間與數量', light: 'green', nextReview: '2026-12-15', lastNote: '目前仍有明顯差異' }),
+          exPremise('env', '沒有資訊能力更強、規模更大的同業出現（對陣點 F04／D04／A04）[S 372]', 'no',
+            { key: true, indicator: '大型連鎖書店網站的月訪客數與資訊投資公告', light: 'red', nextReview: '2026-11-10', lastNote: '連鎖書店已開站，須評估轉移陣地' }),
         ]),
         exArrow('B', '物流運輸', 'A', '物流運輸', '選好的運輸業者確保配送', ['2-5']),
         exArrow('B', '中文書籍', 'D', '採購', '市場需求大帶來採購規模', ['2-3'], [
           exPremise('env', '上網買書的目標客群需求總量夠大，撐得起採購與資訊系統的規模經濟 [S 370]', 'ok'),
         ]),
         exArrow('D', '採購', 'A', '採購', '採購量大壓低進貨成本', ['4-1', '1-3'], [
-          exPremise('env', '出版商家數多、不過度集中，書店的採購談判力才不受限 [S 370]', 'unsure'),
+          exPremise('env', '出版商家數多、不過度集中，書店的採購談判力才不受限 [S 370]', 'unsure',
+            { key: true, indicator: '前三大出版商占進貨金額比重', light: 'yellow', nextReview: '2026-11-30', lastNote: '' }),
         ]),
         exArrow('A', '網站平台', 'A', '中文書籍', '網站查書下單方便', ['1-2']),
         exArrow('A', '物流運輸', 'A', '中文書籍', '快速到貨形成特色', ['1-2', '1-5']),
@@ -1793,14 +1823,16 @@ const EXAMPLE_PROJECTS = [
         exArrow('F', '資金', 'A', '資金', '雄厚財力支撐持續擴廠', ['6-6']),
         exArrow('B', '先進製程代工', 'D', '晶圓製造', '眾多客戶訂單匯集產能', ['2-3'], [
           exPremise('env', '台灣 IC 設計業者家數多、競爭力強 [S 374]', 'ok'),
-          exPremise('env', '可替代的晶圓代工業者不會大量出現 [S 374]', 'unsure'),
+          exPremise('env', '可替代的晶圓代工業者不會大量出現 [S 374]', 'unsure',
+            { key: true, indicator: '新進代工業者的先進製程量產時程', light: 'yellow', nextReview: '2026-12-01', lastNote: '' }),
         ]),
         exArrow('A', '品質管理', 'A', '先進製程代工', '良率穩定確保品質', ['1-2', '1-4']),
         exArrow('A', '設計支援', 'A', '先進製程代工', '設計支援縮短上市時間', ['1-2', '1-5']),
         exArrow('B', '矽晶圓原料', 'A', '矽晶圓原料', '選定穩定的晶圓供應商', ['2-5']),
         exArrow('A', '先進製程代工', 'B', '先進製程代工', '先進製程吸引高階客戶', ['1-1'], [
           exPremise('env', 'PC 與消費電子等終端市場總量持續成長 [S 374]', 'ok'),
-          exPremise('env', 'PC 與消費電子產業聚落留在附近、不大舉外移 [S 374]', 'no'),
+          exPremise('env', 'PC 與消費電子產業聚落留在附近、不大舉外移 [S 374]', 'no',
+            { key: true, indicator: '主要客戶外移的產線與訂單比重', light: 'red', nextReview: '2026-11-20', lastNote: '' }),
         ]),
       ],
       [
@@ -2460,6 +2492,8 @@ function normaliseActionPlans() {
   });
 }
 
+const CTL_LIGHTS = [{ k: 'green', label: '🟢', text: '綠' }, { k: 'yellow', label: '🟡', text: '黃' }, { k: 'red', label: '🔴', text: '紅' }];
+let ctlOnlyKey = true;  // ST-14k：控制表只顯示關鍵前提（舊存檔沒有 → true）
 function newPremiseId() { return 'p' + Math.random().toString(36).slice(2, 9); }
 // ST-14g：前提正規化——只收物件；type／status 不合法就丟掉；text 非字串→''；id 缺或重複→補
 function normalisePremiseList(raw) {
@@ -2468,8 +2502,19 @@ function normalisePremiseList(raw) {
       && PREMISE_TYPE_MAP[p.type] && PREMISE_STATUS.some(s => s.k === p.status)).map(p => {
     let id = typeof p.id === 'string' && p.id && !seen.has(p.id) ? p.id : newPremiseId();
     seen.add(id);
-    return { id, type: p.type, text: typeof p.text === 'string' ? p.text : '', status: p.status };
+    const out = { id, type: p.type, text: typeof p.text === 'string' ? p.text : '', status: p.status };
+    const c = normalisePremiseCtl(p.ctl);
+    if (c) out.ctl = c;  // ST-14k：沒有控制資訊就不加
+    return out;
   });
+}
+// ST-14k：ctl 正規化——不是物件→null；light 不合法→''；日期須為 YYYY-MM-DD
+function normalisePremiseCtl(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const str = v => typeof v === 'string' ? v : '';
+  return { key: raw.key === true, indicator: str(raw.indicator),
+    light: CTL_LIGHTS.some(l => l.k === raw.light) ? raw.light : '',
+    nextReview: /^\d{4}-\d{2}-\d{2}$/.test(str(raw.nextReview)) ? raw.nextReview : '', lastNote: str(raw.lastNote) };
 }
 // 所有讀入點（loadState／匯入／範例／undo）在 ensureArrowIds 後呼叫：舊箭頭沒有 premises → []
 function normaliseArrowPremises() {
@@ -4906,7 +4951,222 @@ function renderArrowList() {
   renderPremiseSwot();  // ST-14g
   renderClashBox();     // ST-14h
   renderActionBox();    // ST-14j
+  renderControlBox();   // ST-14k
   renderStrategySentences();
+}
+
+// ── ST-14k：策略前提控制表（關鍵前提 → 觀察指標、燈號、下次檢視日）[S 377–379] ──────────
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// 目前策略構想所有前提的控制列；依燈號（紅→黃→綠→未設）再依檢視日排序
+function collectControlRows(ci) {
+  const rows = [];
+  (arrows[ci] || []).forEach(a => (a.premises || []).forEach(p => {
+    if (!PREMISE_TYPE_MAP[p.type]) return;
+    rows.push({ premise: p, arrow: a, code: `${cellCode(a.from)}→${cellCode(a.to)}`, ctl: p.ctl || null });
+  }));
+  const lightOrder = l => ({ red: 0, yellow: 1, green: 2 })[l] ?? 3;
+  const rd = r => (r.ctl && r.ctl.nextReview) || '9999-99-99';
+  rows.forEach((r, i) => { r.i = i; });
+  rows.sort((x, y) => lightOrder(x.ctl && x.ctl.light) - lightOrder(y.ctl && y.ctl.light)
+    || rd(x).localeCompare(rd(y)) || x.i - y.i);
+  return rows;
+}
+function controlStats(rows) {
+  const keys = rows.filter(r => r.ctl && r.ctl.key);
+  const n = l => keys.filter(r => r.ctl.light === l).length;
+  const today = todayStr();
+  return { key: keys.length, green: n('green'), yellow: n('yellow'), red: n('red'), unset: keys.filter(r => !r.ctl.light).length,
+    overdue: keys.filter(r => r.ctl.nextReview && r.ctl.nextReview < today).length };
+}
+function ctlOf(p) {
+  if (!p.ctl) p.ctl = { key: false, indicator: '', light: '', nextReview: '', lastNote: '' };
+  return p.ctl;
+}
+function toggleCtlOnlyKey(on) {
+  ctlOnlyKey = !!on;
+  renderControlBox();
+  saveState();
+}
+function renderControlBox() {
+  const body = document.getElementById('controlBody');
+  if (!body) return;
+  const ci = activeIdx;
+  const comp = competitors[ci];
+  document.getElementById('controlBoxComp').textContent = comp ? comp.name : '目前策略構想';
+  const chk = document.getElementById('ctlOnlyKeyChk');
+  if (chk) chk.checked = ctlOnlyKey;
+  body.innerHTML = '';
+  const all = collectControlRows(ci);
+  const st = controlStats(all);
+  const stats = document.createElement('div');
+  stats.className = 'premise-swot-stats';
+  stats.textContent = `關鍵前提 ${st.key} 項：🟢 ${st.green}｜🟡 ${st.yellow}｜🔴 ${st.red}｜未設 ${st.unset}　逾期檢視 ${st.overdue} 項`;
+  body.appendChild(stats);
+  const hint = document.createElement('div');
+  hint.className = 'premise-swot-hint';
+  hint.textContent = '策略前提控制：策略定案後，從環境前提與條件前提中挑出較關鍵的，密切注意其發展趨勢（觀察、偵測、衡量、追蹤）；'
+    + '前提變動太大時，策略就要重新思考與定位。先有具體策略，再針對關鍵前提控制 [S 378]。';
+  body.appendChild(hint);
+  if (!all.length) {
+    const e = document.createElement('div');
+    e.className = 'premise-swot-hint';
+    e.textContent = '（尚無前提：先在箭頭上新增前提（〔＋ 前提〕），再到這裡設定觀察指標與燈號）';
+    body.appendChild(e);
+    return;
+  }
+  const rows = ctlOnlyKey ? all.filter(r => r.ctl && r.ctl.key) : all;
+  if (!rows.length) {
+    const e = document.createElement('div');
+    e.className = 'premise-swot-hint';
+    e.textContent = '（還沒有關鍵前提：勾選下表的 ★，或取消「只顯示關鍵前提」）';
+    body.appendChild(e);
+    return;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'action-table-wrap';
+  const table = document.createElement('table');
+  table.className = 'action-table ctl-table';
+  const heads = ['★ 關鍵', '類型', '前提內容', '來源箭頭', '成立度', '觀察指標', '燈號', '下次檢視日', '備註'];
+  table.innerHTML = '<thead><tr>' + heads.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+  const tbody = document.createElement('tbody');
+  const today = todayStr();
+  rows.forEach(r => {
+    const p = r.premise;
+    const c = r.ctl || { key: false, indicator: '', light: '', nextReview: '', lastNote: '' };
+    const tr = document.createElement('tr');
+    if (c.light === 'red') tr.className = 'ctl-red';
+    const td = () => tr.appendChild(document.createElement('td'));
+    // 關鍵
+    const kc = td();
+    kc.style.textAlign = 'center';
+    const k = document.createElement('input');
+    k.type = 'checkbox';
+    k.checked = !!c.key;
+    k.addEventListener('change', () => {
+      pushHistory();
+      ctlOf(p).key = k.checked;
+      renderControlBox();
+      renderPremiseSwot();
+      saveState();
+    });
+    kc.appendChild(k);
+    td().textContent = `〔${PREMISE_TYPE_MAP[p.type].short}〕`;
+    const tc = td();
+    tc.className = 'ctl-text';
+    tc.textContent = (p.text || '').trim() || '（未填內容）';
+    tc.title = '點擊捲到這條箭頭';
+    tc.addEventListener('click', () => flashArrowItem(r.arrow.id));
+    td().textContent = r.code;
+    td().textContent = premiseStatusLabel(p.status);
+    // 觀察指標
+    const bindText = (f, ph, w) => {
+      const cell = td();
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.placeholder = ph; inp.value = c[f] || '';
+      if (w) inp.style.minWidth = w;
+      inp.addEventListener('blur', () => {
+        if (inp.value === ((p.ctl && p.ctl[f]) || '')) return;
+        pushHistory();
+        ctlOf(p)[f] = inp.value;
+        saveState();
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+      cell.appendChild(inp);
+    };
+    bindText('indicator', '例：競爭者上線時間', '180px');
+    // 燈號
+    const seg = document.createElement('span');
+    seg.className = 'premise-seg';
+    CTL_LIGHTS.forEach(l => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = l.label;
+      b.title = l.text + '燈（再按一次取消）';
+      if (c.light === l.k) b.className = 'on ' + l.k;
+      b.addEventListener('click', () => {
+        pushHistory();
+        const cc = ctlOf(p);
+        cc.light = cc.light === l.k ? '' : l.k;
+        renderControlBox();
+        saveState();
+      });
+      seg.appendChild(b);
+    });
+    td().appendChild(seg);
+    // 下次檢視日
+    const dc = td();
+    if (c.nextReview && c.nextReview < today) { dc.className = 'ctl-overdue'; dc.title = '已逾期未檢視'; }
+    const d = document.createElement('input');
+    d.type = 'date';
+    d.value = c.nextReview || '';
+    d.addEventListener('change', () => {
+      if (d.value === (c.nextReview || '')) return;
+      pushHistory();
+      ctlOf(p).nextReview = d.value;
+      renderControlBox();
+      saveState();
+    });
+    dc.appendChild(d);
+    bindText('lastNote', '備註', '120px');
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  body.appendChild(wrap);
+}
+// 輸出用表格（複製與 CSV 共用）：只含目前顯示的列
+function controlTableData() {
+  const ci = activeIdx;
+  const all = collectControlRows(ci);
+  const rows = ctlOnlyKey ? all.filter(r => r.ctl && r.ctl.key) : all;
+  const header = ['關鍵', '類型', '前提內容', '來源箭頭', '成立度', '觀察指標', '燈號', '下次檢視日', '備註'];
+  const today = todayStr();
+  const data = rows.map(r => {
+    const c = r.ctl || {};
+    const l = CTL_LIGHTS.find(x => x.k === c.light);
+    return [c.key ? '★' : '', PREMISE_TYPE_MAP[r.premise.type].label || PREMISE_TYPE_MAP[r.premise.type].short, (r.premise.text || '').trim(), r.code,
+      premiseStatusLabel(r.premise.status), c.indicator || '', l ? l.text : '',
+      (c.nextReview || '') + (c.nextReview && c.nextReview < today ? '（逾期）' : ''), c.lastNote || ''];
+  });
+  return { header, data, stats: controlStats(all), count: rows.length };
+}
+function controlTableText() {
+  const t = controlTableData();
+  if (!t.count) return '';
+  const st = t.stats;
+  const comp = competitors[activeIdx];
+  const clean = v => String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' ');
+  return [`【策略前提控制表：${comp ? comp.name : ''}】`,
+    `關鍵前提 ${st.key} 項：綠 ${st.green}｜黃 ${st.yellow}｜紅 ${st.red}｜未設 ${st.unset}；逾期檢視 ${st.overdue} 項`,
+    t.header.join('\t'), ...t.data.map(r => r.map(clean).join('\t'))].join('\n');
+}
+function copyControlTable() {
+  const txt = controlTableText();
+  if (!txt) { alert('目前沒有可複製的前提'); return; }
+  const btn = document.getElementById('controlCopyBtn');
+  const ok = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = '📋 複製'; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => alert('複製失敗，請手動選取'));
+  else alert('此瀏覽器不支援自動複製');
+}
+function controlCsvText() {
+  const t = controlTableData();
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  return '﻿' + [t.header, ...t.data].map(r => r.map(q).join(',')).join('\r\n') + '\r\n';
+}
+function exportControlCsv() {
+  if (!controlTableData().count) { alert('目前沒有可匯出的前提'); return; }
+  const blob = new Blob([controlCsvText()], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const title = document.getElementById('strategyTitle').value.trim();
+  const comp = competitors[activeIdx];
+  const link = document.createElement('a');
+  link.download = (title || '策略矩陣') + (comp ? '_' + comp.name : '') + '_前提控制表.csv';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── ST-14f：策略模組（chip 列、圈選模式、套用書上模組）──────────────────────────
@@ -5512,7 +5772,7 @@ function collectPremiseSwot(ci) {
   (arrows[ci] || []).forEach(a => (a.premises || []).forEach(p => {
     const t = PREMISE_TYPE_MAP[p.type];
     if (!t) return;
-    const item = { text: (p.text || '').trim() || '（未填內容）', code: `${cellCode(a.from)}→${cellCode(a.to)}`, arrowId: a.id, type: p.type, status: p.status };
+    const item = { text: (p.text || '').trim() || '（未填內容）', code: `${cellCode(a.from)}→${cellCode(a.to)}`, arrowId: a.id, type: p.type, status: p.status, key: !!(p.ctl && p.ctl.key) };
     out.total++;
     if (p.status === 'ok') out.ok++; else if (p.status === 'no') out.no++; else out.unsureN++;
     if (!t.swot) out.causal.push(item);
@@ -5564,6 +5824,13 @@ function renderPremiseSwot() {
       const li = document.createElement('li');
       const pre = showType ? `〔${PREMISE_TYPE_MAP[it.type].short}〕` : '';
       li.textContent = `${pre}${it.text}（${it.code}）`;
+      if (it.key) {  // ST-14k：關鍵前提加 ★
+        const star = document.createElement('span');
+        star.className = 'premise-key-star';
+        star.textContent = '★';
+        star.title = '關鍵前提（見策略前提控制表）';
+        li.insertBefore(star, li.firstChild);
+      }
       if (showType === 'status') {
         const dot = document.createElement('span');
         dot.className = 'premise-dot ' + it.status;
@@ -6514,6 +6781,7 @@ function saveState() {
       clashNotes:    JSON.parse(JSON.stringify(clashNotes)),  // ST-14h
       actionPlans:   JSON.parse(JSON.stringify(actionPlans)), // ST-14j
       actionGroupByOwner,                                 // ST-14j
+      ctlOnlyKey,                                         // ST-14k
       arrows:        JSON.parse(JSON.stringify(arrows)),
       activeIdx,
       productSepIdx,
@@ -6605,6 +6873,7 @@ function loadState() {
     modules = Array.isArray(state.modules) ? state.modules : [];
     actionPlans = Array.isArray(state.actionPlans) ? state.actionPlans : [];  // ST-14j：舊存檔沒有 → normalise 依 arrows 長度補空陣列
     actionGroupByOwner = state.actionGroupByOwner === true;
+    ctlOnlyKey = state.ctlOnlyKey !== false;  // ST-14k：舊存檔沒有 → true
     normaliseModules();  // 內含 normaliseActionPlans
     return true;
   } catch(e) { return false; }
@@ -6719,7 +6988,7 @@ function loadExampleProject(id) {
     }
     exIds[ci][ai] = newArrowId();
     return { id: exIds[ci][ai], from: { row: a.from.row, col: fc }, to: { row: a.to.row, col: tc }, note: a.note, elements: [...a.elements],
-      premises: (a.premises || []).map(pr => ({ ...pr })) };  // ST-14g：id 由 normaliseArrowPremises 補
+      premises: (a.premises || []).map(pr => ({ ...pr, ...(pr.ctl ? { ctl: { ...pr.ctl } } : {}) })) };  // ST-14g：id 由 normaliseArrowPremises 補
   }).filter(Boolean));
   while (arrows.length < competitors.length) arrows.push([]);
   ensureArrowIds();
