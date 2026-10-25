@@ -11,7 +11,7 @@
 - [x] ST-17 範例專案補策略點描述（cellNotes）：網路書店 A 公司、晶圓代工 T 公司各填 6–8 格（含 C 列 ○✕◐、F 列優勢基礎），讓面板、進度與 PPTX 策略點描述頁有內容 [S 352–368]（完成 2026-10-25：書店 8 格、T 公司 7 格，loadExampleProject 載入 cellNotes）
 - [x] ST-18 PPTX 價值鏈頁沒畫「主要活動 → 產品」的連線（rectById 只登記主要活動方塊；ST-15 驗證時發現）（完成 2026-10-25：價值鏈頁主要活動下方新增「產品」列並登記 rectById，連到產品的線走通道；書店範例節點帶 id 並加一條客服→中文書籍；支援子項另見 ST-20）
 - [x] ST-19 代理流程工具鏈：tools/cdp-harness.mjs（開頁、載範例、stub 對話框、截元素、攔 Blob、收 console error）、tests/fixtures/ 舊版 strategyMatrix_v4 存檔、tools/release-task.sh 收尾腳本；讓 verifier 不必每次重寫測試腳本（2026-10-25 流程回顧）（完成 2026-10-25：tools/cdp-harness.mjs 12 個方法（open／loadExample／stubDialogs／shot／captureDownloads／downloads／blobBytes 分塊／zipEntries／errors…，零 npm 依賴）、ST-18.mjs 改用 harness、tests/fixtures 書店與 T 公司 v4 存檔、tools/release-task.sh（COAUTHOR 可覆寫）、agent／skill 定義加提示）
-- [ ] ST-20 PPTX 價值鏈頁的支援活動群組只畫一條橫條、子項不畫也不登記，連到支援子項的連線會被跳過（ST-18 核對時發現；需把子項以小方塊畫出並登記 rectById）
+- [x] ST-20 PPTX 價值鏈頁沒畫主要活動第三層以下子項、也不登記 rectById，連到孫層的連線會被靜默跳過（如醫美範本 中醫診所→中醫調理）；需遞迴畫小方塊並登記（原寫「支援活動子項」，2026-10-25 核對後支援區 allowGroup:false 不可能有子項，改寫為此）（完成 2026-10-25：buildValueChainShapesXml 子群組畫框＋孫項小方塊並登記 rectById，支援到第三層、更深攤平；孫項高依字級精算 8→7→6pt、有第三層時併用說明區排版、仍不夠才壓縮並提示；略過連線計數進狀態列；書店／T 公司座標與舊版一致）
 - [x] ST-07 修正：欄位管理「＋ 細項」把新欄插在群組中間，但沒重算箭頭位置（後面群組的箭頭會錯一欄），也沒更新 productSepIdx、沒 pushHistory（ST-04 時發現，index.html 約 1657 行）（完成 2026-10-25）
   - 備註（2026-10-25）：修的是已隱藏的舊欄位編輯器（renderColEditor），可降優先度
 - [x] ST-14 依《策略管理新論》Ch8／Ch9 補齊策略矩陣分析的完整引導（描述 → 驗證 → 執行）（全部子項完成 2026-10-25）；規劃依據與頁碼見 doc/reference/策略管理新論-Ch8Ch9-八步流程與功能差距.md
