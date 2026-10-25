@@ -412,11 +412,13 @@
   .vc-products-body > .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: var(--vc-product-border); }
   .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
   .vc-unit.vc-asset { background: var(--vc-asset-bg); border-color: var(--vc-asset-border); }
-  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-support .vc-unit:not(.vc-asset) .vc-act {
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
+  .vc-zone-support .vc-unit:not(.vc-asset) .vc-role-none {
     color: var(--vc-support-text);
   }
   .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-act,
-  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head :is(input, textarea), .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act {
+  .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head :is(input, textarea), .vc-zone-primary > .vc-zone-body > .vc-group > .vc-node-head .vc-act,
+  .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset) .vc-role-none {
     color: var(--vc-primary-text);
   }
   .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):focus,
@@ -463,7 +465,7 @@
   .vc-zone-primary .vc-group-body > .vc-unit { text-align: left; align-items: flex-start; }
   .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head { align-items: flex-start; }
   .vc-zone-primary .vc-group > .vc-node-head { white-space: normal; }
-  .vc-zone-primary .vc-node-head > .vc-kind, .vc-zone-primary .vc-node-head > .vc-act { margin-top: 2px; }
+  .vc-zone-primary .vc-node-head > .vc-kind, .vc-zone-primary .vc-node-head > .vc-role, .vc-zone-primary .vc-node-head > .vc-act { margin-top: 2px; }
   .vc-group > .vc-node-head :is(input, textarea) { font-weight: 700; border-bottom-color: var(--col-header); }
   /* 名稱 input 優先取得空間，只有真的放不下時（flex-shrink）才縮小，不要一開始就被 .vc-kind／.vc-act 擠掉 */
   .vc-group-body > .vc-unit > .vc-node-head > :is(input, textarea) { flex: 1 1 auto; min-width: 0; max-width: 100%; }
@@ -475,6 +477,18 @@
     flex: 0 0 auto;
   }
   .vc-kind.vc-kind-asset { background: var(--vc-asset-tag-bg); color: var(--vc-asset-tag-text); }
+  /* ST-14i：特殊價值單元角色標籤（一般＝淡色「＋角色」；半成品／主導／影響者各用不同底色） */
+  .vc-role {
+    font-size: 0.58rem; padding: 0 4px; border-radius: 3px; cursor: pointer; white-space: nowrap;
+    flex: 0 0 auto; border: 1px dashed currentColor; color: var(--ink-light); opacity: 0.55;
+  }
+  .vc-role:hover { opacity: 1; }
+  .vc-role.vc-role-semi, .vc-role.vc-role-lead, .vc-role.vc-role-influencer { border-style: solid; opacity: 1; font-weight: 600; }
+  .vc-role.vc-role-semi       { background: #d9eef7; border-color: #7fb5cc; color: #1f5a73; }
+  .vc-role.vc-role-lead       { background: #f7dada; border-color: #d08a8a; color: #7a2323; }
+  .vc-role.vc-role-influencer { background: #dcefdc; border-color: #86bb86; color: #285c28; }
+  /* 矩陣表頭欄名後的角色標記（ST-14i） */
+  #matrixTable thead th .col-role { font-size: 0.72em; font-weight: normal; opacity: 0.85; }
   /* 群組內子項的標題列撐滿寬度，使標籤能靠右對齊 */
   .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; }
   .vc-group-body > .vc-unit > .vc-node-head > .vc-kind { margin-left: auto; }
@@ -980,6 +994,18 @@ function getColumnPaths() {
   if (Array.isArray(COLUMN_PATHS) && COLUMN_PATHS.length === COLUMNS.length) return COLUMN_PATHS;
   return columnGroupsToPaths(COLUMN_GROUPS);
 }
+// 欄位的特殊價值單元角色（ST-14i）：{ 欄名: 'semi'|'lead'|'influencer' }，由「展開到策略矩陣」產生；
+// 以欄名對應（跟箭頭搬移一樣），所以欄位編輯器拖曳排序不會讓標記錯位；改名或刪除的欄位自然沒有標記
+let COLUMN_ROLES = {};
+function getColumnRole(ci) {
+  const name = COLUMNS[ci];
+  return Object.prototype.hasOwnProperty.call(COLUMN_ROLES, name) ? vcRoleInfo(COLUMN_ROLES[name]) : null;
+}
+function rolesToColumnRoleMap(names, roles) {
+  const map = {};
+  names.forEach((name, ci) => { if (roles[ci] && !map[name]) map[name] = roles[ci]; });  // 同名欄位取第一個有角色的
+  return map;
+}
 // 由欄位路徑重建最上層的 COLUMN_GROUPS（相鄰且最上層群組相同者併成一組），讓既有存檔／匯出邏輯照常運作
 function pathsToColumnGroups(names, paths) {
   const groups = [];
@@ -1013,6 +1039,7 @@ let showIndustryLabels = false;
 // ── Value Chain ───────────────────────────────────────────────────────────
 // 價值鏈資料（ST-01a）：矩陣欄位由價值鏈「展開到策略矩陣」產生（ST-01d），展開前矩陣維持原本欄位
 // 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
+//       unit 可選 unitRole: 'semi'|'lead'|'influencer'（ST-14i 特殊價值單元；沒有此欄位＝一般單元，舊存檔照常載入）
 // valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg }
 const VALUE_CHAIN_VERSION = 1;
 
@@ -1025,6 +1052,14 @@ function genNodeId(taken) {
   vcUsedIds.add(id);
   return id;
 }
+
+// ST-14i：特殊價值單元角色。陣列順序＝編輯器點擊循環順序（一般→半成品→主導→影響者→一般）
+const VC_UNIT_ROLES = [
+  { key: 'semi',       label: '半成品', title: '半成品：流程中途的產出不再往下加工，部分直接賣給其他產業（策略要素 2-8、3-2）[S 273, 282–283]' },
+  { key: 'lead',       label: '主導',   title: '主導權責：由誰主導整條上下游、承擔風險並享受利潤，其他階段只是代工 [S 361–362]' },
+  { key: 'influencer', label: '影響者', title: '影響者：不直接買賣卻左右採購決策的單位，如政府主管機關、互補業者（策略要素 2-11）[S 308–309]' },
+];
+function vcRoleInfo(role) { return VC_UNIT_ROLES.find(r => r.key === role) || null; }
 
 function makeUnit(name, unitKind = 'activity') {
   return { id: genNodeId(), name, type: 'unit', unitKind };
@@ -1119,7 +1154,9 @@ function normaliseValueChain(raw) {
         if (allowGroup) out.push({ id: takeId(n.id), name, type: 'group', children });
         else out.push(...children);
       } else {
-        out.push({ id: takeId(n.id), name, type: 'unit', unitKind: n.unitKind === 'asset' ? 'asset' : 'activity' });
+        const unit = { id: takeId(n.id), name, type: 'unit', unitKind: n.unitKind === 'asset' ? 'asset' : 'activity' };
+        if (vcRoleInfo(n.unitRole)) unit.unitRole = n.unitRole;  // ST-14i：只留合法角色，其他值（含舊存檔沒有）視為一般
+        out.push(unit);
       }
     });
     return out;
@@ -1151,11 +1188,12 @@ const VC_TEMPLATE_GROUPS = [
   { key: 'other',  label: '其他產業' },
   { key: 'theory', label: '理論骨架' },
 ];
-// 範本用小工具：vcAct=活動單元、vcAsset=資產單元、vcGroup=群組、vcProducts=範本通用的兩個產品
+// 範本用小工具：vcAct=活動單元、vcAsset=資產單元、vcGroup=群組、vcProducts=範本通用的兩個產品、vcRole=幫單元加上特殊角色（ST-14i）
 const vcAct = (name, id) => (id ? { id, name, type: 'unit', unitKind: 'activity' } : { name, type: 'unit', unitKind: 'activity' });
 const vcAsset = name => ({ name, type: 'unit', unitKind: 'asset' });
 const vcGroup = (name, children) => ({ name, type: 'group', children });
 const vcProducts = () => ['產品一', '產品二'].map(n => vcAct(n));
+const vcRole = (unit, unitRole) => ({ ...unit, unitRole });
 const VC_TEMPLATES = [
   {
     id: 'bio-meddevice', group: 'bio', name: '醫療器材製造', source: 'P3 21',
@@ -1356,6 +1394,50 @@ const VC_TEMPLATES = [
       ],
       support: [],
       products: ['產品一', '產品二', '產品三'].map(name => ({ name, type: 'unit', unitKind: 'activity' })),
+      links: [],
+    },
+  },
+  // ST-14i：特殊經營流程骨架（依《策略管理新論》Ch8 的結構自擬通用名稱，不含書上實例）
+  {
+    // 製造一完成後，部分半成品直接賣給其他產業，其餘留在本產業由製造二繼續加工；
+    // 半成品跟書上圖 8.09 一樣放在產品欄（A 列＝半成品特色、B 列＝買半成品的其他產業）
+    id: 'theory-semi', group: 'theory', name: '半成品外售流程', source: 'S 273、282–283',
+    valueChain: {
+      primary: [
+        ...['原料', '零組件', '採購', '研發', '製造一', '製造二', '倉儲', '運輸', '通路'].map(n => vcAct(n)),
+        vcAsset('品牌'),
+      ],
+      support: [],
+      products: [...vcProducts(), vcRole(vcAct('半成品'), 'semi')],
+      links: [],
+    },
+  },
+  {
+    // 仲介者夾在供給方與需求方之間，兩邊都是顧客：兩種服務各列為一項產品，背後共用撮合相關的價值單元
+    id: 'theory-broker', group: 'theory', name: '仲介型經營流程', source: 'S 273–274、283–285',
+    valueChain: {
+      primary: [
+        vcAsset('待媒合標的'), vcAct('供給方開發'),
+        vcGroup('撮合服務', ['標的評估', '資訊揭露', '需求媒合', '議價協調', '交易手續'].map(n => vcAct(n))),
+        vcAct('收費結算'), vcAct('促銷'), vcAct('通路'), vcAsset('品牌'),
+      ],
+      support: ['資訊系統', '人員訓練'].map(n => vcAct(n)),
+      products: ['需求方服務', '供給方服務'].map(n => vcAct(n)),
+      links: [],
+    },
+  },
+  {
+    // 兩個不同產業各有自己的上游流程，產品最後透過同一個通路賣給同一群顧客
+    id: 'theory-multi', group: 'theory', name: '多重產業共用市場', source: 'S 274、284–285',
+    valueChain: {
+      primary: [
+        vcGroup('產業A', ['原料A', '研發A', '製造A'].map(n => vcAct(n))),
+        vcGroup('產業B', ['原料B', '研發B', '製造B'].map(n => vcAct(n))),
+        vcGroup('共用市場', ['共用通路', '顧客服務'].map(n => vcAct(n))),
+        vcAsset('品牌'),
+      ],
+      support: [],
+      products: ['產品A', '產品B'].map(n => vcAct(n)),
       links: [],
     },
   },
@@ -1769,7 +1851,7 @@ let history = [];
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
   const snap = withColumns
-    ? { arrows, cols: { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), productSepIdx } }
+    ? { arrows, cols: { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx } }
     : arrows;
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
@@ -1786,6 +1868,7 @@ function undo() {
     arrows = snap.arrows;
     COLUMN_GROUPS = snap.cols.COLUMN_GROUPS;
     COLUMN_PATHS  = snap.cols.COLUMN_PATHS;
+    COLUMN_ROLES  = snap.cols.COLUMN_ROLES || {};
     productSepIdx = snap.cols.productSepIdx;
     syncColumns();
     colsChanged = true;
@@ -2327,7 +2410,7 @@ function buildVcNode(node, zone) {
   el.draggable = true;
   el.dataset.vcId = node.id;
 
-  // 連線模式：點方塊建立/取消連線（點在 input／✕／活動-資產 標籤上時，那些控制項自己已 stopPropagation，不會走到這裡）
+  // 連線模式：點方塊建立/取消連線（點在 input／✕／活動-資產／角色 標籤上時，那些控制項自己已 stopPropagation，不會走到這裡）
   el.addEventListener('click', e => {
     if (!vcLinkMode) return;
     if (e.target.closest('input, textarea')) return;
@@ -2376,6 +2459,23 @@ function buildVcNode(node, zone) {
       commitValueChain();
     });
     head.appendChild(kind);
+
+    // ST-14i：特殊角色標籤，點一下循環 一般→半成品→主導→影響者→一般
+    const roleInfo = vcRoleInfo(node.unitRole);
+    const role = document.createElement('span');
+    role.className = 'vc-role ' + (roleInfo ? 'vc-role-' + roleInfo.key : 'vc-role-none');
+    role.textContent = roleInfo ? roleInfo.label : '＋角色';
+    role.title = (roleInfo ? roleInfo.title : '一般價值單元；特殊角色有半成品 [S 273, 282]、主導權責 [S 361]、影響者 [S 308]')
+      + '\n點一下切換 一般→半成品→主導→影響者';
+    role.addEventListener('mousedown', e => e.stopPropagation());
+    role.addEventListener('click', e => {
+      e.stopPropagation();
+      const next = VC_UNIT_ROLES[VC_UNIT_ROLES.findIndex(r => r.key === node.unitRole) + 1];
+      if (next) node.unitRole = next.key;
+      else delete node.unitRole;
+      commitValueChain();
+    });
+    head.appendChild(role);
   }
 
   head.appendChild(makeVcAction('＋同層', '在後面新增同層項目', () =>
@@ -2884,22 +2984,25 @@ function cellCode(cell) { return `${cell.row}${String(cell.col+1).padStart(2,'0'
 const SUPPORT_COLUMN_GROUP = '支援活動';
 function isSupportColumnPath(path) { return Array.isArray(path) && path[0] === SUPPORT_COLUMN_GROUP; }
 
-// 由價值鏈產生欄位：{ names, paths, sepIdx }；支援活動路徑為 ['支援活動']，主要活動為其上層群組名稱，產品不分組
+// 由價值鏈產生欄位：{ names, paths, roles, sepIdx }；支援活動路徑為 ['支援活動']，主要活動為其上層群組名稱，產品不分組
+// roles[ci]＝該單元的特殊角色 key（ST-14i），一般單元為 ''
 // 空白名稱以「（未命名）」代替（loadState 會濾掉空白欄名，避免重新整理後欄位錯位）
 function buildValueChainColumns(supportFirst) {
   const unitName = n => n.name || '（未命名）';
-  const support = valueChain.support.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: [SUPPORT_COLUMN_GROUP] }));
+  const unitRole = n => (vcRoleInfo(n.unitRole) ? n.unitRole : '');
+  const support = valueChain.support.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: [SUPPORT_COLUMN_GROUP], role: unitRole(n) }));
   const primary = [];
   const walk = (nodes, path) => nodes.forEach(n => {
     if (n.type === 'group') walk(n.children, [...path, n.name]);
-    else primary.push({ name: unitName(n), path });
+    else primary.push({ name: unitName(n), path, role: unitRole(n) });
   });
   walk(valueChain.primary, []);
-  const products = valueChain.products.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: [] }));
+  const products = valueChain.products.filter(n => n.type === 'unit').map(n => ({ name: unitName(n), path: [], role: unitRole(n) }));
   const cols = supportFirst ? [...support, ...primary, ...products] : [...primary, ...support, ...products];
   return {
     names:  cols.map(c => c.name),
     paths:  cols.map(c => c.path),
+    roles:  cols.map(c => c.role),
     sepIdx: cols.length - products.length,
   };
 }
@@ -2950,6 +3053,7 @@ function planValueChainExpand(supportFirst) {
 // 只換欄位結構（不記復原點、不動箭頭、不重繪）；cols 為 buildValueChainColumns 的回傳值。ST-14e 範例載入共用
 function applyValueChainColumns(cols) {
   COLUMN_PATHS  = cols.paths;
+  COLUMN_ROLES  = rolesToColumnRoleMap(cols.names, cols.roles || []);
   COLUMN_GROUPS = pathsToColumnGroups(cols.names, cols.paths);
   productSepIdx = cols.sepIdx;
   syncColumns();
@@ -3098,6 +3202,14 @@ function buildTable() {
           const th = document.createElement('th');
           th.className = level === 0 ? 'col-header' : 'col-header-leaf';
           th.textContent = COLUMNS[ci];
+          const role = getColumnRole(ci);  // ST-14i：特殊價值單元在欄名後加小標記
+          if (role) {
+            const tag = document.createElement('span');
+            tag.className = 'col-role';
+            tag.textContent = `〔${role.label}〕`;
+            tag.title = role.title;
+            th.appendChild(tag);
+          }
           if (depth + 1 - level > 1) th.rowSpan = depth + 1 - level;
           markProduct(th, ci);
           headRows[level].appendChild(th);
@@ -3948,7 +4060,8 @@ function buildMatrixTableXml(L, shapeId) {
       } else {
         if (p.length === level) {
           const rs = depth + 1 - level;
-          grid[level][ci] = { text: COLUMNS[ci], rowSpan: rs, isLeaf: true, ci };
+          const role = getColumnRole(ci);  // ST-14i：特殊價值單元標記，同畫面表頭
+          grid[level][ci] = { text: COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
           for (let l = level + 1; l <= depth; l++) grid[l][ci] = { vMerge: true, ci };
         }
         ci++;
@@ -4446,6 +4559,7 @@ function saveState() {
       strategyDesc:  document.getElementById('strategyDesc').value,
       COLUMN_GROUPS: JSON.parse(JSON.stringify(COLUMN_GROUPS)),
       COLUMN_PATHS:  JSON.parse(JSON.stringify(getColumnPaths())),
+      COLUMN_ROLES:  JSON.parse(JSON.stringify(COLUMN_ROLES)),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
@@ -4482,6 +4596,13 @@ function loadState() {
       COLUMN_PATHS = state.COLUMN_PATHS;
     } else {
       COLUMN_PATHS = null;
+    }
+    // 欄位特殊角色（ST-14i）：只留「欄名 → 合法角色」；舊存檔沒有 → 全部視為一般
+    COLUMN_ROLES = {};
+    if (state.COLUMN_ROLES && typeof state.COLUMN_ROLES === 'object' && !Array.isArray(state.COLUMN_ROLES)) {
+      Object.keys(state.COLUMN_ROLES).forEach(name => {
+        if (vcRoleInfo(state.COLUMN_ROLES[name])) COLUMN_ROLES[name] = state.COLUMN_ROLES[name];
+      });
     }
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
