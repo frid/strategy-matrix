@@ -175,11 +175,21 @@
   .competitor-chip .chip-name {
     outline: none; border: none; background: transparent;
     font-family: inherit; font-size: 0.80rem; font-weight: 500; color: inherit;
-    min-width: 55px; max-width: 100px; cursor: text;
+    min-width: 55px; max-width: 180px; cursor: text;  /* ST-14h：100→180，容納較長的構想名稱 */
   }
   .competitor-chip .chip-name:focus { border-bottom: 1px dashed currentColor; }
   .competitor-chip .remove { font-size: 0.68rem; opacity: 0.40; cursor: pointer; padding: 0 2px; }
   .competitor-chip .remove:hover { opacity: 1; }
+
+  /* ST-14h：策略構想類型短標（點擊循環切換）＋新增時的類型下拉 */
+  .competitor-chip .chip-kind {
+    font-size: 0.70rem; font-weight: 700; padding: 0 2px; border-radius: 4px; cursor: pointer; white-space: nowrap;
+  }
+  .competitor-chip .chip-kind:hover { background: rgba(0,0,0,0.06); }
+  .competitor-chip.kind-rival .chip-name { font-style: italic; }
+  .add-competitor select {
+    border: 1px solid var(--grid-line); border-radius: 8px; padding: 4px 6px; font-size: 0.78rem; font-family: inherit; background: white;
+  }
 
   .add-competitor { display: flex; gap: 6px; align-items: center; }
   .add-competitor input {
@@ -785,6 +795,11 @@
     width: 8px; height: 8px; border-radius: 50%; background: var(--col-header);
   }
   td.matrix-cell.cell-selected { box-shadow: inset 0 0 0 2px var(--col-header); }
+  /* ST-14h：對陣點（疊圖開啟時）：橘紅框＋右上角 ⚔，不蓋住左上代號 */
+  td.matrix-cell.clash { outline: 3px solid #e0582b; outline-offset: -5px; }
+  td.matrix-cell.clash::before {
+    content: '⚔'; position: absolute; top: 3px; right: 5px; font-size: 1.15rem; font-weight: 700; line-height: 1; color: #e0582b;
+  }
   td.matrix-cell .cell-vi { margin-left: 4px; font-size: 0.9rem; font-weight: bold; color: var(--ink); }
   td.matrix-cell .cell-bases { position: absolute; left: 6px; bottom: 4px; font-size: 0.66rem; color: var(--ink-light); }
   .cell-panel { margin-top: 10px; }
@@ -915,6 +930,16 @@
   .premise-quad li.empty { list-style: none; margin-left: -16px; color: var(--cell-text); cursor: default; text-decoration: none; }
   .premise-quad.extra { grid-column: 1 / -1; }
   @media (max-width: 600px) { .premise-swot-grid { grid-template-columns: 1fr; } }
+  /* ST-14h：對陣點清單 */
+  .clash-list { display: flex; flex-direction: column; gap: 6px; }
+  .clash-item { border: 1px solid var(--grid-line); border-radius: 6px; padding: 4px 8px; background: white; font-size: 12px; }
+  .clash-item.strengthen { border-left: 4px solid #2ca05a; } .clash-item.shift { border-left: 4px solid #e0582b; }
+  .clash-head { font-weight: 600; cursor: pointer; } .clash-head:hover { color: var(--col-header); text-decoration: underline dotted; }
+  .clash-who { color: var(--ink-light); margin: 2px 0 4px; }
+  .clash-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .clash-ctrl input[type=text] { flex: 1; min-width: 160px; border: 1px solid var(--grid-line); border-radius: 5px; padding: 1px 6px; font-family: inherit; font-size: 0.72rem; color: var(--ink); outline: none; }
+  .clash-ctrl input[type=text]:focus { border-color: var(--col-header); }
+  .premise-seg button.on.strengthen { background: #2ca05a; color: white; } .premise-seg button.on.shift { background: #e0582b; color: white; } .premise-seg button.on.none { background: #9e9e9e; color: white; }
 
   /* Column separator pin marker */
   .col-pin { font-size: 0.80rem; cursor: pointer; opacity: 0.22; line-height: 1; padding: 0 2px; user-select: none; }
@@ -1019,6 +1044,14 @@
       <button type="button" class="btn-ghost" id="premiseSwotCopyBtn" onclick="copyPremiseSwot()">📋 複製 SWOT</button>
     </div>
   </details>
+  <!-- ST-14h：對陣點（本公司現行／未來方向 vs 競爭者構想用到同一策略點）＋回應標記 -->
+  <details class="sentence-box premise-box" id="clashBox">
+    <summary>⚔ 對陣點（本公司 vs 競爭者）</summary>
+    <div id="clashBody"></div>
+    <div class="sentence-actions">
+      <button type="button" class="btn-ghost" id="clashCopyBtn" onclick="copyClashPoints()">📋 複製</button>
+    </div>
+  </details>
   <!-- ST-14c：策略句型（依箭頭自動產生） -->
   <details class="sentence-box" id="sentenceBox">
     <summary>📝 策略句型</summary>
@@ -1040,10 +1073,11 @@
 <!-- Competitors (content swapped under 策略構想) -->
 <h2 class="section-title">策略構想</h2>
 <div class="panel">
-  <div class="panel-title">點擊名稱可直接改名</div>
+  <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／未來方向／競爭者）</div>
   <div class="competitor-row" id="competitorBar">
     <div class="add-competitor">
       <input type="text" id="compNameInput" placeholder="新增策略名稱" maxlength="14" />
+      <select id="compKindSelect" title="新策略構想的類型（ST-14h）"></select>
       <button class="btn-primary" onclick="addCompetitor()">＋ 新增</button>
     </div>
   </div>
@@ -1058,6 +1092,7 @@
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
+  <label class="short-view-toggle" title="同時畫出所有策略構想的箭頭（非目前構想變淡、競爭者虛線），並以 ⚔ 標出對陣點；關閉時只畫目前構想（ST-14h）"><input type="checkbox" id="overlayChk" onchange="toggleOverlayAll(this.checked)"> 🔀 疊圖（顯示所有構想）</label>
   <button class="btn-ghost" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
   <button class="btn-ghost" onclick="clearCompetitor()">清除目前策略</button>
@@ -1618,7 +1653,9 @@ const EXAMPLE_PROJECTS = [
       products: ['中文書籍', '專業書籍', '影音商品'].map(n => vcAct(n)),
       links: [],
     },
-    competitors: [{ name: '現行策略', color: COLORS[0] }, { name: '未來方向', color: COLORS[1] }],
+    // ST-14h：第三個構想＝潛在競爭者（示範），依 S 372 的競爭局面改寫：大型連鎖書店開網站，挾資訊投資、規模與採購談判力；非書上原圖
+    competitors: [{ name: '現行策略', color: COLORS[0], kind: 'current' }, { name: '未來方向', color: COLORS[1], kind: 'future' },
+      { name: '競爭者：連鎖書店（示範）', color: COLORS[2], kind: 'rival' }],
     arrows: [
       [
         exArrow('A', '採購', 'A', '中文書籍', '採購成本低使書價便宜', ['1-2']),
@@ -1654,6 +1691,14 @@ const EXAMPLE_PROJECTS = [
           exPremise('cond', '有採購影音商品的經驗與能力 [S 371]', 'no'),
         ]),
       ],
+      [
+        exArrow('F', '資訊系統', 'A', '資訊系統', '對手也砸錢建資訊能力 [S 372]', ['6-2', '6-8']),
+        exArrow('D', '資訊系統', 'A', '資訊系統', '資訊系統投資規模更大 [S 372]', ['4-1']),
+        exArrow('D', '採購', 'A', '採購', '連鎖規模帶來採購談判力', ['4-1', '1-3']),
+        exArrow('A', '採購', 'A', '中文書籍', '進貨成本低，網路書價跟進', ['1-2']),
+        exArrow('A', '品牌', 'B', '中文書籍', '門市品牌把既有讀者帶上網', ['1-2']),
+        exArrow('A', '網站平台', 'A', '中文書籍', '新設網站查書下單', ['1-2']),
+      ],
     ],
     // ST-14f：模組劃分依書上圖序（書中未命名模組）；idx＝同一策略構想 arrows 的順序索引，載入時換成箭頭 id
     modules: [
@@ -1665,6 +1710,7 @@ const EXAMPLE_PROJECTS = [
       [
         { name: '未來方向（圖 9.13）', idx: [0, 1, 2, 3, 4, 5, 6] },
       ],
+      [],
     ],
   },
   {
@@ -1954,6 +2000,20 @@ const PREMISE_TYPES = [
     desc: '企業本身必須具備的能力或資源（資訊系統能力、製程研發能力…）；成立＝優勢、不成立＝劣勢 [S 370, 375]' },
   { k: 'causal', label: '因果認知前提', short: '因', swot: null,
     desc: '對「這個作為會帶來那個結果」的因果判斷，例如顧客是否覺得低價抵得過沒有門市的不便 [S 369, 371]；不歸入 SWOT，另列' },
+];
+// ST-14h：策略構想類型。書上把「現行策略」與「新策略方向」分開驗證 [S 369, 371]，並把可能競爭者的策略畫在同一矩陣上比較、
+// 找出雙方「對陣」之處 [S 372–373]。舊存檔沒有 kind → normaliseCompetitorKinds 推定（不會猜成競爭者）
+const STRATEGY_KINDS = [
+  { k: 'current', label: '本公司現行', short: '本', desc: '本公司目前的作法 [S 369]' },
+  { k: 'future',  label: '未來方向',   short: '未', desc: '本公司考慮中的新策略方向 [S 369, 371]' },
+  { k: 'rival',   label: '競爭者',     short: '競', desc: '可能競爭者的策略；畫在同一矩陣上與我方比對，找出對陣點 [S 372–373]' },
+];
+const STRATEGY_KIND_MAP = Object.fromEntries(STRATEGY_KINDS.map(k => [k.k, k]));
+// ST-14h：對陣點回應。書上：哪裡可創造優勢、哪裡須立即加強、哪裡須轉移陣地 [S 373]
+const CLASH_RESPONSES = [
+  { k: 'strengthen', label: '💪 可強化', text: '可強化' },
+  { k: 'shift',      label: '↪ 須轉移', text: '須轉移' },
+  { k: '',           label: '— 未定',   text: '未定' },
 ];
 const PREMISE_STATUS = [{ k: 'ok', label: '成立' }, { k: 'unsure', label: '待驗證' }, { k: 'no', label: '不成立' }];
 const PREMISE_TYPE_MAP = Object.fromEntries(PREMISE_TYPES.map(t => [t.k, t]));
@@ -2250,6 +2310,30 @@ let competitors = [
   { name: '策略構想B', color: COLORS[1] },
 ];
 let activeIdx = 0;
+// ST-14h：疊圖（同時畫所有策略構想）；預設開＝維持舊版「全部畫出」的觀感，關閉時只畫目前構想
+let overlayAll = true;
+// ST-14h：對陣點回應。clashNotes＝{ '欄名|列字母': { resp: 'strengthen'|'shift'|'', text } }，key 慣例同 cellNotes；沒內容就不存 key
+let clashNotes = {};
+
+// 沒有合法 kind 的構想（舊存檔）→ 第 0 個＝現行、名稱含「未來」＝未來方向、其餘＝現行（不猜成競爭者）
+function normaliseCompetitorKinds() {
+  competitors.forEach((c, ci) => {
+    if (STRATEGY_KIND_MAP[c.kind]) return;
+    c.kind = ci === 0 ? 'current' : (String(c.name || '').includes('未來') ? 'future' : 'current');
+  });
+}
+function compKind(ci) { const c = competitors[ci]; return c && STRATEGY_KIND_MAP[c.kind] ? c.kind : 'current'; }
+function normaliseClashNote(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const n = { resp: CLASH_RESPONSES.some(r => r.k === raw.resp) ? raw.resp : '', text: typeof raw.text === 'string' ? raw.text : '' };
+  return n.resp || n.text.trim() ? n : null;
+}
+function normaliseClashNotes(raw) {
+  const out = {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw))
+    Object.keys(raw).forEach(key => { const n = normaliseClashNote(raw[key]); if (n) out[key] = n; });
+  return out;
+}
 
 // arrows[compIdx] = [ {from: {row,col}, to: {row,col}, note, elements: ['1-3', …]}, ... ]（elements＝ST-14b 策略要素 id）
 // ST-14g：箭頭可帶 premises: [{ id, type: 'env'|'cond'|'causal', text, status: 'ok'|'unsure'|'no' }]
@@ -2319,7 +2403,7 @@ let history = [];
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
   // ST-03：快照一律帶短版矩陣狀態（view）；舊格式（純陣列）undo 時照樣相容
-  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes, modules };  // ST-14a：一併記策略點描述；ST-14f：策略模組
+  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes, modules, clashNotes };  // ST-14h：對陣點回應  // ST-14a：一併記策略點描述；ST-14f：策略模組
   if (withColumns) snap.cols = { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx };
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
@@ -2350,6 +2434,7 @@ function undo() {
     }
     if (snap.cellNotes && typeof snap.cellNotes === 'object') cellNotes = snap.cellNotes;  // 舊快照沒有 → 不動
     if (Array.isArray(snap.modules)) modules = snap.modules;  // ST-14f：舊快照沒有 → 不動（normalise 會清掉失效成員）
+    if (snap.clashNotes && typeof snap.clashNotes === 'object') clashNotes = normaliseClashNotes(snap.clashNotes);  // ST-14h
   }
   ensureArrowIds();
   normaliseArrowPremises();  // ST-14g
@@ -4100,8 +4185,12 @@ function drawLines() {
   svg.appendChild(defs);
 
   const focus = focusModuleArrowIds();  // ST-14f：選取／圈選中的模組 → 其他箭頭變淡
-  arrows.forEach((compArrows, ci) => {
+  // ST-14h：疊圖關閉只畫目前構想；開啟時全部畫，目前構想最後畫（在最上層）
+  const order = overlayAll ? [...arrows.keys()].filter(ci => ci !== activeIdx).concat(activeIdx) : [activeIdx];
+  order.forEach(ci => {
     const comp = competitors[ci];
+    const compArrows = arrows[ci] || [];
+    if (!comp) return;
     compArrows.forEach(arrow => {
       if (arrowTouchesHiddenCol(arrow)) return;  // ST-03：任一端在隱藏欄 → 不畫（資料保留）
       const p1 = getCellCenter(arrow.from.row, arrow.from.col);
@@ -4124,7 +4213,9 @@ function drawLines() {
       path.setAttribute('stroke-width', '13');
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke-linecap', 'butt');
-      path.setAttribute('opacity', focus && !(ci === activeIdx && focus.has(arrow.id)) ? '0.25' : '0.92');
+      // ST-14f 模組淡化只認目前構想的成員；ST-14h 疊圖時非目前構想 0.55
+      path.setAttribute('opacity', focus && !(ci === activeIdx && focus.has(arrow.id)) ? '0.25' : (ci === activeIdx ? '0.92' : '0.55'));
+      if (compKind(ci) === 'rival') path.setAttribute('stroke-dasharray', '24 12');  // ST-14h：競爭者虛線
       path.setAttribute('marker-end', `url(#arrow-${ci})`);
       svg.appendChild(path);
 
@@ -4135,6 +4226,166 @@ function drawLines() {
       if (toTd)   toTd.classList.add('used');
     });
   });
+  renderClashMarks();
+}
+
+// ── 對陣點（ST-14h）────────────────────────────────────────────────────────
+// 某策略點同時被本公司（現行或未來）與至少一個競爭者構想的箭頭用到（起點或終點）＝對陣點 [S 372–373]
+// 回傳 [{ key, row, col, ours: [{ ci, n }], rivals: [{ ci, n }], oursN, rivalsN }]，依列、欄排序
+function collectClashPoints() {
+  const map = new Map();
+  arrows.forEach((list, ci) => {
+    if (!competitors[ci]) return;
+    const side = compKind(ci) === 'rival' ? 'rivals' : 'ours';
+    (list || []).forEach(a => {
+      const ends = [a.from, a.to].filter((c, i, arr) => c && arr.findIndex(x => x && x.row === c.row && x.col === c.col) === i);
+      ends.forEach(c => {
+        if (c.col < 0 || c.col >= COLUMNS.length) return;
+        const key = cellNoteKey(c.col, c.row);
+        if (!map.has(key)) map.set(key, { key, row: c.row, col: c.col, ours: new Map(), rivals: new Map() });
+        const m = map.get(key)[side];
+        m.set(ci, (m.get(ci) || 0) + 1);
+      });
+    });
+  });
+  const rowIdx = id => ROWS.findIndex(r => r.id === id);
+  return [...map.values()].filter(p => p.ours.size && p.rivals.size).map(p => {
+    const list = m => [...m.entries()].map(([ci, n]) => ({ ci, n }));
+    const ours = list(p.ours), rivals = list(p.rivals);
+    return { key: p.key, row: p.row, col: p.col, ours, rivals,
+      oursN: ours.reduce((s, x) => s + x.n, 0), rivalsN: rivals.reduce((s, x) => s + x.n, 0) };
+  }).sort((a, b) => rowIdx(a.row) - rowIdx(b.row) || a.col - b.col);
+}
+function hasRivalStrategy() { return competitors.some((_, ci) => compKind(ci) === 'rival'); }
+// 疊圖開啟時在矩陣格子加 .clash（⚔ 角標＋框）
+function renderClashMarks() {
+  document.querySelectorAll('#matrixTable td.cell.clash').forEach(td => td.classList.remove('clash'));
+  if (!overlayAll) return;
+  collectClashPoints().forEach(p => {
+    const td = document.getElementById(`cell-${p.row}-${p.col}`);
+    if (td) td.classList.add('clash');
+  });
+}
+function clashPointTitle(p) {
+  const row = ROWS.find(r => r.id === p.row);
+  return `${cellCode(p)} ${COLUMNS[p.col]} × ${row ? row.label : p.row}`;
+}
+function clashWhoText(list) { return list.map(x => competitors[x.ci].name).join('、'); }
+function setClashNote(key, patch) {
+  const n = normaliseClashNote({ resp: '', text: '', ...(clashNotes[key] || {}), ...patch });
+  if (n) clashNotes[key] = n; else delete clashNotes[key];
+}
+function clashStats(points) {
+  const st = { total: points.length, strengthen: 0, shift: 0, none: 0 };
+  points.forEach(p => { const r = (clashNotes[p.key] || {}).resp; if (r === 'strengthen') st.strengthen++; else if (r === 'shift') st.shift++; else st.none++; });
+  return st;
+}
+function renderClashBox() {
+  const body = document.getElementById('clashBody');
+  if (!body) return;
+  body.innerHTML = '';
+  const hint = document.createElement('div');
+  hint.className = 'premise-swot-hint';
+  if (!hasRivalStrategy()) {
+    hint.textContent = '新增一個「競爭者」類型的策略構想並畫上它的箭頭，即可比對對陣點。';
+    body.appendChild(hint);
+    return;
+  }
+  const points = collectClashPoints();
+  const st = clashStats(points);
+  const stats = document.createElement('div');
+  stats.className = 'premise-swot-stats';
+  stats.textContent = `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`;
+  body.appendChild(stats);
+  hint.textContent = '把競爭者的策略畫在同一張矩陣上，與本公司（現行／未來方向）用到同一個策略點之處就是雙方直接抗衡的「對陣」點；'
+    + '再判斷哪裡可以強化、創造優勢，哪裡必須轉移陣地 [S 372–373]。' + (overlayAll ? '矩陣上以 ⚔ 標出。' : '開啟「🔀 疊圖」可在矩陣上看到 ⚔ 標記。');
+  body.appendChild(hint);
+  if (!points.length) {
+    const e = document.createElement('div');
+    e.className = 'premise-swot-hint';
+    e.textContent = '（目前沒有對陣點：競爭者構想的箭頭沒有用到本公司構想用到的策略點）';
+    body.appendChild(e);
+    return;
+  }
+  const listEl = document.createElement('div');
+  listEl.className = 'clash-list';
+  points.forEach(p => {
+    const note = clashNotes[p.key] || { resp: '', text: '' };
+    const item = document.createElement('div');
+    item.className = 'clash-item' + (note.resp ? ' ' + note.resp : '');
+    const head = document.createElement('div');
+    head.className = 'clash-head';
+    head.textContent = '⚔ ' + clashPointTitle(p);
+    head.title = '點擊選取這個策略點（矩陣下方面板顯示定義與描述）';
+    head.addEventListener('click', () => {
+      selectCell(p.row, p.col, false);
+      const panel = document.getElementById('cellPanel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    const who = document.createElement('div');
+    who.className = 'clash-who';
+    who.textContent = `本公司：${p.oursN} 條箭頭（${clashWhoText(p.ours)}）｜競爭者：${p.rivalsN} 條（${clashWhoText(p.rivals)}）`;
+    const ctrl = document.createElement('div');
+    ctrl.className = 'clash-ctrl';
+    const seg = document.createElement('span');
+    seg.className = 'premise-seg';
+    CLASH_RESPONSES.forEach(r => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = r.label;
+      if (note.resp === r.k) b.className = 'on ' + (r.k || 'none');
+      b.addEventListener('click', () => {
+        if (note.resp === r.k) return;
+        pushHistory();
+        setClashNote(p.key, { resp: r.k });
+        renderClashBox();
+        saveState();
+      });
+      seg.appendChild(b);
+    });
+    const txt = document.createElement('input');
+    txt.type = 'text';
+    txt.placeholder = '理由（例：資訊系統再投資拉開差距／改在影音商品競爭）';
+    txt.value = note.text || '';
+    txt.addEventListener('input', () => { setClashNote(p.key, { text: txt.value }); saveState(); });
+    ctrl.appendChild(seg); ctrl.appendChild(txt);
+    item.appendChild(head); item.appendChild(who); item.appendChild(ctrl);
+    listEl.appendChild(item);
+  });
+  body.appendChild(listEl);
+}
+function clashPointsText() {
+  if (!hasRivalStrategy()) return '';
+  const points = collectClashPoints();
+  if (!points.length) return '';
+  const st = clashStats(points);
+  const lines = ['【對陣點（本公司 vs 競爭者）】', `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`];
+  points.forEach(p => {
+    const n = clashNotes[p.key] || { resp: '', text: '' };
+    const r = CLASH_RESPONSES.find(x => x.k === n.resp);
+    const why = n.text.trim() ? `；理由：${n.text.trim()}` : '';
+    lines.push(`- ${clashPointTitle(p)}［${r ? r.text : '未定'}］本公司：${p.oursN} 條（${clashWhoText(p.ours)}）｜競爭者：${p.rivalsN} 條（${clashWhoText(p.rivals)}）${why}`);
+  });
+  return lines.join('\n');
+}
+function copyClashPoints() {
+  const txt = clashPointsText();
+  if (!txt) { alert('目前沒有對陣點'); return; }
+  const btn = document.getElementById('clashCopyBtn');
+  const ok = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = '📋 複製'; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => alert('複製失敗，請手動選取'));
+  else alert('此瀏覽器不支援自動複製');
+}
+function syncOverlayControls() {
+  const chk = document.getElementById('overlayChk');
+  if (chk) chk.checked = overlayAll;
+}
+function toggleOverlayAll(on) {
+  overlayAll = !!on;
+  syncOverlayControls();
+  drawLines();
+  renderClashBox();
+  saveState();
 }
 
 // ── Arrow list ────────────────────────────────────────────────────────────
@@ -4270,6 +4521,7 @@ function renderArrowList() {
     list.appendChild(empty);
   }
   renderPremiseSwot();  // ST-14g
+  renderClashBox();     // ST-14h
   renderStrategySentences();
 }
 
@@ -4982,24 +5234,41 @@ function renderCompetitorBar() {
 
   competitors.forEach((comp, ci) => {
     const chip = document.createElement('div');
-    chip.className = 'competitor-chip' + (ci === activeIdx ? ' active' : '');
+    chip.className = 'competitor-chip' + (ci === activeIdx ? ' active' : '') + ` kind-${compKind(ci)}`;
     chip.style.color = comp.color;
 
     const dot = document.createElement('div');
     dot.className = 'dot';
+
+    // ST-14h：類型短標〔本〕〔未〕〔競〕，點擊循環切換
+    const kindEl = document.createElement('span');
+    kindEl.className = 'chip-kind';
+    const kInfo = STRATEGY_KIND_MAP[compKind(ci)];
+    kindEl.textContent = `〔${kInfo.short}〕`;
+    kindEl.title = `${kInfo.label}：${kInfo.desc}（點擊切換類型）`;
+    kindEl.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = STRATEGY_KINDS.findIndex(k => k.k === compKind(ci));
+      comp.kind = STRATEGY_KINDS[(i + 1) % STRATEGY_KINDS.length].k;
+      renderCompetitorBar();
+      drawLines();
+      renderClashBox();
+      saveState();
+    });
 
     const nameInp = document.createElement('input');
     nameInp.className = 'chip-name';
     nameInp.type = 'text';
     nameInp.value = comp.name;
     nameInp.maxLength = 14;
+    nameInp.style.width = `${Math.max(3, comp.name.length) + 2}em`;  // ST-14h：寬度隨名稱長度（上限見 CSS max-width）
     nameInp.title = '點擊改名';
     nameInp.addEventListener('mousedown', e => e.stopPropagation());
     nameInp.addEventListener('change', () => {
       comp.name = nameInp.value.trim() || comp.name;
       nameInp.value = comp.name;
       renderLegend();
-      renderArrowList();
+      renderArrowList();  // 內含 renderClashBox（構想名稱出現在對陣點清單）
       updateStatus();
       saveState();
     });
@@ -5010,7 +5279,7 @@ function renderCompetitorBar() {
     rm.textContent = '✕';
     rm.addEventListener('click', e => { e.stopPropagation(); removeCompetitor(ci); });
 
-    chip.appendChild(dot); chip.appendChild(nameInp); chip.appendChild(rm);
+    chip.appendChild(dot); chip.appendChild(kindEl); chip.appendChild(nameInp); chip.appendChild(rm);
     chip.addEventListener('click', e => {
       if (e.target === nameInp || e.target === rm) return;
       activeIdx = ci;
@@ -5030,10 +5299,12 @@ function renderCompetitorBar() {
 function renderLegend() {
   const legend = document.getElementById('legendContainer');
   legend.innerHTML = '';
-  competitors.forEach(comp => {
+  competitors.forEach((comp, ci) => {
     const item = document.createElement('div');
     item.className = 'legend-item';
-    item.innerHTML = `<div class="legend-line" style="background:${comp.color}"></div><span>${comp.name}</span>`;
+    // ST-14h：競爭者構想的線段畫成虛線，與矩陣上的箭頭一致
+    const bg = compKind(ci) === 'rival' ? `repeating-linear-gradient(90deg, ${comp.color} 0 7px, transparent 7px 11px)` : comp.color;
+    item.innerHTML = `<div class="legend-line" style="background:${bg}"></div><span>〔${STRATEGY_KIND_MAP[compKind(ci)].short}〕${escXml(comp.name)}</span>`;
     legend.appendChild(item);
   });
 }
@@ -5043,17 +5314,34 @@ function addCompetitor() {
   const name = inp.value.trim();
   if (!name) return;
   if (competitors.length >= 8) { alert('最多支援 8 個策略'); return; }
-  competitors.push({ name, color: COLORS[competitors.length % COLORS.length] });
+  const kSel = document.getElementById('compKindSelect');
+  const kind = kSel && STRATEGY_KIND_MAP[kSel.value] ? kSel.value : 'current';  // ST-14h
+  competitors.push({ name, color: COLORS[competitors.length % COLORS.length], kind });
   arrows.push([]);
   modules.push([]);
   activeIdx = competitors.length - 1;
   moduleSelId = moduleEditId = null;
   inp.value = '';
+  syncCompKindSelect();
   renderCompetitorBar();
   drawLines();
   renderArrowList();
   updateStatus();
   saveState();
+}
+
+// ST-14h：新增構想的類型下拉；預設＝已有「本公司現行」就選競爭者，否則選現行
+function syncCompKindSelect() {
+  const sel = document.getElementById('compKindSelect');
+  if (!sel) return;
+  if (!sel.options.length) STRATEGY_KINDS.forEach(k => {
+    const o = document.createElement('option');
+    o.value = k.k;
+    o.textContent = k.label;
+    o.title = k.desc;
+    sel.appendChild(o);
+  });
+  sel.value = competitors.some((_, ci) => compKind(ci) === 'current') ? 'rival' : 'current';
 }
 
 function removeCompetitor(ci) {
@@ -5836,6 +6124,8 @@ function saveState() {
       modules:       JSON.parse(JSON.stringify(modules)),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
+      overlayAll,                                         // ST-14h
+      clashNotes:    JSON.parse(JSON.stringify(clashNotes)),  // ST-14h
       arrows:        JSON.parse(JSON.stringify(arrows)),
       activeIdx,
       productSepIdx,
@@ -5894,6 +6184,9 @@ function loadState() {
     }
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
+    normaliseCompetitorKinds();  // ST-14h：舊存檔沒有 kind → 推定
+    overlayAll = state.overlayAll !== false;  // ST-14h：舊存檔沒有 → 開（維持舊版全部畫出）
+    clashNotes = normaliseClashNotes(state.clashNotes);  // ST-14h：舊存檔沒有 → {}
     if (Array.isArray(state.arrows))
       arrows = state.arrows.map(arr => arr.map(a => {
         // 舊存檔沒有 elements（ST-14b）→ 補空陣列；只留字串 id
@@ -6023,6 +6316,7 @@ function loadExampleProject(id) {
   commitValueChain();
   applyValueChainColumns(buildValueChainColumns(true));
   competitors = ex.competitors.map(c => ({ ...c }));
+  normaliseCompetitorKinds();  // ST-14h
   const colIdx = name => COLUMNS.indexOf(name);  // 同名取第一個
   const exIds = [];  // ST-14f：exIds[ci][範例箭頭索引] = 新 id（略過的箭頭為 null）
   arrows = ex.arrows.map((list, ci) => list.map((a, ai) => {
@@ -6050,8 +6344,10 @@ function loadExampleProject(id) {
   normaliseModules();
   activeIdx = 0;
   cellNotes = {};     // ST-14a：範例不帶策略點描述，清掉舊的
+  clashNotes = {};    // ST-14h：對陣點回應也清掉
   currentCell = null;
   cancelPending();
+  syncCompKindSelect();
   renderColEditor();
   rebuildTable();
   renderCompetitorBar();
@@ -6087,6 +6383,9 @@ buildExampleSelect();
 applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 syncShortViewControls();
+normaliseCompetitorKinds();  // ST-14h：預設構想（沒有存檔時）也補 kind
+syncOverlayControls();
+syncCompKindSelect();
 window.addEventListener('resize', drawLines);
 window.addEventListener('resize', drawVcLinks);
 renderColEditor();
