@@ -3,3 +3,6 @@
 *.pptx
 *.mp3
 Example/
+node_modules/
+test-results/
+playwright-report/

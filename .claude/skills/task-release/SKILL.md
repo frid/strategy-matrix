@@ -95,6 +95,7 @@ git push -u origin "$(git branch --show-current)"
 
 ## Release 到 main（只有使用者說「release」才做）
 
+0. 在 dev 的工作目錄本機執行 `tools/release-check.sh`，以 exit code 判定（印 PASS 才能繼續）。FAIL 一律停下回報，不以 AI 讀截圖或主觀判讀代替。
 1. 確認版號：使用者指定，或提議上一個 tag 的 patch +1（`git tag --sort=-v:refname | head -1`）。
 2. `git log --oneline main..dev` 給使用者看要上線的內容。
 3. `git checkout main && git pull && git merge --no-ff dev && git tag -a vX.Y.Z -m "..." && git push origin main --tags`。
@@ -108,3 +109,4 @@ git push -u origin "$(git branch --show-current)"
 |---|---|---|
 | 1.0.0 | 2026-09-28 | 建立：參考 QMSWeb `qms-release`，拿掉版號／burndown／DB 閘門，改成單檔網頁專案版 |
 | 1.1.0 | 2026-10-25 | 三層分支：merge→dev、release→main＋tag |
+| 1.2.0 | 2026-10-25 | release 前加本機自動測試閘門 tools/release-check.sh |
