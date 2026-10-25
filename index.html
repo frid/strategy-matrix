@@ -284,7 +284,7 @@
     outline: 2px dashed #e0a020; outline-offset: -2px; background: #fff3cd !important;
   }
   /* 連線 SVG 疊加層：細線＋箭頭，不擋滑鼠事件 */
-  #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+  #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
   /* ST-01h：版型依循經典 Porter 價值鏈圖——支援活動在上（橫跨全寬的橫條，由上而下堆疊）、
      主要活動＋產品在下（並排方塊），右側 Margin 箭頭，左／下括號標示支援／主要活動 */
   .vc-zones {
@@ -2747,6 +2747,71 @@ function vcRectEdgePoint(rect, towardX, towardY) {
   return { x: cx + dx * scale, y: cy + dy * scale };
 }
 
+// ST-05：決定一條連線怎麼走（畫面與 PPTX 共用，單位由 opts 決定）
+// rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距 }；rowUse：各列已用的繞行層數
+// 回傳 { kind: 'straight'|'detour', pts: [點...] }（最後一點是箭頭端）
+function vcLinkRoute(r1, r2, rects, opts, rowUse) {
+  const ovX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
+  const ovY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
+  const contains = (o, r) => o.x <= r.x && o.y <= r.y && o.x + o.w >= r.x + r.w && o.y + o.h >= r.y + r.h;
+  const others = rects.filter(o => o !== r1 && o !== r2 && !contains(o, r1) && !contains(o, r2));
+  const sameRow = ovY > Math.min(r1.h, r2.h) * 0.5;
+  if (sameRow) {
+    const left = r1.x <= r2.x ? r1 : r2, right = left === r1 ? r2 : r1;
+    const gapX = right.x - (left.x + left.w);
+    const my = Math.max(r1.y, r2.y) + ovY / 2;
+    // 中間有沒有其他方塊（水平帶狀範圍內、夾在兩者之間）
+    const blocked = others.some(o => o.x < right.x && o.x + o.w > left.x + left.w &&
+      o.y < my && o.y + o.h > my);
+    if (gapX < opts.near && !blocked) {
+      const fromX = r1 === left ? r1.x + r1.w : r1.x;
+      const toX = r1 === left ? r2.x : r2.x + r2.w;
+      return { kind: 'straight', pts: [{ x: fromX, y: my }, { x: toX, y: my }] };
+    }
+    // 跨越：從來源頂邊上去，繞到同列所有方塊上方，再從目標頂邊下來
+    const rowRects = others.concat([r1, r2]).filter(o => o.y < r1.y + r1.h && o.y + o.h > r1.y);
+    const rowTop = Math.min.apply(null, rowRects.map(o => o.y));
+    const key = Math.round(rowTop);
+    const n = rowUse[key] || 0;
+    rowUse[key] = n + 1;
+    const ty = rowTop - opts.lift - n * opts.step;
+    const x1 = r1.x + r1.w / 2, x2 = r2.x + r2.w / 2;
+    return { kind: 'detour', pts: [{ x: x1, y: r1.y }, { x: x1, y: ty }, { x: x2, y: ty }, { x: x2, y: r2.y }] };
+  }
+  if (ovX > 0) {
+    const upper = r1.y <= r2.y ? r1 : r2, lower = upper === r1 ? r2 : r1;
+    const gapY = lower.y - (upper.y + upper.h);
+    const mx = Math.max(r1.x, r2.x) + ovX / 2;
+    const blocked = others.some(o => o.y < lower.y && o.y + o.h > upper.y + upper.h &&
+      o.x < mx && o.x + o.w > mx);
+    if (gapY < opts.near && !blocked) {
+      const fromY = r1 === upper ? r1.y + r1.h : r1.y;
+      const toY = r1 === upper ? r2.y : r2.y + r2.h;
+      return { kind: 'straight', pts: [{ x: mx, y: fromY }, { x: mx, y: toY }] };
+    }
+  }
+  // 不同列：邊緣交點直線
+  const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
+  const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
+  return { kind: 'straight', pts: [vcRectEdgePoint(r1, c2.x, c2.y), vcRectEdgePoint(r2, c1.x, c1.y)] };
+}
+
+// 折線點 → SVG path；轉角用 Q 小圓角（半徑 r）
+function vcRoundedPath(pts, r) {
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1], p = pts[i], p2 = pts[i + 1];
+    const l1 = Math.hypot(p.x - p0.x, p.y - p0.y), l2 = Math.hypot(p2.x - p.x, p2.y - p.y);
+    const rr = Math.min(r, l1 / 2, l2 / 2);
+    if (!rr) { d += ` L ${p.x} ${p.y}`; continue; }
+    const a = { x: p.x + (p0.x - p.x) / l1 * rr, y: p.y + (p0.y - p.y) / l1 * rr };
+    const b = { x: p.x + (p2.x - p.x) / l2 * rr, y: p.y + (p2.y - p.y) / l2 * rr };
+    d += ` L ${a.x} ${a.y} Q ${p.x} ${p.y}, ${b.x} ${b.y}`;
+  }
+  const last = pts[pts.length - 1];
+  return d + ` L ${last.x} ${last.y}`;
+}
+
 function drawVcLinks() {
   const svg = document.getElementById('vcLineCanvas');
   if (!svg) return;
@@ -2756,14 +2821,14 @@ function drawVcLinks() {
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
   const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
   marker.setAttribute('id', 'vc-arrow-head');
-  marker.setAttribute('markerWidth', '9');
-  marker.setAttribute('markerHeight', '9');
-  marker.setAttribute('refX', '8');
-  marker.setAttribute('refY', '4.5');
+  marker.setAttribute('markerWidth', '10');
+  marker.setAttribute('markerHeight', '8');
+  marker.setAttribute('refX', '9');
+  marker.setAttribute('refY', '4');
   marker.setAttribute('orient', 'auto');
   marker.setAttribute('markerUnits', 'userSpaceOnUse');
   const ap = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  ap.setAttribute('d', 'M0,0 L0,9 L9,4.5 z');
+  ap.setAttribute('d', 'M0,0 L0,8 L10,4 z');
   // 連線色取目前配色的 --vc-link（ST-12）
   const linkColor = getComputedStyle(document.documentElement).getPropertyValue('--vc-link').trim() || '#5a4fcf';
   ap.setAttribute('fill', linkColor);
@@ -2771,24 +2836,41 @@ function drawVcLinks() {
   defs.appendChild(marker);
   svg.appendChild(defs);
 
+  const editor = document.getElementById('valueChainEditor');
+  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(Boolean);
+  const rowUse = {};
   valueChain.links.forEach(link => {
     const r1 = getVcNodeRect(link.from);
     const r2 = getVcNodeRect(link.to);
     if (!r1 || !r2) return;
-    const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
-    const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
-    const p1 = vcRectEdgePoint(r1, c2.x, c2.y);
-    const p2 = vcRectEdgePoint(r2, c1.x, c1.y);
-    // 微微上弧，避免多條連線完全重疊看不出來
-    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2 - 14;
+    // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
+    const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
+    const route = vcLinkRoute(same(r1), same(r2), rects, { near: 40, lift: 18, step: 10 }, rowUse);
+    const d = vcRoundedPath(route.pts, 8);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'vc-link');
+    // 底層：底色粗描邊（比主線寬 3px），讓線在方塊邊緣與文字旁看得清楚
+    const halo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    halo.setAttribute('class', 'vc-link-halo');
+    halo.setAttribute('d', d);
+    halo.setAttribute('stroke', '#fff');
+    halo.setAttribute('stroke-width', '5.5');
+    halo.setAttribute('stroke-linecap', 'round');
+    halo.setAttribute('stroke-linejoin', 'round');
+    halo.setAttribute('fill', 'none');
+    halo.setAttribute('opacity', '0.9');
+    g.appendChild(halo);
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M ${p1.x} ${p1.y} Q ${mx} ${my}, ${p2.x} ${p2.y}`);
+    path.setAttribute('class', 'vc-link-main');
+    path.setAttribute('d', d);
     path.setAttribute('stroke', linkColor);
     path.setAttribute('stroke-width', '2.5');
+    path.setAttribute('stroke-linejoin', 'round');
     path.setAttribute('fill', 'none');
-    path.setAttribute('opacity', '0.85');
+    path.setAttribute('opacity', '0.9');
     path.setAttribute('marker-end', 'url(#vc-arrow-head)');
-    svg.appendChild(path);
+    g.appendChild(path);
+    svg.appendChild(g);
   });
 }
 
@@ -3941,7 +4023,7 @@ function buildMatrixTableXml(L, shapeId) {
 }
 
 // ── 直線連接器（箭頭）：給定兩點，產生一支帶箭頭頭的 p:cxnSp ──────────────
-function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu) {
+function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu, arrow = true) {
   const x = Math.min(p1.x, p2.x), y = Math.min(p1.y, p2.y);
   const cx = Math.abs(p2.x - p1.x), cy = Math.abs(p2.y - p1.y);
   const flipH = p2.x < p1.x ? ' flipH="1"' : '';
@@ -3952,7 +4034,7 @@ function pptxConnector(shapeId, name, p1, p2, colorHex, widthEmu) {
         <p:spPr>
           <a:xfrm${flipH}${flipV}><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>
           <a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom>
-          <a:ln w="${widthEmu}" cap="flat"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill><a:tailEnd type="triangle" w="lg" len="lg"/></a:ln>
+          <a:ln w="${widthEmu}" cap="flat"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill>${arrow ? '<a:tailEnd type="triangle" w="lg" len="lg"/>' : ''}</a:ln>
         </p:spPr>
       </p:cxnSp>`;
 }
@@ -4097,16 +4179,19 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
       </p:sp>`;
   }
 
-  // ── 連線（valueChain.links）：原生直線連接器；取矩形邊界交點，作法同 drawVcLinks ──
+  // ── 連線（valueChain.links）：原生直線連接器；規則同 drawVcLinks（vcLinkRoute）──
+  // 相鄰→一條直線；跨越→上去、橫走、下來三條（前兩條無箭頭，最後一條帶箭頭）
+  const allRects = Object.values(rectById);
+  const rowUse = {};
   valueChain.links.forEach((link, i) => {
     const r1 = rectById[link.from], r2 = rectById[link.to];
     if (!r1 || !r2) return;
-    const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
-    const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
-    const p1 = vcRectEdgePoint(r1, c2.x, c2.y);
-    const p2 = vcRectEdgePoint(r2, c1.x, c1.y);
-    const rp = p => ({ x: Math.round(p.x), y: Math.round(p.y) });
-    xml += pptxConnector(id++, `價值鏈連線 ${i + 1}`, rp(p1), rp(p2), P.vcLink, 19050);
+    const route = vcLinkRoute(r1, r2, allRects, { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06) }, rowUse);
+    const pts = route.pts.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+    for (let k = 0; k < pts.length - 1; k++) {
+      const last = k === pts.length - 2;
+      xml += pptxConnector(id++, `價值鏈連線 ${i + 1}${pts.length > 2 ? '-' + (k + 1) : ''}`, pts[k], pts[k + 1], P.vcLink, 19050, last);
+    }
   });
 
   return xml;
