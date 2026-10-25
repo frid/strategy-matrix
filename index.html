@@ -3600,7 +3600,7 @@ function vcRectEdgePoint(rect, towardX, towardY) {
 
 // ST-05：決定一條連線怎麼走（畫面與 PPTX 共用，單位由 opts 決定）
 // rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距 }；rowUse：各列已用的繞行層數
-// 回傳 { kind: 'straight'|'detour', pts: [點...] }（最後一點是箭頭端）
+// 回傳 { kind: 'straight'|'detour'|'cross', pts: [點...] }（最後一點是箭頭端）
 function vcLinkRoute(r1, r2, rects, opts, rowUse) {
   const ovX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
   const ovY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
@@ -3641,10 +3641,70 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
       return { kind: 'straight', pts: [{ x: mx, y: fromY }, { x: mx, y: toY }] };
     }
   }
-  // 不同列：邊緣交點直線
+  // ST-15：不同列 → 正交繞行（出來源底／頂邊中點，走列間通道，進目標頂／底邊中點）
+  const cross = vcCrossRoute(r1, r2, others, opts, rowUse);
+  if (cross) return cross;
+  // 繞不開 → 邊緣交點直線
   const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
   const c2 = { x: r2.x + r2.w / 2, y: r2.y + r2.h / 2 };
   return { kind: 'straight', pts: [vcRectEdgePoint(r1, c2.x, c2.y), vcRectEdgePoint(r2, c1.x, c1.y)] };
+}
+
+// ST-15：跨列正交繞行。回傳 { kind: 'cross', pts } 或 null（繞不開，呼叫端改用直線）
+function vcCrossRoute(r1, r2, others, opts, rowUse) {
+  const u = opts.step / 10;  // 單位換算：畫面 px = 1，PPTX EMU 同比例
+  const down = r2.y + r2.h / 2 >= r1.y + r1.h / 2;
+  const x1 = r1.x + r1.w / 2, x2 = r2.x + r2.w / 2;
+  const y1 = down ? r1.y + r1.h : r1.y, y2 = down ? r2.y : r2.y + r2.h;
+  // 線段（水平或垂直）是否穿過任一其他方塊（內縮 1 單位 避免貼邊誤判）
+  const hit = (ax, ay, bx, by) => others.some(o =>
+    Math.max(ax, bx) > o.x + u && Math.min(ax, bx) < o.x + o.w - u &&
+    Math.max(ay, by) > o.y + u && Math.min(ay, by) < o.y + o.h - u);
+  // 幾乎正上下：直接一條垂直線
+  const ovX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
+  if (ovX > Math.min(r1.w, r2.w) * 0.3) {
+    const mx = Math.max(r1.x, r2.x) + ovX / 2;
+    if (!hit(mx, y1, mx, y2)) return { kind: 'cross', pts: [{ x: mx, y: y1 }, { x: mx, y: y2 }] };
+  }
+  // 列間通道：來源列與目標列之間的中線（列範圍 = 與該方塊垂直重疊的所有方塊）
+  const rowOf = r => others.concat([r]).filter(o => o.y < r.y + r.h && o.y + o.h > r.y);
+  const srcRow = rowOf(r1), tgtRow = rowOf(r2);
+  const from = down ? Math.max.apply(null, srcRow.map(o => o.y + o.h)) : Math.min.apply(null, srcRow.map(o => o.y));
+  const to = down ? Math.min.apply(null, tgtRow.map(o => o.y)) : Math.max.apply(null, tgtRow.map(o => o.y + o.h));
+  if (down ? to <= from : to >= from) return null;
+  const mid = (from + to) / 2, half = Math.abs(to - from) / 2;
+  const key = 'gap:' + Math.round(mid);
+  const n = rowUse[key] || 0;
+  rowUse[key] = n + 1;
+  // 同一通道多條線：0, +1, -1, +2 ... 倍 step 錯開，並限制在通道內
+  const off = Math.max(-(half - u * 3), Math.min(half - u * 3, (n % 2 ? 1 : -1) * Math.ceil(n / 2) * opts.step * (n ? 1 : 0)));
+  const dir = down ? 1 : -1;
+  // 通道 y 往遠離來源的方向推，最多試 3 次
+  for (let k = 0; k < 4; k++) {
+    const ty = mid + off + dir * k * u * 6;
+    if (ty * dir >= to * dir - u * 2 || ty * dir <= from * dir + u * 2) break;
+    if (!hit(x1, y1, x1, ty) && !hit(x1, ty, x2, ty) && !hit(x2, ty, x2, y2)) {
+      return { kind: 'cross', pts: [{ x: x1, y: y1 }, { x: x1, y: ty }, { x: x2, y: ty }, { x: x2, y: y2 }] };
+    }
+  }
+  // 側邊通道（六點）：被夾在中間的列擋住時，繞到所有方塊的外接矩形左／右側再回來
+  const all = others.concat([r1, r2]);
+  const minX = Math.min.apply(null, all.map(o => o.x)), maxX = Math.max.apply(null, all.map(o => o.x + o.w));
+  // y1：來源列與下一列之間；y2：目標列與前一列之間（來源／目標在產品區或支援區時，就是該區與主要活動區之間）
+  const pick = (vals, base, fn) => { const v = vals.filter(t => (t - base) * dir >= -0.5); return v.length ? fn.apply(null, v) : null; };
+  const nx = down ? pick(all.map(o => o.y), from, Math.min) : pick(all.map(o => o.y + o.h), from, Math.max);
+  const pvs = down ? all.map(o => o.y + o.h).filter(t => t <= to + 0.5) : all.map(o => o.y).filter(t => t >= to - 0.5);
+  const prev = pvs.length ? (down ? Math.max.apply(null, pvs) : Math.min.apply(null, pvs)) : null;
+  const sy1 = nx === null ? from + dir * u * 6 : (from + nx) / 2;
+  const sy2 = prev === null ? to - dir * u * 6 : (prev + to) / 2;
+  if ((sy1 - from) * dir <= 0 || (to - sy2) * dir <= 0 || (sy2 - sy1) * dir <= 0) return null;
+  const left = Math.abs(x2 - minX) <= Math.abs(maxX - x2);
+  const sKey = left ? 'side:L' : 'side:R';
+  const sn = rowUse[sKey] || 0;
+  const sx = left ? minX - u * 12 - sn * opts.step : maxX + u * 12 + sn * opts.step;
+  if (hit(x1, y1, x1, sy1) || hit(x1, sy1, sx, sy1) || hit(sx, sy1, sx, sy2) || hit(sx, sy2, x2, sy2) || hit(x2, sy2, x2, y2)) return null;
+  rowUse[sKey] = sn + 1;
+  return { kind: 'cross', pts: [{ x: x1, y: y1 }, { x: x1, y: sy1 }, { x: sx, y: sy1 }, { x: sx, y: sy2 }, { x: x2, y: sy2 }, { x: x2, y: y2 }] };
 }
 
 // 折線點 → SVG path；轉角用 Q 小圓角（半徑 r）
