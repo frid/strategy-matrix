@@ -32,3 +32,4 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 ## 2026-10-25 ST-18
 - [ ] ST-18 用 PowerPoint 開書店範例 PPTX：slide1 的「產品」列與方塊文字色、客服→中文書籍三段連接器是否連續不斷。
 - [ ] ST-18 載入「仲介型經營流程」範本匯出：列數多、unitH 被壓縮後方塊文字是否仍清楚。
+- [ ] ST-19 tools/release-task.sh 第一次真的收尾時，人工看一次 push 與 ls-remote 輸出（這次只在假 repo dry-run）

@@ -5,10 +5,10 @@
 //   3) 所有 shape 的 y+h 不超出價值鏈區（取 slide 高 5143500 - 邊界，這裡用 slide 底 5143500 當上限）；
 //   4) 與基準版（dev）同流程匯出的 slide1 比對主活動／支援活動 shape 座標差異（說明 unitH 縮放幅度）。
 // 另截一張畫面價值鏈區到 $CLAUDE_JOB_DIR/tmp/ST-18-vc.png。預期輸出全部 PASS。
-import { spawn } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { launch } from '../cdp-harness.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const newHtml = resolve(here, '../../index.html');
 const baseHtml = resolve(process.argv[2] || join(here, '../../../dev/index.html'));
@@ -16,32 +16,20 @@ const tmp = (process.env.CLAUDE_JOB_DIR || '/tmp') + '/tmp'; mkdirSync(tmp, { re
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function run(file, shotPath) {
-  const PORT = 9400 + Math.floor(Math.random() * 500);
-  const chrome = spawn('/usr/bin/google-chrome', ['--headless=new', `--remote-debugging-port=${PORT}`, '--no-sandbox', '--disable-gpu',
-    `--user-data-dir=${tmp}/prof-${PORT}`, '--hide-scrollbars', 'about:blank'], { stdio: 'ignore' });
+  const h = await launch();
   try {
-    let t; for (let i = 0; i < 60; i++) { try { t = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find(x => x.type === 'page'); if (t) break; } catch {} await sleep(250); }
-    const ws = new WebSocket(t.webSocketDebuggerUrl); await new Promise(r => ws.addEventListener('open', r));
-    let seq = 0; const pend = new Map();
-    ws.addEventListener('message', e => { const m = JSON.parse(e.data); if (m.id && pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } });
-    const send = (method, params = {}) => new Promise((res, rej) => { const id = ++seq; pend.set(id, m => m.error ? rej(new Error(JSON.stringify(m.error))) : res(m.result)); ws.send(JSON.stringify({ id, method, params })); });
-    const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
-    await send('Page.enable'); await send('Runtime.enable');
-    await send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false });
-    await send('Page.navigate', { url: 'file://' + file }); await sleep(1500);
-    await ev(`window.confirm=()=>true; window.alert=()=>{}; window.prompt=()=>null; HTMLAnchorElement.prototype.click=function(){};
-      const g=JSZip.prototype.generateAsync; JSZip.prototype.generateAsync=function(...a){window.__zip=this;return g.apply(this,a);}; 0`);
-    await ev(`loadExampleProject('bookstore-a'); 0`); await sleep(500);
-    const links = await ev(`JSON.stringify(valueChain.links.map(l=>[l.from,l.to]).map(([a,b])=>{const f=id=>{let r=null;const w=(l)=>l.forEach(n=>{if(n.id===id)r=n.name;if(n.children)w(n.children)});w(valueChain.primary);w(valueChain.support);w(valueChain.products);return r};return f(a)+'→'+f(b)}))`);
-    await ev(`exportPptx()`); await sleep(1500);
-    const xml = await ev(`window.__zip.file('ppt/slides/slide1.xml').async('string')`);
+    await h.open(file);
+    await h.captureDownloads();
+    await h.loadExample('bookstore-a');
+    const links = await h.ev(`JSON.stringify(valueChain.links.map(l=>[l.from,l.to]).map(([a,b])=>{const f=id=>{let r=null;const w=(l)=>l.forEach(n=>{if(n.id===id)r=n.name;if(n.children)w(n.children)});w(valueChain.primary);w(valueChain.support);w(valueChain.products);return r};return f(a)+'→'+f(b)}))`);
+    await h.ev(`exportPptx()`); await sleep(1500);
+    const xml = await (await h.zipEntries(0)).read('ppt/slides/slide1.xml');
     if (shotPath) {
-      const r = await ev(`(()=>{const e=document.querySelector('.vc-products-panel');const q=document.getElementById('vcArea')||document.querySelector('.vc-wrap, #valueChainSection, .value-chain')||e.parentElement;const a=q.getBoundingClientRect();return {x:a.left,y:a.top+scrollY,w:a.width,h:a.height}})()`);
-      const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: Math.max(0, r.x), y: Math.max(0, r.y), width: r.w, height: r.h, scale: 1 } });
-      writeFileSync(shotPath, Buffer.from(data, 'base64'));
+      const sel = await h.ev(`(()=>{const e=document.querySelector('.vc-products-panel');const q=document.getElementById('vcArea')||document.querySelector('.vc-wrap, #valueChainSection, .value-chain')||e.parentElement;q.setAttribute('data-st18-shot','1');return '[data-st18-shot]'})()`);
+      await h.shot(sel, shotPath);
     }
     return { xml, links };
-  } finally { chrome.kill(); }
+  } finally { await h.close(); }
 }
 const parse = xml => [...xml.matchAll(/<p:(sp|cxnSp)>[\s\S]*?<\/p:\1>/g)].map(m => {
   const s = m[0]; const nm = (s.match(/name="([^"]*)"/) || [])[1];

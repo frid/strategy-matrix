@@ -44,3 +44,5 @@ console 錯誤：<清單或「無」>
 待使用者手點：<條列或「無」>
 FAIL 原文：<照貼關鍵輸出，不摘要；PASS 時寫「無」>
 ```
+
+- 寫測試腳本時優先 `import { launch } from '../cdp-harness.mjs'`（`tools/cdp-harness.mjs`，開頁／載範例／stub 對話框／截圖／攔下載／收 console error），舊存檔 fixture 在 `tests/fixtures/`。
