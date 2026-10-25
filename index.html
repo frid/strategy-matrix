@@ -1858,7 +1858,7 @@ function renderColEditor() {
       e.stopPropagation();
       const flatLen = getFlatColumns().length;
       if (flatLen - group.items.length < 2) { alert('至少保留 2 個欄位'); return; }
-      pushHistory();
+      pushHistory(true);
       const removeStart = startIdx, removeCount = group.items.length;
       arrows = arrows.map(arr => arr.filter(a =>
           !(a.from.col >= removeStart && a.from.col < removeStart + removeCount) &&
@@ -1925,7 +1925,7 @@ function renderColEditor() {
       rm.addEventListener('click', e => {
         e.stopPropagation();
         if (getFlatColumns().length <= 2) { alert('至少保留 2 個欄位'); return; }
-        pushHistory();
+        pushHistory(true);
         arrows = arrows.map(arr => arr.filter(a => a.from.col !== flatIdx && a.to.col !== flatIdx)
           .map(a => ({
             ...a,
@@ -1969,7 +1969,7 @@ function renderColEditor() {
         e.preventDefault();
         e.stopPropagation();
         if (!dragItemSrc || dragItemSrc.gi !== gi || dragItemSrc.ii === ii) return;
-        pushHistory();
+        pushHistory(true);
         const g = COLUMN_GROUPS[gi];
         const oldStart = getGroupStartIdx(gi);
         const localOrder = Array.from({ length: g.items.length }, (_, i) => i);
@@ -2004,6 +2004,15 @@ function renderColEditor() {
     addItemBtn.textContent = '＋ 細項';
     addItemBtn.addEventListener('click', e => {
       e.stopPropagation();
+      pushHistory(true);
+      // 新欄插在本組最後一欄之後：其後所有欄的箭頭 col +1，產品欄分隔線若在插入點（含）之後也 +1
+      const insertAt = startIdx + group.items.length;
+      arrows = arrows.map(arr => arr.map(a => ({
+        ...a,
+        from: { row: a.from.row, col: a.from.col >= insertAt ? a.from.col + 1 : a.from.col },
+        to:   { row: a.to.row,   col: a.to.col   >= insertAt ? a.to.col   + 1 : a.to.col },
+      })));
+      if (insertAt <= productSepIdx) productSepIdx++;
       group.items.push('新欄位');
       syncColumns();
       renderColEditor();
@@ -2037,7 +2046,7 @@ function renderColEditor() {
       e.preventDefault();
       e.stopPropagation();
       if (dragGroupSrc === null || dragGroupSrc === gi) return;
-      pushHistory();
+      pushHistory(true);
 
       const oldGroupSizes = COLUMN_GROUPS.map(g => g.items.length);
       const groupOrder = Array.from({ length: COLUMN_GROUPS.length }, (_, i) => i);
@@ -2090,6 +2099,7 @@ function renderColEditor() {
     e.stopPropagation();
     const name = addInp.value.trim();
     if (!name) { addInp.focus(); return; }
+    pushHistory(true);
     COLUMN_GROUPS.push({ category: '', items: [name] });
     syncColumns();
     renderColEditor();
