@@ -9,6 +9,12 @@
 - **使用者明確說「merge」才可以合併回 `main`。** 在那之前只能 commit / push 分支。
 - `main` 一更新就會自動部署到 GitHub Pages，所以合併前要先讓使用者確認。
 
+## 參考資料
+
+- 原始教材（教科書掃描、講義 PDF、上課備忘、錄音逐字稿）都在上一層課程資料夾 `../../`（本機 Google Drive 掛載），**不進 git**。
+- 來源清單、代號與頁碼標法見 `doc/reference/README.md`；要找資料先讀它。本機找不到的檔案用 Google Drive 連接器搜（資料夾 ID 也記在該檔）。
+- 新資料的處理方式：在 README 登記 → 摘要成 `doc/reference/<主題>.md` 並標頁碼 → `TODO.md` 只指向摘要。
+
 ## 溝通
 - 用繁體中文回覆。
 

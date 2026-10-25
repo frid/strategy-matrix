@@ -1,0 +1,5 @@
+# 原始教材不進 git，位置見 doc/reference/README.md
+*.pdf
+*.pptx
+*.mp3
+Example/
