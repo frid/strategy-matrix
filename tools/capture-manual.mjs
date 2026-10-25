@@ -137,5 +137,16 @@ await ev(`applyPalette(0); true`);
 await ev(`if (!showIndustryLabels) toggleIndustryMatrix(); true`);
 await shot('16-industry-matrix', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
 
+// 17 策略要素：第一條箭頭展開要素選擇面板
+await ev(`openElemPanelKey = '0-0'; renderArrowList(); true`);
+await shot('17-elements', `document.getElementById('arrowList')`);
+await ev(`openElemPanelKey = null; renderArrowList(); true`);
+// 18 策略句型：展開句型框
+await ev(`document.getElementById('sentenceBox').open = true; true`);
+await shot('18-sentences', `document.getElementById('sentenceBox')`);
+// 19 載入範例：專案區塊（載入「網路書店 A 公司」後）
+await ev(`loadExampleProject(EXAMPLE_PROJECTS[0].id); true`);
+await shot('19-example', `[document.querySelector('.project-panel').previousElementSibling, document.querySelector('.project-panel')]`);
+
 ws.close(); chrome.kill(); await sleep(1500);
 try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 400 }); } catch {}

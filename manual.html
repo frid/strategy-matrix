@@ -96,6 +96,9 @@
     <li><a href="#expand">展開到策略矩陣</a></li>
     <li><a href="#ideas">策略構想</a></li>
     <li><a href="#arrows">畫箭頭、補充說明、排序、復原、清除</a></li>
+    <li><a href="#elements">策略要素標記</a></li>
+    <li><a href="#sentences">策略句型產生器</a></li>
+    <li><a href="#examples">載入範例</a></li>
     <li><a href="#industry">產業矩陣切換與配色</a></li>
     <li><a href="#pptx">匯出 PPTX</a></li>
     <li><a href="#save">存檔／載入／重設</a></li>
@@ -320,8 +323,53 @@
   </ul>
 </section>
 
+<section class="panel" id="elements">
+  <h2 class="sec">11. 策略要素標記</h2>
+  <p>每條箭頭可以標上「策略要素」（《策略管理新論》Ch9 的 51 項要素，例如「1-3 價值單元成本之降低」），用來說明這條箭頭的策略意義。</p>
+  <ol class="steps">
+    <li>在「已繪製的箭頭」清單中，每條箭頭下方有一列<b>要素標籤</b>。</li>
+    <li>按 <span class="btn">＋要素</span> 展開勾選面板；上方「建議（依箭頭形狀）」會依箭頭的形狀（例如同欄向下、跨欄向右）先列出可能適用的要素，下方可從全部 51 項中勾選。</li>
+    <li>沒標要素的箭頭，若有建議，會以淡色字顯示「建議：…」，直接點要素編號即可加入。</li>
+    <li>點標籤上的 ✕ 可移除該要素；已標的要素會接在補充說明後面，一併進 PPTX 步驟頁。</li>
+  </ol>
+  <figure>
+    <img src="manual/img/17-elements.png" alt="箭頭的策略要素標籤與勾選面板">
+    <figcaption>箭頭下方的要素標籤列與勾選面板。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="sentences">
+  <h2 class="sec">12. 策略句型產生器</h2>
+  <p>箭頭清單下方的「📝 策略句型」會依各條箭頭自動組成策略敘述（相連的箭頭會合併成匯流句或鏈式句）。</p>
+  <ol class="steps">
+    <li>點開 <span class="btn">📝 策略句型</span> 展開句型框，查看目前策略的句子。</li>
+    <li>按 <span class="btn">📋 複製</span> 把句子複製到剪貼簿，貼到報告或簡報。</li>
+    <li>按 <span class="btn">⬇ 填入說明</span> 把句子寫進頁面最上方的「策略說明」欄。</li>
+  </ol>
+  <p>匯出 PPTX 時，步驟頁與最後的總覽頁也會附上策略句型。</p>
+  <figure>
+    <img src="manual/img/18-sentences.png" alt="策略句型框">
+    <figcaption>策略句型框：句子清單、複製與填入說明。</figcaption>
+  </figure>
+</section>
+
+<section class="panel" id="examples">
+  <h2 class="sec">13. 載入範例</h2>
+  <p>想先看一份完整的策略長什麼樣子，可以載入內建範例。</p>
+  <ol class="steps">
+    <li>在「專案」區按 <span class="btn">📚 載入範例…</span> 下拉選單。</li>
+    <li>選一個範例：<b>網路書店 A 公司</b> 或 <b>晶圓代工 T 公司</b>（內容依《策略管理新論》Ch9 案例改寫）。</li>
+    <li>跳出確認視窗，按「確定」後會<b>取代目前的價值鏈、策略構想與箭頭</b>；載入前請先「💾 存檔」備份。</li>
+  </ol>
+  <p>載入後可直接修改、匯出，或按「↩ 復原」回到載入前。</p>
+  <figure>
+    <img src="manual/img/19-example.png" alt="專案區的載入範例下拉">
+    <figcaption>「專案」區的「📚 載入範例…」；圖為載入網路書店 A 公司後的狀態。</figcaption>
+  </figure>
+</section>
+
 <section class="panel" id="industry">
-  <h2 class="sec">11. 產業矩陣切換與配色</h2>
+  <h2 class="sec">14. 產業矩陣切換與配色</h2>
   <h3>產業矩陣切換</h3>
   <p>操作列的 <span class="btn">策略矩陣</span> 按鈕按一下會切成「策略矩陣＋產業矩陣」，矩陣左側的列標籤改為產業矩陣用語：關聯、市場、垂直、規模、地理、KSF's（再按一次切回）。</p>
   <figure>
@@ -347,7 +395,7 @@
 </section>
 
 <section class="panel" id="pptx">
-  <h2 class="sec">12. 匯出 PPTX</h2>
+  <h2 class="sec">15. 匯出 PPTX</h2>
   <p>按「專案」區的 <span class="btn">📊 匯出 PPTX</span>，工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
   <ol class="steps">
     <li>價值鏈頁。</li>
@@ -358,7 +406,7 @@
 </section>
 
 <section class="panel" id="save">
-  <h2 class="sec">13. 存檔／載入／重設</h2>
+  <h2 class="sec">16. 存檔／載入／重設</h2>
   <p>這三個按鈕都在頁面上方的「專案」區：</p>
   <ul>
     <li><span class="btn">💾 存檔</span>：把整張策略矩陣（價值鏈、欄位、策略構想、箭頭、配色）存成 <code>&lt;策略名稱&gt;_存檔.json</code>。</li>
@@ -371,7 +419,7 @@
 </section>
 
 <section class="panel" id="faq">
-  <h2 class="sec">14. 常見問題</h2>
+  <h2 class="sec">17. 常見問題</h2>
   <dl>
     <dt>Q：價值鏈改錯了，可以按「↩ 復原」嗎？</dt>
     <dd>不行。「↩ 復原」只管矩陣這一側的動作（箭頭、策略、清除、展開）。價值鏈的編輯不能復原；建議大改前先按「💾 存價值鏈」備份。</dd>
