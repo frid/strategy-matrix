@@ -148,5 +148,38 @@ await shot('18-sentences', `document.getElementById('sentenceBox')`);
 await ev(`loadExampleProject(EXAMPLE_PROJECTS[0].id); true`);
 await shot('19-example', `[document.querySelector('.project-panel').previousElementSibling, document.querySelector('.project-panel')]`);
 
+// ── ST-16：三波新功能（以下都在已載入的「網路書店 A 公司」範例上拍）──
+// 20 流程導引步驟條（展開要點面板）
+await ev(`document.getElementById('guideDetail').open = true; true`);
+await shot('20-guide-bar', `document.getElementById('guideBar')`);
+// 22 短版矩陣：自動隱藏無箭頭欄後（含 chip 列），截完還原
+await ev(`autoHideUnusedCols(); true`);
+await shot('22-short-view', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper'), document.getElementById('hiddenColsBar')]`);
+await ev(`shortView = false; hiddenCols = {}; afterShortViewChange(); true`);
+// 23 策略點描述：切到描述模式、點 C 列（有 ○✕◐ 的格子）
+const noteKey = await ev(`Object.keys(cellNotes).find(k => k.endsWith('|C')) || Object.keys(cellNotes)[0]`);
+await ev(`setMode('describe'); (() => { const k = ${JSON.stringify(noteKey)}.split('|'); selectCell(k[1], COLUMNS.indexOf(k[0])); })(); true`);
+await shot('23-cell-panel', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper'), document.getElementById('cellPanel')]`);
+await ev(`setMode('draw'); currentCell = null; renderCellPanel(); true`);
+// 24 策略構想分型＋疊圖對陣點
+await shot('24-kinds', `[document.getElementById('competitorBar').closest('.panel'), document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
+// 25 對陣點列表
+await ev(`document.getElementById('clashBox').open = true; true`);
+await shot('25-clash', `document.getElementById('clashBox')`);
+// 26 策略模組 chip 列＋箭頭清單
+await shot('26-modules', `[document.getElementById('moduleBox'), ...[...document.getElementById('arrowList').children].slice(0, 4)]`);
+// 27 前提與 SWOT
+await ev(`document.getElementById('premiseBox').open = true; true`);
+await shot('27-premise-swot', `document.getElementById('premiseBox')`);
+// 28 行動計畫
+await ev(`document.getElementById('actionBox').open = true; true`);
+await shot('28-actions', `document.getElementById('actionBox')`);
+// 29 前提控制表
+await ev(`document.getElementById('controlBox').open = true; true`);
+await shot('29-control', `document.getElementById('controlBox')`);
+// 21 單元角色：載入理論骨架「半成品外售流程」範本（放最後，之後不再用範例）
+await ev(`loadValueChainTemplate('theory-semi'); true`);
+await shot('21-vc-roles', vcPanel);
+
 ws.close(); chrome.kill(); await sleep(1500);
 try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 400 }); } catch {}
