@@ -98,6 +98,30 @@
     color: var(--col-header);
     margin-bottom: 10px;
   }
+  /* ── ST-14d：流程導引步驟條 ── */
+  .guide-bar { margin-bottom: 14px; }
+  .guide-steps { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding-bottom: 4px; }
+  .guide-step { flex: 1 1 120px; min-width: 120px; background: white; border: 1px solid var(--grid-line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+  .guide-step:hover { background: var(--cell-hover); }
+  .guide-step.current { border-color: var(--col-header); box-shadow: 0 0 0 2px var(--col-header-light); }
+  .guide-step-head { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; }
+  .guide-step-num { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--grid-line); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; }
+  .guide-step.done .guide-step-num { background: var(--col-header); color: white; }
+  .guide-step-bar { height: 4px; border-radius: 2px; background: var(--grid-line); overflow: hidden; margin: 6px 0 4px; }
+  .guide-step-fill { height: 100%; background: var(--col-header); transition: width 0.2s; }
+  .guide-step-label { font-size: 0.7rem; color: var(--ink-light); line-height: 1.3; }
+  .guide-total { flex: 0 0 auto; align-self: center; font-size: 0.82rem; font-weight: 700; color: var(--col-header); white-space: nowrap; padding: 0 6px; }
+  .guide-detail { margin-top: 8px; font-size: 0.8rem; line-height: 1.6; }
+  .guide-detail summary { cursor: pointer; font-weight: 600; }
+  .guide-points { margin: 6px 0 4px 18px; padding: 0; }
+  .guide-tip { color: var(--ink-light); }
+  .guide-go { margin-left: 8px; }
+  @media (max-width: 900px) {
+    .guide-steps { flex-wrap: wrap; overflow-x: visible; }
+    .guide-step { flex: 1 1 30%; min-width: 0; }
+    .guide-total { flex-basis: 100%; text-align: right; }
+  }
+
   .section-title {
     font-size: 1.1rem;
     font-weight: 700;
@@ -1055,14 +1079,17 @@
   </div>
 </div>
 
+<!-- 流程導引步驟條（ST-14d）：六步完成度＋教科書要點 -->
+<div class="panel guide-bar" id="guideBar"></div>
+
 <!-- Value chain editor（ST-01b）：支援活動｜主要活動｜產品 -->
-<h2 class="section-title">價值鏈</h2>
+<h2 class="section-title" id="secValueChain">價值鏈</h2>
 <div class="panel">
   <div class="vc-editor" id="valueChainEditor"></div>
 </div>
 
 <!-- Legend + Arrow list (matrix drawing itself moved to bottom of page) -->
-<h2 class="section-title">策略矩陣展開</h2>
+<h2 class="section-title" id="secMatrix">策略矩陣展開</h2>
 <!-- Legend -->
 <div class="panel" style="padding:10px 16px; margin-bottom:12px;">
   <div class="legend" id="legendContainer"></div>
@@ -3519,6 +3546,7 @@ function renderValueChainEditor() {
   }
 
   drawVcLinks();
+  renderGuideBar();  // ST-14d
 }
 
 // ── Value chain links：畫方塊間的細箭頭（連線清單資料 → SVG）──────────────
@@ -3986,6 +4014,7 @@ function buildTable() {
   renderHiddenColsBar();
   renderCellNoteMarks();
   renderCellPanel();
+  renderGuideBar();  // ST-14d
 }
 
 // ── Cell Click — free arrow drawing ───────────────────────────────────────
@@ -4127,6 +4156,7 @@ function afterCellNoteChange() {
   renderCellNoteMarks();
   updateCellProgress();
   saveState();
+  renderGuideBar();
 }
 function renderCellPanel() {
   const panel = document.getElementById('cellPanel');
@@ -4953,6 +4983,7 @@ function renderArrowList() {
   renderActionBox();    // ST-14j
   renderControlBox();   // ST-14k
   renderStrategySentences();
+  renderGuideBar();     // ST-14d
 }
 
 // ── ST-14k：策略前提控制表（關鍵前提 → 觀察指標、燈號、下次檢視日）[S 377–379] ──────────
@@ -6759,6 +6790,141 @@ function escXml(str) {
 }
 
 
+// ── ST-14d：流程導引步驟條 ─────────────────────────────────────────────────
+// 要點是用自己的話整理的《策略管理新論》（司徒達賢）要點，頁碼見 doc/reference/策略管理新論-Ch8Ch9-八步流程與功能差距.md
+const GUIDE_STEPS = [
+  { k: 'chain', num: '①', title: '經營流程', anchor: '#secValueChain',
+    points: ['先把整個產業的經營流程畫出來，列出每個價值單元（活動或資產）；不只列自己做的部分，上下游也要涵蓋 [S 270–275]。'],
+    tip: '至少列出 3 個價值單元，再按「展開到策略矩陣」。' },
+  { k: 'cells', num: '②', title: '策略點描述', anchor: '#secMatrix',
+    points: ['矩陣上每個格子是一個策略點，投入欄與產出欄、A–F 各列各有固定意義 [S 275–281]。',
+             '幾十甚至上百個策略點都逐一了解後，策略現狀就掌握了大半 [S 281]。'],
+    tip: '切到「描述策略點」模式，點格子逐格填寫。' },
+  { k: 'ideas', num: '③', title: '策略構想', anchor: '#arrowListPanel',
+    points: ['用箭頭表達策略要素之間的因果，多條相關箭頭可組成「模組」，再由模組組成整套策略組合 [S 343–346]。'],
+    tip: '先畫出主要箭頭並寫備註、勾策略要素，再把相關箭頭圈成模組。' },
+  { k: 'premise', num: '④', title: '前提驗證', anchor: '#premiseBox',
+    points: ['有了具體方案才談 SWOT：每個策略動作或因果關係都有前提，分環境前提（機會／威脅）與條件前提（優勢／劣勢）[S 369]。',
+             '同一件事在不同方案下可能是優勢也可能是劣勢，所以要依方案分別彙整 [S 375]。'],
+    tip: '在箭頭上加前提並標成立度，把「待驗證」逐項釐清。' },
+  { k: 'action', num: '⑤', title: '行動計畫', anchor: '#actionBox',
+    points: ['行動計畫與形成策略方向相反：把選定的策略組合拆回模組與策略要素，每個用得上的要素就是一個行動重點 [S 375]。',
+             '多數行動可歸屬某個價值單元的負責單位；跨單元的行動需要跨部門協調 [S 377]。'],
+    tip: '按「從箭頭產生行動項目」，再補負責單元與期程。' },
+  { k: 'control', num: '⑥', title: '策略控制', anchor: '#controlBox',
+    points: ['策略控制以行動控制與前提控制最能借助策略矩陣 [S 377]。',
+             '前提控制是挑出較關鍵的環境與條件前提密切追蹤，前提變動太大就要重新思考策略 [S 378]。'],
+    tip: '把關鍵前提標出來，設指標、燈號與下次檢視日。' },
+];
+let guideStep = '';   // ''＝依完成度自動選第一個未完成的步驟
+let guideOpen = true;
+
+function guideVcUnitNames() {
+  const out = [];
+  const walk = list => (list || []).forEach(n => { if (n.type === 'group') walk(n.children); else out.push(n.name); });
+  walk(valueChain.support); walk(valueChain.primary); walk(valueChain.products);
+  return out;
+}
+function guideProgress() {
+  const ci = activeIdx, res = {};
+  // ① 經營流程
+  const units = guideVcUnitNames();
+  const expanded = COLUMNS.length > 0 && units.length > 0 && units.every(n => COLUMNS.includes(n));
+  res.chain = { pct: (units.length >= 3 ? 50 : 0) + (expanded ? 50 : 0),
+    label: `${units.length} 個單元、${expanded ? `已展開 ${COLUMNS.length} 欄` : '未展開'}` };
+  // ② 策略點描述
+  const cp = cellNoteProgress();
+  res.cells = { pct: cp.total ? Math.round(cp.done / cp.total * 100) : 0, label: `已描述 ${cp.done}／${cp.total} 格` };
+  // ③ 策略構想
+  const arr = arrows[ci] || [], mods = modules[ci] || [];
+  const detailed = arr.filter(a => (a.note || '').trim() || (a.elements || []).length).length;
+  res.ideas = { pct: (arr.length ? 40 : 0) + (arr.length && detailed * 2 >= arr.length ? 30 : 0) + (mods.length ? 30 : 0),
+    label: `${arr.length} 條箭頭、${mods.length} 個模組` };
+  // ④ 前提驗證
+  const pr = collectPremiseSwot(ci);
+  res.premise = { pct: pr.total ? 50 + (pr.unsureN === 0 ? 50 : 0) : 0, label: `${pr.total} 項前提、${pr.unsureN} 待驗證` };
+  // ⑤ 行動計畫
+  const ac = actionStats(ci);
+  res.action = { pct: ac.total ? Math.round(50 + ac.done / ac.total * 50) : 0, label: `${ac.total} 項、完成 ${ac.done}` };
+  // ⑥ 策略控制
+  const ct = controlStats(collectControlRows(ci));
+  res.control = { pct: ct.key ? 50 + (ct.unset === 0 ? 50 : 0) : 0,
+    label: `${ct.key} 項關鍵${ct.red ? `、🔴${ct.red}` : ''}${ct.yellow ? `、🟡${ct.yellow}` : ''}${ct.unset ? `、未設燈號 ${ct.unset}` : ''}` };
+  return res;
+}
+function guideCurrentKey(prog) {
+  if (GUIDE_STEPS.some(g => g.k === guideStep)) return guideStep;
+  const first = GUIDE_STEPS.find(g => prog[g.k].pct < 100);
+  return (first || GUIDE_STEPS[GUIDE_STEPS.length - 1]).k;
+}
+function guideGoto(k) {
+  const g = GUIDE_STEPS.find(x => x.k === k);
+  if (!g) return;
+  guideStep = k;
+  const el = document.querySelector(g.anchor);
+  if (el && el.tagName === 'DETAILS') el.open = true;
+  renderGuideBar();
+  saveState();
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function guideSelect(k) {  // 點節點：切換目前步驟並捲到錨點
+  guideGoto(k);
+}
+function renderGuideBar() {
+  const bar = document.getElementById('guideBar');
+  if (!bar) return;
+  let prog;
+  try { prog = guideProgress(); } catch (e) { return; }
+  const cur = guideCurrentKey(prog);
+  const total = Math.round(GUIDE_STEPS.reduce((n, g) => n + prog[g.k].pct, 0) / GUIDE_STEPS.length);
+  bar.innerHTML = '';
+  const steps = document.createElement('div');
+  steps.className = 'guide-steps';
+  GUIDE_STEPS.forEach(g => {
+    const pr = prog[g.k];
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'guide-step' + (g.k === cur ? ' current' : '') + (pr.pct >= 100 ? ' done' : '');
+    b.dataset.step = g.k;
+    b.title = g.tip;
+    b.innerHTML = `<div class="guide-step-head"><span class="guide-step-num">${pr.pct >= 100 ? '✓' : g.num}</span><span>${g.title}</span></div>` +
+      `<div class="guide-step-bar"><div class="guide-step-fill" style="width:${pr.pct}%"></div></div>` +
+      `<div class="guide-step-label">${pr.pct}%｜${pr.label}</div>`;
+    b.onclick = () => guideSelect(g.k);
+    steps.appendChild(b);
+  });
+  const tot = document.createElement('div');
+  tot.className = 'guide-total';
+  tot.id = 'guideTotal';
+  tot.textContent = `整體 ${total}%`;
+  steps.appendChild(tot);
+  bar.appendChild(steps);
+  const g = GUIDE_STEPS.find(x => x.k === cur);
+  const det = document.createElement('details');
+  det.className = 'guide-detail';
+  det.id = 'guideDetail';
+  det.open = guideOpen;
+  det.addEventListener('toggle', () => { if (guideOpen !== det.open) { guideOpen = det.open; saveState(); } });
+  const sum = document.createElement('summary');
+  sum.textContent = `${g.num} ${g.title}：教科書要點`;
+  const go = document.createElement('button');
+  go.type = 'button';
+  go.className = 'btn-ghost guide-go';
+  go.textContent = '前往 ▸';
+  go.onclick = e => { e.preventDefault(); e.stopPropagation(); guideGoto(g.k); };
+  sum.appendChild(go);
+  det.appendChild(sum);
+  const ul = document.createElement('ul');
+  ul.className = 'guide-points';
+  g.points.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+  det.appendChild(ul);
+  const tip = document.createElement('div');
+  tip.className = 'guide-tip';
+  tip.textContent = `下一步建議：${g.tip}`;
+  det.appendChild(tip);
+  bar.appendChild(det);
+}
+
 // ── LocalStorage Persistence ──────────────────────────────────────────────
 const STORAGE_KEY = 'strategyMatrix_v4';
 
@@ -6782,6 +6948,8 @@ function saveState() {
       actionPlans:   JSON.parse(JSON.stringify(actionPlans)), // ST-14j
       actionGroupByOwner,                                 // ST-14j
       ctlOnlyKey,                                         // ST-14k
+      guideStep,                                          // ST-14d
+      guideOpen,                                          // ST-14d
       arrows:        JSON.parse(JSON.stringify(arrows)),
       activeIdx,
       productSepIdx,
@@ -6789,6 +6957,7 @@ function saveState() {
       colorPaletteIdx,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderGuideBar();  // ST-14d：任何存檔點都順便刷新完成度
   } catch(e) {}
 }
 
@@ -6874,6 +7043,8 @@ function loadState() {
     actionPlans = Array.isArray(state.actionPlans) ? state.actionPlans : [];  // ST-14j：舊存檔沒有 → normalise 依 arrows 長度補空陣列
     actionGroupByOwner = state.actionGroupByOwner === true;
     ctlOnlyKey = state.ctlOnlyKey !== false;  // ST-14k：舊存檔沒有 → true
+    guideStep = (typeof state.guideStep === 'string' && GUIDE_STEPS.some(g => g.k === state.guideStep)) ? state.guideStep : '';  // ST-14d：舊存檔沒有 → 自動
+    guideOpen = state.guideOpen !== false;
     normaliseModules();  // 內含 normaliseActionPlans
     return true;
   } catch(e) { return false; }
