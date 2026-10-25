@@ -779,6 +779,43 @@
 
   .instructions { font-size: 0.74rem; color: var(--ink-light); line-height: 1.7; }
 
+  /* ── 策略點描述（ST-14a）：格子標記＋矩陣下方點選面板 ── */
+  td.matrix-cell.has-note::after {
+    content: ''; position: absolute; right: 6px; bottom: 6px;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--col-header);
+  }
+  td.matrix-cell.cell-selected { box-shadow: inset 0 0 0 2px var(--col-header); }
+  td.matrix-cell .cell-vi { margin-left: 4px; font-size: 0.9rem; font-weight: bold; color: var(--ink); }
+  td.matrix-cell .cell-bases { position: absolute; left: 6px; bottom: 4px; font-size: 0.66rem; color: var(--ink-light); }
+  .cell-panel { margin-top: 10px; }
+  .cell-panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .cell-panel-title { font-size: 0.86rem; font-weight: 600; color: var(--ink); flex: 1; min-width: 200px; }
+  .cell-panel-code { font-family: 'DM Mono', monospace; color: var(--mx-code-text); margin-right: 2px; }
+  .cell-kind { margin-left: 8px; font-size: 0.68rem; font-weight: 500; padding: 1px 7px; border-radius: 10px; background: var(--mx-leaf-bg); color: var(--mx-leaf-text); }
+  .cell-kind.out { background: var(--mx-product-cell-bg); color: var(--ink); border: 1px solid var(--grid-line); }
+  .cell-progress { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; color: var(--ink-light); white-space: nowrap; }
+  .cell-progress-bar { width: 120px; height: 5px; border-radius: 3px; background: var(--grid-line); overflow: hidden; }
+  .cell-progress-fill { height: 100%; background: var(--col-header); transition: width 0.2s; }
+  .cell-panel-empty { font-size: 0.76rem; color: var(--ink-light); font-style: italic; padding: 4px 0; }
+  .cell-def { font-size: 0.78rem; color: var(--ink); line-height: 1.6; }
+  .cell-page { font-size: 0.68rem; color: var(--ink-light); }
+  .cell-questions { margin: 4px 0 8px 20px; padding: 0; font-size: 0.76rem; color: var(--ink-light); line-height: 1.7; }
+  .cell-opt-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 0.76rem; }
+  .cell-opt-tag { color: var(--ink-light); }
+  .cell-opt-btn { border: 1px solid var(--grid-line); border-radius: 10px; background: white; color: var(--ink); font-size: 0.74rem; font-family: inherit; padding: 2px 10px; cursor: pointer; }
+  .cell-opt-btn:hover { border-color: var(--col-header); }
+  .cell-opt-btn.active { background: var(--col-header); border-color: var(--col-header); color: white; }
+  .cell-base-chip { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--grid-line); border-radius: 10px; background: white; padding: 1px 8px; cursor: pointer; }
+  .cell-base-chip input { margin: 0; }
+  .cell-base-chip.active { border-color: var(--col-header); background: var(--cell-hover); }
+  .cell-note-text {
+    width: 100%; box-sizing: border-box; resize: vertical; min-height: 64px;
+    border: 1px solid var(--grid-line); border-radius: 6px; padding: 6px 10px;
+    font-size: 0.8rem; font-family: inherit; color: var(--ink); background: white; outline: none;
+  }
+  .cell-note-text:focus { border-color: var(--col-header); }
+  .cell-note-text::placeholder { color: var(--cell-text); }
+
   /* ── Arrow list panel ── */
   .arrow-list { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
   .arrow-item {
@@ -956,6 +993,7 @@
   <div class="mode-toggle">
     <button class="mode-btn active" id="modeDrawBtn" onclick="setMode('draw')">✏️ 繪製箭頭</button>
     <button class="mode-btn" id="modeViewBtn" onclick="setMode('view')">👁 檢視模式</button>
+    <button class="mode-btn" id="modeDescBtn" onclick="setMode('describe')" title="點格子在矩陣下方面板看策略點定義並填寫描述（ST-14a）">📝 描述策略點</button>
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
@@ -974,10 +1012,13 @@
   </div>
 </div>
 <div class="hidden-cols-bar" id="hiddenColsBar"></div>
+<!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自製／外包、F 列優勢基礎；填寫進度） -->
+<div class="panel cell-panel" id="cellPanel"></div>
 
 <p class="instructions">
   ✏️ <b>繪製模式：</b>點第一格（起點，變黃色）→ 再點第二格（終點）→ 自動畫出帶箭頭的連線<br>
-  若想取消起點，再次點擊黃色格子即可
+  若想取消起點，再次點擊黃色格子即可<br>
+  📝 <b>描述策略點：</b>切到「📝 描述策略點」後點任一格，在矩陣下方面板看定義、引導問題並填寫描述
 </p>
 
 <!-- 展開到策略矩陣：確認／結果對話框（ST-01d）-->
@@ -1670,6 +1711,44 @@ const ELEMENT_SUGGEST_RULES = [
   { when: (f, t)    => f.row === 'D' && t.row === 'C', ids: ['3-4', '4-2'] },
 ];
 
+// ST-14a：策略點的意義（依列 × 投入欄／產出欄）＋引導問題；文字用自己的話摘要，頁碼見 doc/reference 第二節
+// C 列只對投入欄有意義（自製／外包），產出欄 output＝null
+const STRATEGY_POINT_DEFS = {
+  A: { label: '產品線廣度與特色',
+    input:  { def: '此價值單元對各產品在特色、成本、品質、交貨速度上的潛在貢獻', page: 'S 279–280',
+              questions: ['這個價值單元對各產品的特色、成本、品質、交期，有什麼潛在貢獻？', '哪些貢獻已經發揮？哪些還值得發展或強調？'] },
+    output: { def: '該產品的特色，包括功能、價格、品質、交期等（產品欄合起來就是該產品的策略形態）', page: 'S 279',
+              questions: ['這項產品的特色是什麼（功能、價格、品質、交期）？', '它跟同類產品差在哪裡？'] } },
+  B: { label: '目標市場區隔與選擇',
+    input:  { def: '此價值單元若不自行負責，由誰負責；供應商、協力廠、通路、OEM 對象等都視為它的「目標市場」', page: 'S 281',
+              questions: ['這個價值單元如果不自己做，交給誰做（供應商、協力廠、通路、OEM 對象…）？', '用什麼標準挑選這些合作對象？'] },
+    output: { def: '該產品的目標市場區隔方式與選擇', page: 'S 279, 281',
+              questions: ['這項產品鎖定哪些顧客？', '市場怎麼區隔？為什麼選這一塊？'] } },
+  C: { label: '垂直整合程度之取決',
+    input:  { def: '此價值單元自製或外包的狀態（圖 8.08：○ 自行負責、✕ 外包）', page: 'S 280',
+              questions: ['這個價值單元是自製、外包，還是局部整合？', '為什麼這樣安排？'] },
+    output: null },
+  D: { label: '相對規模與規模經濟',
+    input:  { def: '此價值單元是否已達經濟規模，策略上是否要發揮規模（或範疇經濟）優勢', page: 'S 281',
+              questions: ['這個價值單元是否已達經濟規模？', '策略上要不要靠規模（或範疇經濟）取勝？'] },
+    output: { def: '該產品的相對規模', page: 'S 279',
+              questions: ['這項產品的規模與市占，跟競爭者比是大是小？'] } },
+  E: { label: '地理涵蓋範圍',
+    input:  { def: '此價值單元位於何處；若不只一處，分散在哪些地方', page: 'S 281',
+              questions: ['這個價值單元設在哪裡？', '若不只一處，分散在哪些地區？'] },
+    output: { def: '該產品銷售的地理範圍', page: 'S 279',
+              questions: ['這項產品在哪些地區銷售？'] } },
+  F: { label: '競爭優勢',
+    input:  { def: '此價值單元是否為競爭優勢的來源，以及優勢建立在什麼基礎上', page: 'S 281',
+              questions: ['跟同業比，這個價值單元是不是競爭優勢的來源？', '若是，優勢建立在什麼基礎上（能力、獨佔、時機、財力、綜效、關係、資訊科技）？'] },
+    output: { def: '該產品的競爭優勢', page: 'S 279',
+              questions: ['顧客為什麼選這項產品、不選競爭者的？', '它的競爭優勢是什麼？'] } },
+};
+// C 列垂直整合標記 [S 280；局部整合見策略要素 3-5]
+const VI_OPTIONS = [{ k: 'make', sym: '○', label: '自製' }, { k: 'buy', sym: '✕', label: '外包' }, { k: 'partial', sym: '◐', label: '局部整合' }];
+// F 列優勢基礎 [S 281；分類同策略要素 6-2～6-8，S 338–339]
+const ADV_BASES = ['能力', '獨佔', '時機', '財力', '綜效', '關係', '資訊科技'];
+
 // 回傳該箭頭的建議要素 id（去重、依要素庫順序）
 function suggestElements(arrow) {
   if (!arrow || !arrow.from || !arrow.to) return [];
@@ -1962,7 +2041,11 @@ let activeIdx = 0;
 let arrows = [[], []];
 
 let pendingCell = null; // { row, col, el }
-let currentMode = 'draw';
+let currentMode = 'draw';  // 'draw'＝點格子畫箭頭｜'view'＝檢視｜'describe'＝描述策略點（ST-14a）；點格子一律同步下方面板
+// ST-14a：策略點描述。cellNotes＝{ '欄名|列字母': { text, vi, bases } }，跟 COLUMN_ROLES 一樣以欄名對應（欄位搬移不錯位；
+// 找不到欄名的 key 保留不刪）；vi 只用在 C 列、bases 只用在 F 列；沒內容就不存 key
+let cellNotes = {};
+let currentCell = null;   // 面板的目前格子 { row, col, name }
 let dragArrowSrc = null; // { ci, ai } for arrow list reorder
 
 // ── Undo ──────────────────────────────────────────────────────────────────
@@ -1971,7 +2054,7 @@ let history = [];
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
   // ST-03：快照一律帶短版矩陣狀態（view）；舊格式（純陣列）undo 時照樣相容
-  const snap = { arrows, view: { shortView, hiddenCols } };
+  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes };  // ST-14a：一併記策略點描述
   if (withColumns) snap.cols = { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx };
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
@@ -2000,11 +2083,13 @@ function undo() {
       shortView  = v.shortView;
       hiddenCols = v.hiddenCols;
     }
+    if (snap.cellNotes && typeof snap.cellNotes === 'object') cellNotes = snap.cellNotes;  // 舊快照沒有 → 不動
   }
   if (!history.length) document.getElementById('undoBtn').disabled = true;
   cancelPending();
   if (colsChanged) renderColEditor();
   if (colsChanged || viewChanged) { syncShortViewControls(); buildTable(); }
+  else { renderCellNoteMarks(); renderCellPanel(); }
   drawLines();
   renderArrowList();
   updateStatus();
@@ -2016,11 +2101,12 @@ function setMode(mode) {
   currentMode = mode;
   document.getElementById('modeDrawBtn').classList.toggle('active', mode === 'draw');
   document.getElementById('modeViewBtn').classList.toggle('active', mode === 'view');
+  document.getElementById('modeDescBtn').classList.toggle('active', mode === 'describe');
   cancelPending();
   updateStatus();
   // Update cursor
   document.querySelectorAll('td.cell').forEach(td => {
-    td.style.cursor = mode === 'draw' ? 'crosshair' : 'default';
+    td.style.cursor = cellCursor();
   });
 }
 
@@ -3385,7 +3471,7 @@ function buildTable() {
       td.id = `cell-${row.id}-${ci}`;
       td.dataset.row = row.id;
       td.dataset.col = ci;
-      td.style.cursor = currentMode === 'draw' ? 'crosshair' : 'default';
+      td.style.cursor = cellCursor();
       // 第14欄起加粗左邊框（產品欄分隔）
       if (ci === productSepIdx) { td.classList.add('product-separator'); td.style.borderLeft = '3px solid #000000'; }
       // 產品欄位（粗線以右）：儲存格改用玫瑰紅色系
@@ -3397,7 +3483,7 @@ function buildTable() {
       code.textContent = `${row.id}${String(ci+1).padStart(2,'0')}`;
       td.appendChild(code);
 
-      td.addEventListener('click', () => onCellClick(row.id, ci, td));
+      td.addEventListener('click', () => onMatrixCellClick(row.id, ci, td));
       tr.appendChild(td);
     });
 
@@ -3411,6 +3497,8 @@ function buildTable() {
   });
   table.appendChild(tbody);
   renderHiddenColsBar();
+  renderCellNoteMarks();
+  renderCellPanel();
 }
 
 // ── Cell Click — free arrow drawing ───────────────────────────────────────
@@ -3450,6 +3538,253 @@ function cancelPending() {
     pendingCell = null;
   }
   updateStatus();
+}
+
+// ── 策略點描述（ST-14a）──────────────────────────────────────────────────
+// 格子游標：繪製＝crosshair、描述＝pointer、檢視＝default
+function cellCursor() {
+  if (currentMode === 'describe') return 'pointer';
+  return currentMode === 'draw' ? 'crosshair' : 'default';
+}
+// 格子點擊：一律設為面板的目前格子（描述模式再聚焦描述欄）；再走既有 onCellClick（只在繪製模式畫箭頭，起訖流程不受影響）
+function onMatrixCellClick(rowId, colIdx, td) {
+  selectCell(rowId, colIdx, currentMode === 'describe');
+  onCellClick(rowId, colIdx, td);
+}
+function cellNoteKey(colIdx, rowId) { return `${COLUMNS[colIdx]}|${rowId}`; }
+function isOutputCol(colIdx) { return colIdx >= productSepIdx; }
+// C 列產品欄不適用（書上 C 列只對價值單元有意義）
+function cellPointApplies(rowId, colIdx) { return !(rowId === 'C' && isOutputCol(colIdx)); }
+// 正規化一格的描述；vi 只留在 C 列、bases 只留在 F 列；沒內容回 null
+function normaliseCellNote(raw, rowId) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const n = {
+    text:  typeof raw.text === 'string' ? raw.text : '',
+    vi:    rowId === 'C' && VI_OPTIONS.some(o => o.k === raw.vi) ? raw.vi : '',
+    bases: rowId === 'F' && Array.isArray(raw.bases) ? ADV_BASES.filter(b => raw.bases.includes(b)) : [],
+  };
+  return cellNoteHasContent(n) ? n : null;
+}
+function cellNoteHasContent(n) {
+  return !!n && ((typeof n.text === 'string' && n.text.trim() !== '') || !!n.vi || (Array.isArray(n.bases) && n.bases.length > 0));
+}
+function getCellNote(colIdx, rowId) {
+  return cellNotes[cellNoteKey(colIdx, rowId)] || null;
+}
+function setCellNote(colIdx, rowId, patch) {
+  const key = cellNoteKey(colIdx, rowId);
+  const n = normaliseCellNote({ text: '', vi: '', bases: [], ...(cellNotes[key] || {}), ...patch }, rowId);
+  if (n) cellNotes[key] = n; else delete cellNotes[key];
+}
+// 填寫進度：分母＝目前可見欄 × 6 列（扣掉 C 列產品欄）
+function cellNoteProgress() {
+  let done = 0, total = 0;
+  visibleColIdx().forEach(ci => ROWS.forEach(row => {
+    if (!cellPointApplies(row.id, ci)) return;
+    total++;
+    if (cellNoteHasContent(getCellNote(ci, row.id))) done++;
+  }));
+  return { done, total };
+}
+// 格子上的標記：有內容→右下小圓點；C 列 vi→代號旁符號；F 列 bases→小字數量；title＝描述前 60 字
+function renderCellNoteMarks() {
+  document.querySelectorAll('#matrixTable td.cell').forEach(td => {
+    const rowId = td.dataset.row, ci = Number(td.dataset.col);
+    const n = cellPointApplies(rowId, ci) ? getCellNote(ci, rowId) : null;
+    td.classList.toggle('has-note', cellNoteHasContent(n));
+    td.classList.toggle('cell-selected', !!currentCell && currentCell.row === rowId && currentCell.col === ci);
+    td.querySelectorAll('.cell-vi, .cell-bases').forEach(x => x.remove());
+    const code = td.querySelector('.cell-code');
+    if (n && n.vi) {
+      const vi = document.createElement('span');
+      vi.className = 'cell-vi';
+      const opt = VI_OPTIONS.find(o => o.k === n.vi);
+      vi.textContent = opt.sym;
+      vi.title = opt.label;
+      code.after(vi);
+    }
+    if (n && n.bases.length) {
+      const b = document.createElement('span');
+      b.className = 'cell-bases';
+      b.textContent = `優勢×${n.bases.length}`;
+      b.title = n.bases.join('、');
+      td.appendChild(b);
+    }
+    const text = n && n.text.trim();
+    if (text) td.title = text.length > 60 ? text.slice(0, 60) + '…' : text;
+    else td.removeAttribute('title');
+  });
+}
+function selectCell(rowId, colIdx, focus) {
+  currentCell = { row: rowId, col: colIdx, name: COLUMNS[colIdx] };
+  renderCellNoteMarks();
+  renderCellPanel();
+  if (focus) {
+    const panel = document.getElementById('cellPanel');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const ta = panel.querySelector('.cell-note-text');
+    if (ta) ta.focus({ preventScroll: true });
+  }
+}
+function updateCellProgress() {
+  const { done, total } = cellNoteProgress();
+  const label = document.getElementById('cellProgressLabel');
+  const fill  = document.getElementById('cellProgressFill');
+  if (label) label.textContent = `已描述 ${done}／${total} 格`;
+  if (fill)  fill.style.width = total ? `${Math.round(done / total * 100)}%` : '0%';
+}
+// 描述有改動 → 立即存檔、更新格子標記與進度
+function afterCellNoteChange() {
+  renderCellNoteMarks();
+  updateCellProgress();
+  saveState();
+}
+function renderCellPanel() {
+  const panel = document.getElementById('cellPanel');
+  if (!panel) return;
+  // 目前格子的欄位被搬移／隱藏／刪除 → 依欄名重新定位；找不到就清掉
+  if (currentCell) {
+    let ci = currentCell.col;
+    if (COLUMNS[ci] !== currentCell.name) ci = COLUMNS.indexOf(currentCell.name);
+    if (ci < 0 || isColHidden(ci)) currentCell = null;
+    else currentCell.col = ci;
+  }
+  panel.innerHTML = '';
+
+  const head = document.createElement('div');
+  head.className = 'cell-panel-head';
+  const title = document.createElement('div');
+  title.className = 'cell-panel-title';
+  const prog = document.createElement('div');
+  prog.className = 'cell-progress';
+  const progLabel = document.createElement('span');
+  progLabel.id = 'cellProgressLabel';
+  const bar = document.createElement('div');
+  bar.className = 'cell-progress-bar';
+  const fill = document.createElement('div');
+  fill.className = 'cell-progress-fill';
+  fill.id = 'cellProgressFill';
+  bar.appendChild(fill);
+  prog.appendChild(progLabel);
+  prog.appendChild(bar);
+  head.appendChild(title);
+  head.appendChild(prog);
+  panel.appendChild(head);
+
+  if (!currentCell) {
+    title.textContent = '📝 策略點';
+    const hint = document.createElement('div');
+    hint.className = 'cell-panel-empty';
+    hint.textContent = '點矩陣任一格查看策略點定義';
+    panel.appendChild(hint);
+    updateCellProgress();
+    return;
+  }
+
+  const { row: rowId, col: ci } = currentCell;
+  const rowDef = STRATEGY_POINT_DEFS[rowId];
+  const out = isOutputCol(ci);
+  const code = document.createElement('b');
+  code.className = 'cell-panel-code';
+  code.textContent = `${rowId}${String(ci + 1).padStart(2, '0')}`;
+  title.appendChild(code);
+  title.appendChild(document.createTextNode(` ${COLUMNS[ci]} × ${rowDef.label}`));
+  const kind = document.createElement('span');
+  kind.className = 'cell-kind' + (out ? ' out' : '');
+  kind.textContent = out ? '產出欄' : '投入欄';
+  title.appendChild(kind);
+
+  const def = out ? rowDef.output : rowDef.input;
+  if (!def) {
+    const na = document.createElement('div');
+    na.className = 'cell-panel-empty';
+    na.textContent = '此列不適用於產品欄（垂直整合只描述價值單元自製或外包）';
+    panel.appendChild(na);
+    updateCellProgress();
+    return;
+  }
+
+  const defEl = document.createElement('div');
+  defEl.className = 'cell-def';
+  defEl.textContent = def.def + ' ';
+  const page = document.createElement('span');
+  page.className = 'cell-page';
+  page.textContent = `[${def.page}]`;
+  defEl.appendChild(page);
+  panel.appendChild(defEl);
+
+  const ql = document.createElement('ul');
+  ql.className = 'cell-questions';
+  def.questions.forEach(q => {
+    const li = document.createElement('li');
+    li.textContent = q;
+    ql.appendChild(li);
+  });
+  panel.appendChild(ql);
+
+  const note = getCellNote(ci, rowId) || { text: '', vi: '', bases: [] };
+
+  // C 列投入欄：自製／外包／局部整合（再點一次取消）
+  if (rowId === 'C') {
+    const line = document.createElement('div');
+    line.className = 'cell-opt-line';
+    line.appendChild(Object.assign(document.createElement('span'), { className: 'cell-opt-tag', textContent: '垂直整合：' }));
+    VI_OPTIONS.forEach(o => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cell-opt-btn' + (note.vi === o.k ? ' active' : '');
+      btn.textContent = `${o.sym} ${o.label}`;
+      btn.addEventListener('click', () => {
+        pushHistory();
+        setCellNote(ci, rowId, { vi: note.vi === o.k ? '' : o.k });
+        afterCellNoteChange();
+        renderCellPanel();
+      });
+      line.appendChild(btn);
+    });
+    panel.appendChild(line);
+  }
+  // F 列：優勢基礎（多選）
+  if (rowId === 'F') {
+    const line = document.createElement('div');
+    line.className = 'cell-opt-line';
+    line.appendChild(Object.assign(document.createElement('span'), { className: 'cell-opt-tag', textContent: '優勢基礎：' }));
+    ADV_BASES.forEach(b => {
+      const lab = document.createElement('label');
+      lab.className = 'cell-base-chip' + (note.bases.includes(b) ? ' active' : '');
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.checked = note.bases.includes(b);
+      chk.addEventListener('change', () => {
+        pushHistory();
+        const cur = (getCellNote(ci, rowId) || { bases: [] }).bases;
+        setCellNote(ci, rowId, { bases: chk.checked ? [...cur, b] : cur.filter(x => x !== b) });
+        afterCellNoteChange();
+        renderCellPanel();
+      });
+      lab.appendChild(chk);
+      lab.appendChild(document.createTextNode(b));
+      line.appendChild(lab);
+    });
+    panel.appendChild(line);
+  }
+
+  // 描述：輸入即存；每次聚焦後第一次輸入前記一次復原點（復原會回到這次編輯前）
+  const ta = document.createElement('textarea');
+  ta.className = 'cell-note-text';
+  ta.rows = 3;
+  ta.placeholder = '描述這個策略點的現狀…';
+  ta.value = note.text;
+  let editing = false;
+  ta.addEventListener('focus', () => { editing = false; });
+  ta.addEventListener('input', () => {
+    if (!editing) { pushHistory(); editing = true; }
+    setCellNote(ci, rowId, { text: ta.value });
+    afterCellNoteChange();
+  });
+  ta.addEventListener('blur', () => { editing = false; });
+  panel.appendChild(ta);
+  updateCellProgress();
 }
 
 // ── Draw Lines + Arrows ───────────────────────────────────────────────────
@@ -3984,7 +4319,9 @@ function updateStatus() {
   const comp = competitors[activeIdx];
   const count = arrows[activeIdx].length;
   let hint = '';
-  if (currentMode === 'draw') {
+  if (currentMode === 'describe') {
+    hint = '📝 描述模式：點格子填寫策略點';
+  } else if (currentMode === 'draw') {
     hint = pendingCell
       ? `選起點：${pendingCell.row}${String(pendingCell.col+1).padStart(2,'0')} — 請點終點`
       : `✏️ 點第一格設起點`;
@@ -4712,6 +5049,7 @@ function saveState() {
       COLUMN_ROLES:  JSON.parse(JSON.stringify(COLUMN_ROLES)),
       shortView,
       hiddenCols:    JSON.parse(JSON.stringify(hiddenCols)),
+      cellNotes:     JSON.parse(JSON.stringify(cellNotes)),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
@@ -4761,6 +5099,14 @@ function loadState() {
     hiddenCols = {};
     if (state.hiddenCols && typeof state.hiddenCols === 'object' && !Array.isArray(state.hiddenCols)) {
       Object.keys(state.hiddenCols).forEach(name => { if (state.hiddenCols[name] === true) hiddenCols[name] = true; });
+    }
+    // 策略點描述（ST-14a）：舊存檔沒有 → 空；只收物件，逐格正規化，沒內容的丟掉
+    cellNotes = {};
+    if (state.cellNotes && typeof state.cellNotes === 'object' && !Array.isArray(state.cellNotes)) {
+      Object.keys(state.cellNotes).forEach(key => {
+        const n = normaliseCellNote(state.cellNotes[key], key.slice(key.lastIndexOf('|') + 1));
+        if (n) cellNotes[key] = n;
+      });
     }
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
@@ -4899,6 +5245,8 @@ function loadExampleProject(id) {
   }).filter(Boolean));
   while (arrows.length < competitors.length) arrows.push([]);
   activeIdx = 0;
+  cellNotes = {};     // ST-14a：範例不帶策略點描述，清掉舊的
+  currentCell = null;
   cancelPending();
   renderColEditor();
   rebuildTable();
@@ -4923,6 +5271,8 @@ function buildExampleSelect() {
 function clearLocalStorage() {
   if (!confirm('確定要清除所有存檔並重設為預設值？（此操作無法復原）')) return;
   localStorage.removeItem(STORAGE_KEY);
+  cellNotes = {};     // ST-14a（reload 後本來也會是空的，這裡明確清掉）
+  currentCell = null;
   location.reload();
 }
 
