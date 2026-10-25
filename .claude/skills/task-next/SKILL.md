@@ -4,7 +4,7 @@ description: >-
   從 TODO.md 挑下一項未完成任務，先補編號、先寫計畫給使用者確認，點頭後才動手改 index.html，
   改完驗證，再交給 task-release 收尾。當使用者說「下一步」「接著做」「做下一項」
   「/task-next」「把 TODO 的 XX-01 做掉」時使用。
-  硬規則：一次只做一項；先規劃、等使用者點頭再執行；不在 main 上改；使用者沒說「merge」不合併。
+  硬規則：一次只做一項；先規劃、等使用者點頭再執行；不在 main 上改；使用者沒說「merge」不併入 dev、沒說「release」不上 main。
 metadata:
   version: "1.2.0"
 ---
@@ -21,7 +21,7 @@ metadata:
 1. **先規劃再執行**：步驟 3 的計畫沒被使用者點頭前，不改任何檔（補編號除外，見步驟 1）。
 2. **一次一項**：上一項沒 commit，不開下一項。
 3. **不在 `main` 上改**：必須在 worktree／feature branch 上（CLAUDE.md §Git 規則）。
-4. **使用者沒明確說「merge」，不合併回 `main`**。`main` 一更新就自動部署 GitHub Pages。
+4. **使用者沒說「merge」不合併到 `dev`；沒說「release」不合併到 `main`**（三層分支見 CLAUDE.md §Git 規則）。`main` 一更新就自動部署 GitHub Pages。
 5. **要刪檔、搬檔、改檔名，或規格有兩種以上合理解讀 → 停下問使用者**，不猜。
 6. **改檔、驗證都交給 subagent**：主 session 只負責讀 TODO、寫計畫、派工、檢查 subagent 的成果、收尾（`TODO.md`／頁尾日期／commit 可由主 session 做）。主 session 不直接改 `index.html`，連「只有一行」的改動也一樣。
 7. **主 session 用量守在六成內**：context 用量超過約 60% → 先把目前進度收尾（commit），提醒使用者 `/clear` 後再用 `task-next` 接著做。`/clear` 只有使用者能按。
@@ -164,7 +164,7 @@ verifier 回報後，主 session 自己看一眼截圖（Read 圖檔）確認。
 - 做完哪一項、commit hash、分支名
 - 驗證了什麼、結果如何
 - TODO.md 下一個未完成項目是什麼
-- 提醒：要上線請說「merge」
+- 提醒：要併入 `dev` 請說「merge」；要上線請說「release」
 
 然後**停下來**。要不要接著做下一項，由使用者決定。
 

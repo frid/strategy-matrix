@@ -3,9 +3,9 @@ name: task-release
 description: >-
   任務做完並驗證後的收尾流程：勾選 TODO.md、更新 index.html 頁尾「最後更新日期」、
   只 stage 本任務的檔、commit、push 分支。當 task-next 走到收尾、或使用者說
-  「收尾」「commit」「/task-release」時使用。不會合併回 main——使用者明確說「merge」才另外做。
+  「收尾」「commit」「/task-release」時使用。不會自動合併——使用者說「merge」才併入 dev、說「release」才上 main。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Task Release — 任務收尾
@@ -83,14 +83,22 @@ git push -u origin "$(git branch --show-current)"
 
 - commit hash、分支名、納入哪些檔
 - 驗證摘要
-- 下一步：「要上線請說『merge』」
+- 下一步：「要併入開發分支請說『merge』；要上線請說『release』」
 
 ---
 
-## 合併回 main（只有使用者說「merge」才做）
+## 合併到 dev（只有使用者說「merge」才做）
 
-1. 先讓使用者確認要合併的 commit 清單：`git log --oneline main..<branch>`。
-2. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
+1. 先讓使用者確認要合併的 commit 清單：`git log --oneline dev..<branch>`。
+2. `git checkout dev && git pull && git merge --no-ff <branch> && git push origin dev`（在主 checkout 做，不在 worktree 裡做）。
+3. 合併後可刪 worktree branch。`dev` 不會部署。
+
+## Release 到 main（只有使用者說「release」才做）
+
+1. 確認版號：使用者指定，或提議上一個 tag 的 patch +1（`git tag --sort=-v:refname | head -1`）。
+2. `git log --oneline main..dev` 給使用者看要上線的內容。
+3. `git checkout main && git pull && git merge --no-ff dev && git tag -a vX.Y.Z -m "..." && git push origin main --tags`。
+4. 合併後 `main` 會自動部署到 https://jack0630.github.io/strategy-matrix/ ，提醒使用者過幾分鐘去看。
 
 ---
 
@@ -99,3 +107,4 @@ git push -u origin "$(git branch --show-current)"
 | 版號 | 日期 | 變更 |
 |---|---|---|
 | 1.0.0 | 2026-09-28 | 建立：參考 QMSWeb `qms-release`，拿掉版號／burndown／DB 閘門，改成單檔網頁專案版 |
+| 1.1.0 | 2026-10-25 | 三層分支：merge→dev、release→main＋tag |
