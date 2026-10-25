@@ -749,7 +749,7 @@
   /* ── Arrow list panel ── */
   .arrow-list { display: flex; flex-direction: column; gap: 5px; margin-top: 4px; }
   .arrow-item {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     font-size: 0.76rem; padding: 4px 8px; border-radius: 6px;
     background: #f7f5ff;
   }
@@ -772,6 +772,23 @@
   .arrow-drag-handle:active { cursor: grabbing; }
   .arrow-item.dragging { opacity: 0.38; }
   .arrow-item.drag-over { outline: 2px dashed var(--col-header); outline-offset: -2px; background: var(--cell-hover) !important; }
+  /* ST-14b：箭頭的策略要素區（chip／建議提示／選擇面板） */
+  .arrow-elems { flex-basis: 100%; padding-left: 36px; font-size: 0.70rem; color: var(--ink-light); }
+  .arrow-elems-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+  .arrow-elems-tag { color: var(--ink-light); }
+  .elem-chip { border: 1px solid var(--grid-line); border-radius: 10px; padding: 0 6px; color: var(--ink); background: white; white-space: nowrap; cursor: default; }
+  .elem-chip-x { cursor: pointer; opacity: 0.45; }
+  .elem-chip-x:hover { opacity: 1; }
+  .elem-hint { color: var(--cell-text); }
+  .elem-hint-id { cursor: pointer; text-decoration: underline dotted; }
+  .elem-hint-id:hover { color: var(--col-header); }
+  .elem-add-btn { border: 1px solid var(--grid-line); border-radius: 10px; background: white; color: var(--col-header); font-size: 0.68rem; font-family: inherit; padding: 0 7px; cursor: pointer; }
+  .elem-add-btn:hover { border-color: var(--col-header); }
+  .elem-panel { margin-top: 4px; max-height: 260px; overflow-y: auto; border: 1px solid var(--grid-line); border-radius: 6px; background: white; padding: 4px 8px; }
+  .elem-panel-head { font-weight: 600; color: var(--col-header); margin-top: 4px; }
+  .elem-panel-group { display: flex; flex-wrap: wrap; gap: 0 12px; }
+  .elem-opt { color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .elem-opt input { vertical-align: middle; margin: 0 2px 0 0; }
 
   /* Column separator pin marker */
   .col-pin { font-size: 0.80rem; cursor: pointer; opacity: 0.22; line-height: 1; padding: 0 2px; user-select: none; }
@@ -1325,6 +1342,113 @@ const VC_TEMPLATES = [
   },
 ];
 
+// ── ST-14b：51 項策略要素（策略管理新論 Ch9 [S 285–339]）────────────────────────
+// def／example 為自行摘要的策略意涵與通用例子（非原文）；page 只標該類起始頁
+const STRATEGY_ELEMENT_CATS = [
+  { id: 1, name: '產品線廣度與特色',         page: 'S 286' },
+  { id: 2, name: '目標市場之區隔方式與選擇', page: 'S 300' },
+  { id: 3, name: '垂直整合程度之取決',       page: 'S 312' },
+  { id: 4, name: '相對規模與規模經濟',       page: 'S 319' },
+  { id: 5, name: '地理涵蓋範圍',             page: 'S 324' },
+  { id: 6, name: '競爭優勢',                 page: 'S 332' },
+];
+const STRATEGY_ELEMENTS = [
+  // 1 產品線廣度與特色
+  { id: '1-1',  cat: 1, name: '產品與市場之配合', def: '讓產品組合對應所選目標市場的需求', example: '推出平價款滿足價格敏感的顧客群' },
+  { id: '1-2',  cat: 1, name: '產品特色之形成', def: '投入面的價值活動轉化為顧客感受到的產品特色', example: '採購成本低，使產品售價得以壓低' },
+  { id: '1-3',  cat: 1, name: '價值單元成本之降低', def: '靠規模、技術或流程降低某價值單元的成本', example: '工廠產量大，單位製造成本下降' },
+  { id: '1-4',  cat: 1, name: '產品品質之確保', def: '安排價值活動以確保產品品質穩定', example: '自建品管實驗室，降低出貨不良率' },
+  { id: '1-5',  cat: 1, name: '顧客需求之迅速回應', def: '縮短從需求出現到供應滿足的時間', example: '在地倉儲讓訂單隔日送達' },
+  { id: '1-6',  cat: 1, name: '價值單元間的替代', def: '以某一價值活動取代另一活動的功能', example: '線上客服系統取代部分門市人力' },
+  { id: '1-7',  cat: 1, name: '價值單元間的互補', def: '不同價值活動互相支援，提升整體效果', example: '資訊系統支援業務掌握顧客資料' },
+  { id: '1-8',  cat: 1, name: '與交易對象價值單元間的配合與滿足', def: '配合供應商或顧客的價值活動來創造價值', example: '依大客戶的生產排程即時供貨' },
+  { id: '1-9',  cat: 1, name: '價值鏈之切割與創造', def: '切出或新增價值鏈的一段，形成新事業或服務', example: '把內部物流部門獨立出來對外承攬' },
+  { id: '1-10', cat: 1, name: '因產品組合形成之產品特色', def: '多項產品搭配後產生單一產品沒有的特色', example: '整套解決方案比分開購買更方便' },
+  { id: '1-11', cat: 1, name: '產品組合對其他策略點之影響', def: '產品組合改變連帶影響行銷、採購等策略點', example: '新增相似產品可共用既有通路' },
+  { id: '1-12', cat: 1, name: '價值活動間之呼應與配合', def: '各價值活動作法一致、互相強化', example: '高價定位搭配精緻門市與專業服務' },
+  // 2 目標市場之區隔方式與選擇
+  { id: '2-1',  cat: 2, name: '目標市場之區隔方式與選擇', def: '決定以何種標準切分市場、鎖定哪些顧客', example: '鎖定中小企業而非大型企業客戶' },
+  { id: '2-2',  cat: 2, name: '目標市場改變造成價值活動之增減', def: '換目標市場後需新增或刪減的價值活動', example: '進軍企業客戶需增設業務團隊' },
+  { id: '2-3',  cat: 2, name: '新的市場區隔對規模經濟之影響', def: '開拓新市場帶來的量能提升規模經濟', example: '新市場需求使原料採購量擴大' },
+  { id: '2-4',  cat: 2, name: '利用市場區隔形成競爭優勢', def: '選擇對手忽略或做不好的區隔取得優勢', example: '專攻大廠不願接的小量客製訂單' },
+  { id: '2-5',  cat: 2, name: '採購來源之選擇與掌握', def: '選擇並掌握好的供應來源支撐價值活動', example: '選用可靠的物流業者確保配送品質' },
+  { id: '2-6',  cat: 2, name: '與合作廠商或機構關係之掌握', def: '經營與合作夥伴、機構的關係以取得資源', example: '與大學合作取得研發人才' },
+  { id: '2-7',  cat: 2, name: '對合作廠商談判力之運用', def: '憑自身優勢提升對供應商或通路的議價力', example: '品牌強勢，通路願意給較好的條件' },
+  { id: '2-8',  cat: 2, name: '半成品目標市場之掌握', def: '將半成品或中間產出賣給外部客戶', example: '自產關鍵元件同時供應其他品牌' },
+  { id: '2-9',  cat: 2, name: '半成品採購來源之掌握', def: '掌握關鍵零組件或中間材料的外部來源', example: '與關鍵零件商簽長期供貨合約' },
+  { id: '2-10', cat: 2, name: '通路之選擇與滿足', def: '挑選合適通路並滿足其需求以觸及顧客', example: '提供通路促銷支援換取貨架位置' },
+  { id: '2-11', cat: 2, name: '採購決策影響者之界定與滿足', def: '辨識並滿足會影響購買決策的關係人', example: '向專業人員推廣以影響終端選購' },
+  // 3 垂直整合程度之取決
+  { id: '3-1',  cat: 3, name: '垂直整合程度之取決', def: '決定哪些價值活動自己做、哪些交給外部', example: '自建資訊系統形成服務特色' },
+  { id: '3-2',  cat: 3, name: '部份半成品外售', def: '自製的中間產出部分對外銷售，提高利用率', example: '自有工廠的剩餘產能替他廠代工' },
+  { id: '3-3',  cat: 3, name: '價值單元間之介面管理', def: '管理上下游價值活動之間的銜接與協調', example: '研發與製造緊密配合，縮短量產時程' },
+  { id: '3-4',  cat: 3, name: '垂直整合與規模經濟', def: '規模夠大時，整合上下游才划算', example: '製造量大到值得自製關鍵零件' },
+  { id: '3-5',  cat: 3, name: '局部整合', def: '只整合價值鏈中關鍵的一段，其餘外包', example: '只自做核心配方，其餘委外生產' },
+  { id: '3-6',  cat: 3, name: '網絡關係', def: '以長期合作網絡取代完全自製或純市場交易', example: '與一群固定協力廠形成供應網' },
+  { id: '3-7',  cat: 3, name: '價值單元與生存空間', def: '保留足以生存的價值活動，避免被上下游取代', example: '掌握關鍵技術，避免被大客戶自製取代' },
+  // 4 相對規模與規模經濟
+  { id: '4-1',  cat: 4, name: '規模經濟之發揮', def: '擴大某價值活動的規模以降低單位成本', example: '集中生產使單位成本低於對手' },
+  { id: '4-2',  cat: 4, name: '規模經濟與外包決策', def: '依規模是否足夠決定自製或外包', example: '量小時委外，量大後自建產線' },
+  { id: '4-3',  cat: 4, name: '經驗曲線之運用', def: '累積產量帶來學習效果，使成本下降', example: '量產經驗多使良率持續提升' },
+  { id: '4-4',  cat: 4, name: '與其他事業共享範疇經濟', def: '與企業內其他事業共用資源以分攤成本', example: '多個品牌共用同一物流中心' },
+  // 5 地理涵蓋範圍
+  { id: '5-1',  cat: 5, name: '價值單元之地理移動', def: '把價值活動移到更有利的地點', example: '工廠設在原料產地，使原料成本低' },
+  { id: '5-2',  cat: 5, name: '地理移動與交易對象之相互影響', def: '價值活動移地後牽動供應商或顧客的配合', example: '跟著主要客戶到海外設廠' },
+  { id: '5-3',  cat: 5, name: '不同地區價值單元之介面', def: '分處各地的價值活動如何協調銜接', example: '零組件廠需與組裝廠設在同地' },
+  { id: '5-4',  cat: 5, name: '地理移動與產品特色之調整', def: '進入新地區時調整產品以符合當地需求', example: '依各地口味調整產品配方' },
+  { id: '5-5',  cat: 5, name: '多點經營與規模經濟', def: '多地區營運累積總量，產生規模效益', example: '通路分散各地但集中採購' },
+  { id: '5-6',  cat: 5, name: '多點經營與風險分散', def: '分散於多地區，降低單一地區的風險', example: '多國設廠避免單一地區斷鏈' },
+  { id: '5-7',  cat: 5, name: '競爭優勢隨地理移動而擴散延伸', def: '把既有優勢複製到新地區', example: '成功的門市模式複製到其他城市' },
+  { id: '5-8',  cat: 5, name: '地理局部優勢及其連續創造', def: '在特定地區建立優勢並持續開拓新據點', example: '先在一區站穩，再逐步拓展鄰近區' },
+  { id: '5-9',  cat: 5, name: '地理區改變對其他策略點之影響', def: '地理範圍改變連帶影響成本、特色等策略點', example: '移往低工資地區使人工成本下降' },
+  // 6 競爭優勢
+  { id: '6-1',  cat: 6, name: '策略形態因素類的競爭優勢', def: '來自產品、市場、整合、規模、地理選擇的優勢', example: '規模最大的廠商取得成本領先' },
+  { id: '6-2',  cat: 6, name: '獨特能力', def: '對手難以模仿的技術、知識或資源', example: '自有資訊能力支撐客製化服務' },
+  { id: '6-3',  cat: 6, name: '獨佔力', def: '法令、專利或稀有資源帶來的排他地位', example: '專利保護使對手無法推出同類產品' },
+  { id: '6-4',  cat: 6, name: '時機', def: '比對手更早或更適時地採取行動', example: '搶先進入新興市場占得先機' },
+  { id: '6-5',  cat: 6, name: '綜效', def: '多項業務或活動結合後產生的加乘效果', example: '多項產品共用通路帶來行銷綜效' },
+  { id: '6-6',  cat: 6, name: '財力', def: '雄厚資金支撐長期投資與價格競爭', example: '資金充裕得以持續擴廠' },
+  { id: '6-7',  cat: 6, name: '關係', def: '與政府、客戶或夥伴的良好關係', example: '與大型客戶長期合作取得穩定訂單' },
+  { id: '6-8',  cat: 6, name: '資訊科技之運用', def: '運用資訊系統提升效率或創造服務特色', example: '以數據分析精準掌握顧客需求' },
+].map(e => ({ ...e, page: STRATEGY_ELEMENT_CATS.find(c => c.id === e.cat).page }));
+const STRATEGY_ELEMENT_MAP = Object.fromEntries(STRATEGY_ELEMENTS.map(e => [e.id, e]));
+
+// 箭頭形狀 → 建議要素（依 doc/reference Ch8Ch9 文件第四節；「B 列同格多產品相似」無箭頭對應，略過）
+// f／t = { row, col, out }，out＝是否為產出／產品欄（col >= productSepIdx）；ctx.sameCol／ctx.sameRow
+const ELEMENT_SUGGEST_RULES = [
+  { when: (f, t, c) => f.row === 'D' && t.row === 'A' && c.sameCol, ids: ['4-1', '1-3'] },
+  { when: (f, t, c) => f.row === 'E' && t.row === 'A' && c.sameCol, ids: ['5-1', '5-9'] },
+  { when: (f, t, c) => f.row === 'F' && t.row === 'A' && c.sameCol, ids: ['6-2', '6-3', '6-4', '6-5', '6-6', '6-7', '6-8'] },
+  { when: (f, t, c) => f.row === 'C' && t.row === 'A' && c.sameCol, ids: ['3-1'] },
+  { when: (f, t)    => f.row === 'A' && t.row === 'A' && !f.out && t.out, ids: ['1-2'] },
+  { when: (f, t)    => f.row === 'A' && t.row === 'B' && f.out && t.out, ids: ['1-1'] },
+  { when: (f, t)    => f.row === 'A' && t.row === 'A' && !f.out && !t.out, ids: ['1-6', '1-7'] },
+  { when: (f, t)    => f.row === 'A' && t.row === 'B' && !f.out && !t.out, ids: ['2-7'] },
+  { when: (f, t)    => f.row === 'B' && t.row === 'A' && !f.out && !t.out, ids: ['2-5', '2-6', '2-10'] },
+  { when: (f, t, c) => f.row === 'C' && t.row === 'C' && !c.sameCol, ids: ['3-3'] },
+  { when: (f, t, c) => f.row === 'E' && t.row === 'E' && !c.sameCol, ids: ['5-3'] },
+  { when: (f, t)    => f.row === 'B' && t.row === 'D', ids: ['2-3'] },
+  { when: (f, t)    => f.row === 'E' && t.row === 'D', ids: ['5-5', '5-6'] },
+  { when: (f, t)    => f.row === 'D' && t.row === 'C', ids: ['3-4', '4-2'] },
+];
+
+// 回傳該箭頭的建議要素 id（去重、依要素庫順序）
+function suggestElements(arrow) {
+  if (!arrow || !arrow.from || !arrow.to) return [];
+  const f = { row: arrow.from.row, col: arrow.from.col, out: arrow.from.col >= productSepIdx };
+  const t = { row: arrow.to.row,   col: arrow.to.col,   out: arrow.to.col   >= productSepIdx };
+  const ctx = { sameCol: f.col === t.col, sameRow: f.row === t.row };
+  const hit = new Set();
+  ELEMENT_SUGGEST_RULES.forEach(r => { if (r.when(f, t, ctx)) r.ids.forEach(id => hit.add(id)); });
+  return STRATEGY_ELEMENTS.filter(e => hit.has(e.id)).map(e => e.id);
+}
+
+// 要素顯示文字：「1-3 價值單元成本之降低」
+function elementLabel(id) {
+  const e = STRATEGY_ELEMENT_MAP[id];
+  return e ? `${id} ${e.name}` : id;
+}
+
 // ── 矩陣＋價值鏈配色預設（由「專案」區的配色下拉選單切換）─────────────────────────────
 const COLOR_PALETTES = [
   {
@@ -1522,7 +1646,7 @@ let competitors = [
 ];
 let activeIdx = 0;
 
-// arrows[compIdx] = [ {from: {row,col}, to: {row,col}, note}, ... ]
+// arrows[compIdx] = [ {from: {row,col}, to: {row,col}, note, elements: ['1-3', …]}, ... ]（elements＝ST-14b 策略要素 id）
 let arrows = [[], []];
 
 let pendingCell = null; // { row, col, el }
@@ -2854,6 +2978,7 @@ function onCellClick(rowId, colIdx, td) {
       from: { row: pendingCell.row, col: pendingCell.col },
       to:   { row: rowId, col: colIdx },
       note: '',
+      elements: [],
     });
     cancelPending();
     drawLines();
@@ -2993,6 +3118,7 @@ function renderArrowList() {
       del.addEventListener('click', () => {
         pushHistory();
         arrows[ci].splice(ai, 1);
+        openElemPanelKey = null;
         drawLines();
         renderArrowList();
         updateStatus();
@@ -3004,6 +3130,7 @@ function renderArrowList() {
       item.appendChild(label);
       item.appendChild(noteInp);
       item.appendChild(del);
+      item.appendChild(buildArrowElementsRow(ci, ai));
 
       // Drag-to-reorder within the same competitor's arrows
       item.addEventListener('dragstart', e => {
@@ -3030,6 +3157,7 @@ function renderArrowList() {
         const [moved] = arrows[ci].splice(dragArrowSrc.ai, 1);
         arrows[ci].splice(ai, 0, moved);
         dragArrowSrc = null;
+        openElemPanelKey = null;
         renderArrowList();
         saveState();
       });
@@ -3044,6 +3172,139 @@ function renderArrowList() {
     empty.textContent = '尚未繪製任何箭頭';
     list.appendChild(empty);
   }
+}
+
+// ── ST-14b：箭頭清單每筆的「要素」區（chip＋建議提示＋選擇面板）────────────────
+let openElemPanelKey = null; // 目前展開選擇面板的箭頭 `${ci}-${ai}`（重繪後維持展開）
+
+function buildArrowElementsRow(ci, ai) {
+  const arrow = arrows[ci][ai];
+  if (!Array.isArray(arrow.elements)) arrow.elements = [];
+  const key = `${ci}-${ai}`;
+  const wrap = document.createElement('div');
+  wrap.className = 'arrow-elems';
+  // 面板內操作不觸發整列拖曳
+  wrap.addEventListener('mousedown', e => e.stopPropagation());
+  wrap.addEventListener('dragstart', e => { e.preventDefault(); e.stopPropagation(); });
+
+  const line = document.createElement('div');
+  line.className = 'arrow-elems-line';
+  wrap.appendChild(line);
+
+  const has = id => arrow.elements.includes(id);
+  const setElem = (id, on) => {
+    if (on && !has(id)) arrow.elements.push(id);
+    if (!on) arrow.elements = arrow.elements.filter(x => x !== id);
+    // 依要素庫順序排列
+    const order = STRATEGY_ELEMENTS.map(e => e.id);
+    arrow.elements.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    saveState();
+  };
+  const tipOf = id => {
+    const e = STRATEGY_ELEMENT_MAP[id];
+    return e ? `${id} ${e.name}\n${e.def}\n例：${e.example}\n［${e.page}］` : id;
+  };
+
+  const renderLine = () => {
+    line.innerHTML = '';
+    const tag = document.createElement('span');
+    tag.className = 'arrow-elems-tag';
+    tag.textContent = '要素';
+    line.appendChild(tag);
+
+    arrow.elements.forEach(id => {
+      const chip = document.createElement('span');
+      chip.className = 'elem-chip';
+      chip.title = tipOf(id);
+      chip.textContent = elementLabel(id) + ' ';
+      const x = document.createElement('span');
+      x.className = 'elem-chip-x';
+      x.textContent = '×';
+      x.title = '移除此要素';
+      x.addEventListener('click', () => { setElem(id, false); renderArrowList(); });
+      chip.appendChild(x);
+      line.appendChild(chip);
+    });
+
+    // 沒標要素但有建議 → 淡色提示，點 id 即加入
+    const sugg = suggestElements(arrow);
+    if (arrow.elements.length === 0 && sugg.length) {
+      const hint = document.createElement('span');
+      hint.className = 'elem-hint';
+      hint.appendChild(document.createTextNode('建議：'));
+      sugg.forEach((id, k) => {
+        if (k) hint.appendChild(document.createTextNode('、'));
+        const a = document.createElement('span');
+        a.className = 'elem-hint-id';
+        a.textContent = id;
+        a.title = tipOf(id) + '\n（點擊加入）';
+        a.addEventListener('click', () => { setElem(id, true); renderArrowList(); });
+        hint.appendChild(a);
+      });
+      line.appendChild(hint);
+    }
+
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'elem-add-btn';
+    addBtn.textContent = openElemPanelKey === key ? '－要素' : '＋要素';
+    addBtn.title = '從 51 項策略要素中選擇';
+    addBtn.addEventListener('click', () => {
+      openElemPanelKey = openElemPanelKey === key ? null : key;
+      renderArrowList();
+    });
+    line.appendChild(addBtn);
+  };
+  renderLine();
+
+  if (openElemPanelKey === key) {
+    const panel = document.createElement('div');
+    panel.className = 'elem-panel';
+    // 勾選後只更新 chip 列與面板內同 id 的勾選框，不整個重繪（保留面板捲動位置）
+    const makeOpt = id => {
+      const e = STRATEGY_ELEMENT_MAP[id];
+      const lab = document.createElement('label');
+      lab.className = 'elem-opt';
+      lab.title = tipOf(id);
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.dataset.elemId = id;
+      cb.checked = has(id);
+      cb.addEventListener('change', () => {
+        setElem(id, cb.checked);
+        panel.querySelectorAll('input[data-elem-id="' + id + '"]').forEach(o => { o.checked = cb.checked; });
+        renderLine();
+      });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(` ${id} ${e ? e.name : ''}`));
+      return lab;
+    };
+
+    const sugg = suggestElements(arrow);
+    const sh = document.createElement('div');
+    sh.className = 'elem-panel-head';
+    sh.textContent = sugg.length ? '建議（依箭頭形狀）' : '建議：此箭頭形狀沒有對應的建議要素';
+    panel.appendChild(sh);
+    if (sugg.length) {
+      const sg = document.createElement('div');
+      sg.className = 'elem-panel-group';
+      sugg.forEach(id => sg.appendChild(makeOpt(id)));
+      panel.appendChild(sg);
+    }
+
+    STRATEGY_ELEMENT_CATS.forEach(cat => {
+      const h = document.createElement('div');
+      h.className = 'elem-panel-head';
+      h.textContent = `${cat.id} ${cat.name}［${cat.page}］`;
+      panel.appendChild(h);
+      const g = document.createElement('div');
+      g.className = 'elem-panel-group';
+      STRATEGY_ELEMENTS.filter(e => e.cat === cat.id).forEach(e => g.appendChild(makeOpt(e.id)));
+      panel.appendChild(g);
+    });
+    wrap.appendChild(panel);
+  }
+  return wrap;
 }
 
 // ── Competitor UI ─────────────────────────────────────────────────────────
@@ -3779,7 +4040,10 @@ async function exportPptx() {
     const stepNote   = (allSteps[i].arrow.note || '').trim();
     const compName   = competitors[allSteps[i].ci].name;
     const stepPrefix = `（Step ${i + 1} / ${N}）${compName}`;
-    const descLine   = stepNote ? stepPrefix + '　' + stepNote : stepPrefix;
+    // ST-14b：箭頭有標策略要素 → 接在補充說明後面
+    const stepElems  = (allSteps[i].arrow.elements || []).map(elementLabel).join('、');
+    const stepText   = stepNote + (stepElems ? `〔要素：${stepElems}〕` : '');
+    const descLine   = stepText ? stepPrefix + '　' + stepText : stepPrefix;
 
     const body = titleSp(titleText) + descSp(descLine)
       + buildMatrixTableXml(L, 10)
@@ -3906,7 +4170,12 @@ function loadState() {
     if (Array.isArray(state.competitors) && state.competitors.length >= 1)
       competitors = state.competitors;
     if (Array.isArray(state.arrows))
-      arrows = state.arrows.map(arr => arr.map(a => ({ note: '', ...a })));
+      arrows = state.arrows.map(arr => arr.map(a => {
+        // 舊存檔沒有 elements（ST-14b）→ 補空陣列；只留字串 id
+        const o = { note: '', elements: [], ...a };
+        o.elements = Array.isArray(o.elements) ? o.elements.filter(x => typeof x === 'string') : [];
+        return o;
+      }));
     if (typeof state.activeIdx     === 'number') activeIdx     = Math.min(state.activeIdx, competitors.length - 1);
     if (typeof state.productSepIdx === 'number') productSepIdx = state.productSepIdx;
     if (typeof state.showIndustryLabels === 'boolean') showIndustryLabels = state.showIndustryLabels;
@@ -4052,7 +4321,7 @@ document.getElementById('strategyDesc').addEventListener('input', saveState);
   </div>
   本策略矩陣繪圖工具由政大企研所113級賴元平於2026/03/10開發。<br>
   政大EMBA 115 侯榮富 博士於2026/10/10變更<br>
-  最後更新日期：2026/10/15<br>
+  最後更新日期：2026/10/25<br>
   <a class="manual-link" style="margin-left:0; font-size:0.8rem;" href="manual.html" target="_blank" rel="noopener">📖 操作手冊</a>
 </div>
 </body>
