@@ -940,6 +940,30 @@
   .clash-ctrl input[type=text] { flex: 1; min-width: 160px; border: 1px solid var(--grid-line); border-radius: 5px; padding: 1px 6px; font-family: inherit; font-size: 0.72rem; color: var(--ink); outline: none; }
   .clash-ctrl input[type=text]:focus { border-color: var(--col-header); }
   .premise-seg button.on.strengthen { background: #2ca05a; color: white; } .premise-seg button.on.shift { background: #e0582b; color: white; } .premise-seg button.on.none { background: #9e9e9e; color: white; }
+  /* ST-14j：行動計畫 */
+  .arrow-crossdept-tag { font-size: 0.66rem; color: #8a5a00; border: 1px solid #e0b860; border-radius: 8px; padding: 0 5px; background: #fff6dc; white-space: nowrap; cursor: help; }
+  .action-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0; font-size: 12px; }
+  .action-toolbar label { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-light); cursor: pointer; }
+  .action-table-wrap { overflow-x: auto; }
+  .action-table { border-collapse: collapse; width: 100%; font-size: 12px; background: white; }
+  .action-table th, .action-table td { border: 1px solid var(--grid-line); padding: 2px 4px; vertical-align: middle; }
+  .action-table th { background: var(--cell-hover); font-weight: 600; white-space: nowrap; text-align: left; }
+  .action-table td.action-num { color: var(--ink-light); text-align: right; white-space: nowrap; }
+  .action-table input[type=text], .action-table input[type=date], .action-table select { border: 1px solid transparent; border-radius: 4px; padding: 1px 4px; font-family: inherit; font-size: 0.72rem; color: var(--ink); background: transparent; outline: none; }
+  .action-table input[type=text]:hover, .action-table input[type=date]:hover, .action-table select:hover { border-color: var(--grid-line); }
+  .action-table input[type=text]:focus, .action-table input[type=date]:focus, .action-table select:focus { border-color: var(--col-header); background: white; }
+  .action-table input.action-title { width: 100%; min-width: 220px; }
+  .action-table input.action-dept { width: 100%; min-width: 80px; }
+  .action-table input.action-owner-other { width: 90px; margin-top: 2px; display: block; }
+  .action-arrow-link { cursor: pointer; white-space: nowrap; color: var(--col-header); }
+  .action-arrow-link:hover { text-decoration: underline dotted; }
+  .action-crossdept { white-space: nowrap; }
+  .action-crossdept .arrow-crossdept-tag { margin-left: 3px; }
+  .action-del { cursor: pointer; color: var(--ink-light); }
+  .action-del:hover { color: #d64545; }
+  .action-table tr.action-done td { background: #f2f8f3; }
+  .action-table tr.action-group-row td { background: var(--cell-hover); font-weight: 600; }
+  .premise-seg button.on.todo { background: #9e9e9e; color: white; } .premise-seg button.on.doing { background: #e0a020; color: white; } .premise-seg button.on.done { background: #2ca05a; color: white; }
 
   /* Column separator pin marker */
   .col-pin { font-size: 0.80rem; cursor: pointer; opacity: 0.22; line-height: 1; padding: 0 2px; user-select: none; }
@@ -1050,6 +1074,19 @@
     <div id="clashBody"></div>
     <div class="sentence-actions">
       <button type="button" class="btn-ghost" id="clashCopyBtn" onclick="copyClashPoints()">📋 複製</button>
+    </div>
+  </details>
+  <!-- ST-14j：行動計畫（目前策略構想；從箭頭拆出行動項目、負責單元、期程、跨部門協調） -->
+  <details class="sentence-box premise-box" id="actionBox">
+    <summary>🗂 行動計畫（<span id="actionBoxComp">目前策略構想</span>）</summary>
+    <div class="action-toolbar">
+      <button type="button" class="btn-ghost" onclick="generateActionsFromArrows()" title="為目前策略構想每條還沒有行動項目的箭頭各建一筆">✨ 從箭頭產生行動項目</button>
+      <button type="button" class="btn-ghost" onclick="addActionItem()">＋ 行動項目</button>
+      <label><input type="checkbox" id="actionGroupChk" onchange="toggleActionGroup(this.checked)"> 依負責單元分組</label>
+    </div>
+    <div id="actionBody"></div>
+    <div class="sentence-actions">
+      <button type="button" class="btn-ghost" id="actionCopyBtn" onclick="copyActionPlan()">📋 複製</button>
     </div>
   </details>
   <!-- ST-14c：策略句型（依箭頭自動產生） -->
@@ -1712,6 +1749,20 @@ const EXAMPLE_PROJECTS = [
       ],
       [],
     ],
+    // ST-14j：現行策略的行動計畫（依圖 9.28「策略組合拆回要素 → 行動項目」的精神改寫成 A 公司的欄名，非書上內容）；
+    // idx＝現行策略 arrows 的索引，載入時換成箭頭 id；日期與狀態為示範值
+    actionPlans: [
+      [
+        { idx: 3, title: '強化資訊系統的獨特能力（查書、推薦功能）', owner: '資訊系統', dept: '資訊部', start: '2026-07-01', end: '2026-12-31', status: 'doing' },
+        { idx: 1, title: '資訊系統串接顧客資料庫，整合購買紀錄', owner: '顧客資料庫', dept: '資訊部＋行銷部', start: '2026-09-01', end: '2027-03-31', status: 'doing', crossDept: true },
+        { idx: 6, title: '與主要出版社議定大量採購折扣', owner: '採購', dept: '採購部', start: '2026-03-01', end: '2026-06-30', status: 'done' },
+        { idx: 9, title: '倉儲集中到單一物流中心，降低存貨', owner: '倉儲', dept: '物流部', start: '2027-01-01', end: '2027-06-30', status: 'todo' },
+        { idx: 4, title: '篩選配送業者並訂定到貨服務水準', owner: '物流運輸', dept: '物流部', start: '2026-11-01', end: '2027-01-31', status: 'todo' },
+        { idx: 7, title: '簡化網站查書與下單流程', owner: '網站平台', dept: '電商部', start: '2026-05-01', end: '2026-08-31', status: 'done' },
+      ],
+      [],
+      [],
+    ],
   },
   {
     id: 'foundry-t', name: '晶圓代工 T 公司', source: 'S 360–368',
@@ -2371,6 +2422,42 @@ function normaliseModules() {
   const cur = modules[activeIdx] || [];
   if (moduleSelId  && !cur.some(m => m.id === moduleSelId))  moduleSelId  = null;
   if (moduleEditId && !cur.some(m => m.id === moduleEditId)) moduleEditId = null;
+  normaliseActionPlans();  // ST-14j：行動項目掛的箭頭／模組 id 也一起對齊
+}
+
+// ST-14j：行動計畫。actionPlans[compIdx] = [ { id, title, arrowId, moduleId, owner, dept, start, end, status, crossDept, note } ]，
+// 與 arrows／modules 平行（每個策略構想一份）。owner＝負責價值單元（欄名或自由文字）；掛箭頭 id、不用格子代號
+let actionPlans = [[], []];
+let actionGroupByOwner = false;  // 「依負責單元分組」顯示
+const ACTION_STATUS = [
+  { k: 'todo',  label: '待辦' },
+  { k: 'doing', label: '進行中' },
+  { k: 'done',  label: '完成' },
+];
+function newActionId() { return 'x' + Math.random().toString(36).slice(2, 9); }
+// 正規化：長度對齊 arrows、欄位補齊；arrowId／moduleId 指向不存在的箭頭／模組 → ''（行動項目保留）。外層陣列重建、項目物件就地修正
+function normaliseActionPlans() {
+  if (!Array.isArray(actionPlans)) actionPlans = [];
+  while (actionPlans.length < arrows.length) actionPlans.push([]);
+  while (actionPlans.length > arrows.length) actionPlans.pop();
+  const str = v => typeof v === 'string' ? v : '';
+  actionPlans = actionPlans.map((list, ci) => {
+    const aIds = new Set((arrows[ci] || []).map(a => a.id));
+    const mIds = new Set((modules[ci] || []).map(m => m.id));
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter(x => x && typeof x === 'object').map(x => {
+      const id = typeof x.id === 'string' && x.id && !seen.has(x.id) ? x.id : newActionId();
+      seen.add(id);
+      return Object.assign(x, {  // 原物件就地修正（表格列綁著物件參照，存檔時不能換掉）
+        id, title: str(x.title),
+        arrowId:  aIds.has(x.arrowId)  ? x.arrowId  : '',
+        moduleId: mIds.has(x.moduleId) ? x.moduleId : '',
+        owner: str(x.owner), dept: str(x.dept), start: str(x.start), end: str(x.end),
+        status: ACTION_STATUS.some(s => s.k === x.status) ? x.status : 'todo',
+        crossDept: x.crossDept === true, note: str(x.note),
+      });
+    });
+  });
 }
 
 function newPremiseId() { return 'p' + Math.random().toString(36).slice(2, 9); }
@@ -2403,7 +2490,7 @@ let history = [];
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
   // ST-03：快照一律帶短版矩陣狀態（view）；舊格式（純陣列）undo 時照樣相容
-  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes, modules, clashNotes };  // ST-14h：對陣點回應  // ST-14a：一併記策略點描述；ST-14f：策略模組
+  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes, modules, clashNotes, actionPlans };  // ST-14j：行動計畫  // ST-14h：對陣點回應  // ST-14a：一併記策略點描述；ST-14f：策略模組
   if (withColumns) snap.cols = { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx };
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
@@ -2435,6 +2522,7 @@ function undo() {
     if (snap.cellNotes && typeof snap.cellNotes === 'object') cellNotes = snap.cellNotes;  // 舊快照沒有 → 不動
     if (Array.isArray(snap.modules)) modules = snap.modules;  // ST-14f：舊快照沒有 → 不動（normalise 會清掉失效成員）
     if (snap.clashNotes && typeof snap.clashNotes === 'object') clashNotes = normaliseClashNotes(snap.clashNotes);  // ST-14h
+    if (Array.isArray(snap.actionPlans)) actionPlans = snap.actionPlans;  // ST-14j：舊快照沒有 → 不動
   }
   ensureArrowIds();
   normaliseArrowPremises();  // ST-14g
@@ -4376,6 +4464,292 @@ function copyClashPoints() {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => alert('複製失敗，請手動選取'));
   else alert('此瀏覽器不支援自動複製');
 }
+// ── ST-14j：行動計畫（策略組合拆回要素／箭頭 → 行動項目、權責、期程）[S 375–377] ─────────────
+// 跨部門協調判定：兩端都在投入欄（非產品欄）且不同欄，或要素含 1-7／3-3／5-3。回傳原因字串；不是 → ''
+const CROSS_DEPT_ELEMENTS = ['1-7', '3-3', '5-3'];
+function arrowCrossDeptReason(arrow) {
+  if (!arrow) return '';
+  const why = [];
+  if (arrow.from.col !== arrow.to.col && !isOutputCol(arrow.from.col) && !isOutputCol(arrow.to.col))
+    why.push(`起訖分屬不同價值單元（${COLUMNS[arrow.from.col] || '?'} → ${COLUMNS[arrow.to.col] || '?'}）`);
+  const els = (arrow.elements || []).filter(id => CROSS_DEPT_ELEMENTS.includes(id));
+  if (els.length) why.push('策略要素 ' + els.map(id => { const e = STRATEGY_ELEMENT_MAP[id]; return e ? `${id} ${e.name}` : id; }).join('、'));
+  return why.join('；');
+}
+function arrowIsCrossDept(arrow) { return !!arrowCrossDeptReason(arrow); }
+function findArrowById(ci, id) { return id ? (arrows[ci] || []).find(a => a.id === id) || null : null; }
+function actionArrowCode(arrow) { return arrow ? `${cellCode(arrow.from)}→${cellCode(arrow.to)}` : ''; }
+function actionIsCrossDept(ci, act) {
+  const auto = arrowIsCrossDept(findArrowById(ci, act.arrowId));
+  return { auto, any: auto || act.crossDept };
+}
+function actionStats(ci) {
+  const list = actionPlans[ci] || [];
+  return { total: list.length, done: list.filter(a => a.status === 'done').length,
+    cross: list.filter(a => actionIsCrossDept(ci, a).any).length };
+}
+function uniqueColumnNames() { return COLUMNS.filter((n, i) => COLUMNS.indexOf(n) === i); }
+
+// 為目前構想每條還沒有行動項目的箭頭建一筆
+function generateActionsFromArrows() {
+  const ci = activeIdx;
+  normaliseActionPlans();
+  const list = actionPlans[ci];
+  const used = new Set(list.map(a => a.arrowId).filter(Boolean));
+  const todo = (arrows[ci] || []).filter(a => !used.has(a.id));
+  if (!todo.length) { alert((arrows[ci] || []).length ? '目前策略構想的每條箭頭都已有行動項目' : '目前策略構想還沒有箭頭'); return; }
+  pushHistory();
+  todo.forEach(arrow => {
+    let title = (arrow.note || '').trim();
+    if (!title) { try { title = arrowSentence(arrow, ci); } catch (e) { title = ''; } }
+    if (!title) title = actionArrowCode(arrow);
+    const fOut = isOutputCol(arrow.from.col), tOut = isOutputCol(arrow.to.col);
+    const owner = COLUMNS[tOut ? arrow.from.col : arrow.to.col] || '';  // 終點在投入欄 → 終點欄；否則起點欄
+    const mod = (modules[ci] || []).find(m => m.arrowIds.includes(arrow.id));
+    list.push({ id: newActionId(), title, arrowId: arrow.id, moduleId: mod ? mod.id : '', owner, dept: '', start: '', end: '',
+      status: 'todo', crossDept: !fOut && !tOut && arrow.from.col !== arrow.to.col, note: '' });
+  });
+  const box = document.getElementById('actionBox');
+  if (box) box.open = true;
+  renderActionBox();
+  saveState();
+}
+function addActionItem() {
+  normaliseActionPlans();
+  pushHistory();
+  actionPlans[activeIdx].push({ id: newActionId(), title: '', arrowId: '', moduleId: '', owner: '', dept: '', start: '', end: '',
+    status: 'todo', crossDept: false, note: '' });
+  renderActionBox();
+  saveState();
+  const rows = document.querySelectorAll('#actionBody input.action-title');
+  if (rows.length) rows[rows.length - 1].focus();
+}
+function toggleActionGroup(on) {
+  actionGroupByOwner = !!on;
+  renderActionBox();
+  saveState();
+}
+// 文字欄 blur 才存，有變才 pushHistory
+function bindActionText(inp, act, field) {
+  inp.value = act[field] || '';
+  inp.addEventListener('blur', () => {
+    if (inp.value === (act[field] || '')) return;
+    pushHistory();
+    act[field] = inp.value;
+    saveState();
+  });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+}
+function buildActionRow(ci, act, num) {
+  const tr = document.createElement('tr');
+  if (act.status === 'done') tr.className = 'action-done';
+  const td = () => { const c = document.createElement('td'); tr.appendChild(c); return c; };
+  td().textContent = num; tr.lastChild.className = 'action-num';
+  // 行動項目
+  const title = document.createElement('input');
+  title.type = 'text'; title.className = 'action-title'; title.placeholder = '行動項目…';
+  bindActionText(title, act, 'title');
+  td().appendChild(title);
+  // 來源箭頭
+  const arrow = findArrowById(ci, act.arrowId);
+  const aCell = td();
+  if (arrow) {
+    const a = document.createElement('span');
+    a.className = 'action-arrow-link';
+    a.textContent = actionArrowCode(arrow);
+    a.title = (arrow.note ? arrow.note + '｜' : '') + '點擊捲到箭頭清單中的這條箭頭';
+    a.addEventListener('click', () => flashArrowItem(arrow.id));
+    aCell.appendChild(a);
+  } else aCell.textContent = '—';
+  // 模組
+  const mod = (modules[ci] || []).find(m => m.id === act.moduleId);
+  td().textContent = mod ? '🧩 ' + mod.name : '';
+  // 負責單元：下拉（欄名）＋「其他…」自由文字
+  const oCell = td();
+  const sel = document.createElement('select');
+  const names = uniqueColumnNames();
+  const isOther = !!act.owner && !names.includes(act.owner);
+  sel.innerHTML = '<option value="">（未指定）</option>'
+    + names.map(n => `<option value="${escXml(n)}">${escXml(n)}</option>`).join('')
+    + '<option value="__other">其他…</option>';
+  sel.value = isOther ? '__other' : act.owner;
+  const other = document.createElement('input');
+  other.type = 'text'; other.className = 'action-owner-other'; other.placeholder = '自訂單元';
+  other.style.display = isOther ? '' : 'none';
+  bindActionText(other, act, 'owner');
+  if (!isOther) other.value = '';
+  sel.addEventListener('change', () => {
+    if (sel.value === '__other') { other.style.display = ''; other.value = ''; other.focus(); return; }
+    pushHistory();
+    act.owner = sel.value;
+    renderActionBox();
+    saveState();
+  });
+  oCell.appendChild(sel); oCell.appendChild(other);
+  // 部門／負責人
+  const dept = document.createElement('input');
+  dept.type = 'text'; dept.className = 'action-dept'; dept.placeholder = '部門／負責人';
+  bindActionText(dept, act, 'dept');
+  td().appendChild(dept);
+  // 開始／結束
+  ['start', 'end'].forEach(f => {
+    const d = document.createElement('input');
+    d.type = 'date';
+    d.value = act[f] || '';
+    d.addEventListener('change', () => {
+      if (d.value === (act[f] || '')) return;
+      pushHistory();
+      act[f] = d.value;
+      saveState();
+    });
+    td().appendChild(d);
+  });
+  // 狀態
+  const seg = document.createElement('span');
+  seg.className = 'premise-seg';
+  ACTION_STATUS.forEach(st => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = st.label;
+    if (act.status === st.k) b.className = 'on ' + st.k;
+    b.addEventListener('click', () => {
+      if (act.status === st.k) return;
+      pushHistory();
+      act.status = st.k;
+      renderActionBox();
+      saveState();
+    });
+    seg.appendChild(b);
+  });
+  td().appendChild(seg);
+  // 跨部門
+  const cCell = td();
+  cCell.className = 'action-crossdept';
+  const cd = actionIsCrossDept(ci, act);
+  const chk = document.createElement('input');
+  chk.type = 'checkbox';
+  chk.checked = cd.any;
+  chk.disabled = cd.auto;
+  chk.title = cd.auto ? '來源箭頭自動判定為跨部門協調' : '手動標記需要跨部門協調';
+  chk.addEventListener('change', () => {
+    pushHistory();
+    act.crossDept = chk.checked;
+    renderActionBox();
+    saveState();
+  });
+  cCell.appendChild(chk);
+  if (cd.any) {
+    const t = document.createElement('span');
+    t.className = 'arrow-crossdept-tag';
+    t.textContent = '跨部門協調';
+    t.title = cd.auto ? '自動判定：' + arrowCrossDeptReason(arrow) + ' [S 377]' : '手動標記';
+    cCell.appendChild(t);
+  }
+  // 刪除
+  const del = document.createElement('span');
+  del.className = 'action-del';
+  del.textContent = '🗑';
+  del.title = '刪除這個行動項目';
+  del.addEventListener('click', () => {
+    pushHistory();
+    actionPlans[ci] = actionPlans[ci].filter(x => x !== act);
+    renderActionBox();
+    saveState();
+  });
+  td().appendChild(del);
+  return tr;
+}
+// 依負責單元分組：組的順序＝欄位順序，其他自由文字依出現順序，未指定放最後
+function groupActionsByOwner(list) {
+  const keys = [];
+  list.forEach(a => { if (!keys.includes(a.owner)) keys.push(a.owner); });
+  const order = k => k === '' ? 1e9 : (COLUMNS.indexOf(k) >= 0 ? COLUMNS.indexOf(k) : 1e6 + keys.indexOf(k));
+  keys.sort((a, b) => order(a) - order(b));
+  return keys.map(k => ({ owner: k, items: list.filter(a => a.owner === k) }));
+}
+function renderActionBox() {
+  const body = document.getElementById('actionBody');
+  if (!body) return;
+  normaliseActionPlans();
+  const ci = activeIdx;
+  const comp = competitors[ci];
+  document.getElementById('actionBoxComp').textContent = comp ? comp.name : '目前策略構想';
+  const chk = document.getElementById('actionGroupChk');
+  if (chk) chk.checked = actionGroupByOwner;
+  body.innerHTML = '';
+  const list = actionPlans[ci] || [];
+  const st = actionStats(ci);
+  const stats = document.createElement('div');
+  stats.className = 'premise-swot-stats';
+  stats.textContent = `行動項目 ${st.total} 項：完成 ${st.done}｜跨部門協調 ${st.cross}`;
+  body.appendChild(stats);
+  const hint = document.createElement('div');
+  hint.className = 'premise-swot-hint';
+  hint.textContent = '把選定的策略組合拆回策略要素，每個用得上的要素（箭頭）都是一個行動重點；每項行動歸屬某個價值單元，'
+    + '跨單元的行動（例：資訊系統協助製造）或要素 1-7、3-3、5-3 需要跨部門協調 [S 375–377]。';
+  body.appendChild(hint);
+  if (!list.length) {
+    const e = document.createElement('div');
+    e.className = 'premise-swot-hint';
+    e.textContent = '（尚無行動項目：按「✨ 從箭頭產生行動項目」或「＋ 行動項目」）';
+    body.appendChild(e);
+    return;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'action-table-wrap';
+  const table = document.createElement('table');
+  table.className = 'action-table';
+  const heads = ['＃', '行動項目', '來源箭頭', '模組', '負責單元', '部門／負責人', '開始', '結束', '狀態', '🤝 跨部門', ''];
+  table.innerHTML = '<thead><tr>' + heads.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+  const tbody = document.createElement('tbody');
+  const numOf = a => list.indexOf(a) + 1;
+  if (actionGroupByOwner) {
+    groupActionsByOwner(list).forEach(g => {
+      const gr = document.createElement('tr');
+      gr.className = 'action-group-row';
+      const gc = document.createElement('td');
+      gc.colSpan = heads.length;
+      gc.textContent = `${g.owner || '（未指定負責單元）'}（${g.items.length}）`;
+      gr.appendChild(gc);
+      tbody.appendChild(gr);
+      g.items.forEach(a => tbody.appendChild(buildActionRow(ci, a, numOf(a))));
+    });
+  } else list.forEach(a => tbody.appendChild(buildActionRow(ci, a, numOf(a))));
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  body.appendChild(wrap);
+}
+function actionPlanText() {
+  const ci = activeIdx;
+  const list = actionPlans[ci] || [];
+  if (!list.length) return '';
+  const st = actionStats(ci);
+  const comp = competitors[ci];
+  const lines = [`【行動計畫：${comp ? comp.name : ''}】`, `行動項目 ${st.total} 項：完成 ${st.done}｜跨部門協調 ${st.cross}`,
+    ['＃', '行動項目', '來源箭頭', '模組', '負責單元', '部門／負責人', '開始', '結束', '狀態', '跨部門協調'].join('\t')];
+  const clean = v => String(v || '').replace(/[\t\r\n]+/g, ' ');
+  const row = a => {
+    const mod = (modules[ci] || []).find(m => m.id === a.moduleId);
+    const stt = ACTION_STATUS.find(x => x.k === a.status);
+    return [list.indexOf(a) + 1, a.title, actionArrowCode(findArrowById(ci, a.arrowId)), mod ? mod.name : '', a.owner, a.dept,
+      a.start, a.end, stt ? stt.label : '', actionIsCrossDept(ci, a).any ? '是' : ''].map(clean).join('\t');
+  };
+  if (actionGroupByOwner) groupActionsByOwner(list).forEach(g => {
+    lines.push(`〔${g.owner || '未指定負責單元'}〕`);
+    g.items.forEach(a => lines.push(row(a)));
+  });
+  else list.forEach(a => lines.push(row(a)));
+  return lines.join('\n');
+}
+function copyActionPlan() {
+  const txt = actionPlanText();
+  if (!txt) { alert('目前策略構想沒有行動項目'); return; }
+  const btn = document.getElementById('actionCopyBtn');
+  const ok = () => { btn.textContent = '已複製'; setTimeout(() => { btn.textContent = '📋 複製'; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => alert('複製失敗，請手動選取'));
+  else alert('此瀏覽器不支援自動複製');
+}
+
 function syncOverlayControls() {
   const chk = document.getElementById('overlayChk');
   if (chk) chk.checked = overlayAll;
@@ -4433,6 +4807,15 @@ function renderArrowList() {
         t.textContent = '🧩 ' + m.name;
         return t;
       });
+      // ST-14j：跨部門協調小標（判定原因放 title）
+      const crossWhy = arrowCrossDeptReason(arrow);
+      if (crossWhy) {
+        const t = document.createElement('span');
+        t.className = 'arrow-crossdept-tag';
+        t.textContent = '🤝 跨部門';
+        t.title = '需要跨部門協調：' + crossWhy + ' [S 377]';
+        modTags.push(t);
+      }
       if (focus && ci === activeIdx && focus.has(arrow.id)) item.classList.add('in-module');
       let modCheck = null;
       if (moduleEditId && ci === activeIdx) {
@@ -4522,6 +4905,7 @@ function renderArrowList() {
   }
   renderPremiseSwot();  // ST-14g
   renderClashBox();     // ST-14h
+  renderActionBox();    // ST-14j
   renderStrategySentences();
 }
 
@@ -5319,6 +5703,7 @@ function addCompetitor() {
   competitors.push({ name, color: COLORS[competitors.length % COLORS.length], kind });
   arrows.push([]);
   modules.push([]);
+  actionPlans.push([]);  // ST-14j
   activeIdx = competitors.length - 1;
   moduleSelId = moduleEditId = null;
   inp.value = '';
@@ -5350,6 +5735,7 @@ function removeCompetitor(ci) {
   competitors.splice(ci, 1);
   arrows.splice(ci, 1);
   modules.splice(ci, 1);
+  actionPlans.splice(ci, 1);  // ST-14j
   moduleSelId = moduleEditId = null;
   if (activeIdx >= competitors.length) activeIdx = competitors.length - 1;
   cancelPending();
@@ -6126,6 +6512,8 @@ function saveState() {
       competitors:  JSON.parse(JSON.stringify(competitors)),
       overlayAll,                                         // ST-14h
       clashNotes:    JSON.parse(JSON.stringify(clashNotes)),  // ST-14h
+      actionPlans:   JSON.parse(JSON.stringify(actionPlans)), // ST-14j
+      actionGroupByOwner,                                 // ST-14j
       arrows:        JSON.parse(JSON.stringify(arrows)),
       activeIdx,
       productSepIdx,
@@ -6215,7 +6603,9 @@ function loadState() {
     ensureArrowIds();
     normaliseArrowPremises();  // ST-14g：舊存檔箭頭沒有 premises → []
     modules = Array.isArray(state.modules) ? state.modules : [];
-    normaliseModules();
+    actionPlans = Array.isArray(state.actionPlans) ? state.actionPlans : [];  // ST-14j：舊存檔沒有 → normalise 依 arrows 長度補空陣列
+    actionGroupByOwner = state.actionGroupByOwner === true;
+    normaliseModules();  // 內含 normaliseActionPlans
     return true;
   } catch(e) { return false; }
 }
@@ -6341,6 +6731,13 @@ function loadExampleProject(id) {
     arrowIds: m.idx.map(i => (exIds[ci] || [])[i]).filter(Boolean),
   })));
   moduleSelId = moduleEditId = null;
+  // ST-14j：範例行動項目；idx＝箭頭索引 → 箭頭 id，moduleId 取該箭頭所屬的第一個模組
+  actionPlans = competitors.map((_, ci) => ((ex.actionPlans || [])[ci] || []).map(x => {
+    const aid = typeof x.idx === 'number' ? ((exIds[ci] || [])[x.idx] || '') : '';
+    const mod = aid ? (modules[ci] || []).find(m => m.arrowIds.includes(aid)) : null;
+    return { id: newActionId(), title: x.title, arrowId: aid, moduleId: mod ? mod.id : '', owner: x.owner || '', dept: x.dept || '',
+      start: x.start || '', end: x.end || '', status: x.status || 'todo', crossDept: x.crossDept === true, note: '' };
+  }));
   normaliseModules();
   activeIdx = 0;
   cellNotes = {};     // ST-14a：範例不帶策略點描述，清掉舊的
