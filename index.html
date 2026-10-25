@@ -848,6 +848,29 @@
   .sentence-box summary { cursor: pointer; font-weight: 600; font-size: 13px; }
   .sentence-list { margin: 8px 0 8px 20px; padding: 0; font-size: 13px; line-height: 1.7; }
   .sentence-list li.empty { list-style: none; opacity: .6; }
+  .sentence-list li.sentence-group { list-style: none; margin-left: -20px; font-weight: 600; color: var(--col-header); }
+  /* ST-14f：策略模組（箭頭清單上方）*/
+  .module-box { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--grid-line); font-size: 0.76rem; }
+  .module-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .module-head-title { font-weight: 600; color: var(--ink); margin-right: auto; }
+  .module-btn, .module-tpl-select { border: 1px solid var(--grid-line); border-radius: 10px; background: white; color: var(--col-header); font-size: 0.72rem; font-family: inherit; padding: 1px 9px; cursor: pointer; }
+  .module-btn:hover, .module-tpl-select:hover { border-color: var(--col-header); }
+  .module-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .module-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--grid-line); border-radius: 12px; background: white; padding: 2px 9px; cursor: pointer; color: var(--ink); }
+  .module-chip.active { border-color: var(--col-header); background: var(--cell-hover); }
+  .module-chip.editing { outline: 2px dashed var(--col-header); outline-offset: 1px; }
+  .module-chip-count { color: var(--ink-light); }
+  .module-chip-act { opacity: 0.45; cursor: pointer; font-size: 0.7rem; }
+  .module-chip-act:hover { opacity: 1; color: var(--col-header); }
+  .module-chip-act.del:hover { color: #d64545; }
+  .module-empty { color: var(--ink-light); font-style: italic; }
+  .module-edit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 8px; background: var(--cell-hover); border-radius: 6px; }
+  .arrow-module-check { margin: 0; flex-shrink: 0; cursor: pointer; }
+  .arrow-module-tag { font-size: 0.66rem; color: var(--col-header); border: 1px solid var(--grid-line); border-radius: 8px; padding: 0 5px; background: white; white-space: nowrap; }
+  .arrow-item.in-module { box-shadow: inset 3px 0 0 var(--col-header); background: var(--cell-hover); }
+  .module-map-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .module-map-row > span { width: 11em; flex-shrink: 0; }
+  .module-map-row select { flex: 1; min-width: 0; font-family: inherit; font-size: 0.78rem; }
   .sentence-actions { display: flex; gap: 8px; }
   .arrow-elems-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
   .arrow-elems-tag { color: var(--ink-light); }
@@ -957,6 +980,8 @@
 <!-- Arrow list -->
 <div class="panel" id="arrowListPanel">
   <div class="panel-title">已繪製的箭頭（點 ✕ 可刪除）</div>
+  <!-- ST-14f：策略模組（目前策略構想；把箭頭圈成有名字的一組）-->
+  <div class="module-box" id="moduleBox"></div>
   <div class="arrow-list" id="arrowList"></div>
   <!-- ST-14c：策略句型（依箭頭自動產生） -->
   <details class="sentence-box" id="sentenceBox">
@@ -1024,6 +1049,10 @@
 <!-- 展開到策略矩陣：確認／結果對話框（ST-01d）-->
 <div id="expandModal" class="sm-modal">
   <div class="sm-modal-box" id="expandModalBox"></div>
+</div>
+<!-- ST-14f：套用書上模組（角色 → 欄位對應）-->
+<div id="moduleModal" class="sm-modal">
+  <div class="sm-modal-box" id="moduleModalBox"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1576,6 +1605,17 @@ const EXAMPLE_PROJECTS = [
         exArrow('B', '中文書籍', 'B', '影音商品', '共用顧客群產生行銷綜效', ['1-10', '6-5']),
       ],
     ],
+    // ST-14f：模組劃分依書上圖序（書中未命名模組）；idx＝同一策略構想 arrows 的順序索引，載入時換成箭頭 id
+    modules: [
+      [
+        { name: '附加價值來源（圖 9.10）', idx: [0, 1, 7, 8] },
+        { name: '競爭優勢：資訊系統與採購（圖 9.11）', idx: [2, 3, 5, 6] },
+        { name: '運輸與倉儲（圖 9.12）', idx: [4, 9] },
+      ],
+      [
+        { name: '未來方向（圖 9.13）', idx: [0, 1, 2, 3, 4, 5, 6] },
+      ],
+    ],
   },
   {
     id: 'foundry-t', name: '晶圓代工 T 公司', source: 'S 360–368',
@@ -1616,6 +1656,17 @@ const EXAMPLE_PROJECTS = [
         exArrow('B', '先進製程代工', 'B', '成熟製程代工', '新舊製程共享客戶', ['1-10', '6-5']),
         exArrow('C', '先進封裝', 'A', '先進封裝', '自做封裝提供整合服務', ['3-1']),
         exArrow('D', '晶圓製造', 'C', '先進封裝', '量產規模大值得自建封裝', ['3-4', '4-2']),
+      ],
+    ],
+    // ST-14f：模組劃分依書上圖序（書中未命名模組）；對不上的箭頭留在【其他】
+    modules: [
+      [
+        { name: '基本策略定位（圖 9.16）', idx: [0, 1, 2, 3] },
+        { name: '主導權責與目標市場（圖 9.17）', idx: [10] },
+      ],
+      [
+        { name: '未來方向：客戶關係與 IP（圖 9.19）', idx: [0, 4] },
+        { name: '未來方向：垂直整合（圖 9.20）', idx: [5, 6] },
       ],
     ],
   },
@@ -1691,6 +1742,91 @@ const STRATEGY_ELEMENTS = [
   { id: '6-8',  cat: 6, name: '資訊科技之運用', def: '運用資訊系統提升效率或創造服務特色', example: '以數據分析精準掌握顧客需求' },
 ].map(e => ({ ...e, page: STRATEGY_ELEMENT_CATS.find(c => c.id === e.cat).page }));
 const STRATEGY_ELEMENT_MAP = Object.fromEntries(STRATEGY_ELEMENTS.map(e => [e.id, e]));
+
+// ── ST-14f：書上 5 個策略模組（策略管理新論 Ch9 §1 [S 344–352]；摘要見 doc/reference/策略管理新論-Ch9-五個策略模組.md）──
+// 角色是抽象欄位，套用時讓使用者對應到自己的欄；kw＝猜欄位用的欄名關鍵字（product 改用第一個產品欄）。desc／note 為自行摘要
+const MODULE_ROLES = {
+  material:      { label: '原料',                 kw: ['原料', '材料'] },
+  manufacturing: { label: '製造／設廠',           kw: ['製造', '生產', '工廠', '裝配', '組裝'] },
+  product:       { label: '產品',                 kw: [] },
+  brand:         { label: '自有品牌',             kw: ['品牌', '形象', '商譽'] },
+  oemBrand:      { label: 'OEM 客戶的品牌',       kw: ['OEM', '客戶品牌', '代工客戶', '品牌'] },
+  partA:         { label: '零組件甲（需與工廠同地）', kw: ['零組件', '零件', '元件', '組件'] },
+  partB:         { label: '零組件乙（無法外移）',   kw: ['零組件', '零件', '元件', '組件'] },
+  rd:            { label: '研發',                 kw: ['研發', '開發', '研究'] },
+  capital:       { label: '外部資金',             kw: ['資金', '資本', '募資', '財務'] },
+  talent:        { label: '人才',                 kw: ['人才', '人力', '人員'] },
+  license:       { label: '特許權',               kw: ['特許', '許可', '執照', '證照', '法規', '查驗登記'] },
+};
+const mStep = (fromRow, fromRole, toRow, toRole, note) => ({ fromRow, fromRole, toRow, toRole, note });
+const MODULE_TEMPLATES = [
+  {
+    id: 'cost-down', name: '降低成本', page: 'S 344–346',
+    desc: '原料產地便宜、製造有規模經濟，原料與製造成本都低，形成低價特色，吸引在乎價格的顧客。',
+    steps: [
+      mStep('E', 'material', 'A', 'material', '原料產地便宜使原料成本低'),
+      mStep('D', 'manufacturing', 'A', 'manufacturing', '製造規模大使製造成本低'),
+      mStep('A', 'material', 'A', 'product', '原料成本低使產品價格低'),
+      mStep('A', 'manufacturing', 'A', 'product', '製造成本低使產品價格低'),
+      mStep('A', 'product', 'B', 'product', '低價特色吸引重視價格的顧客'),
+    ],
+  },
+  {
+    id: 'own-brand', name: '自創品牌提升規模', page: 'S 346–348',
+    desc: '原本只做 OEM 製造；自創品牌擴大規模，並賣到 OEM 客戶沒進入的地區避免衝突；市場變大帶來規模經濟，對 OEM 客戶也更有談判力。',
+    steps: [
+      mStep('C', 'brand', 'A', 'brand', '品牌改為自己做'),
+      mStep('A', 'brand', 'A', 'product', '自有品牌形成新產品'),
+      mStep('A', 'product', 'B', 'product', '新產品賣給另一群顧客'),
+      mStep('E', 'product', 'B', 'product', '只賣到 OEM 客戶未進入的地區'),
+      mStep('B', 'product', 'D', 'manufacturing', '市場擴大使製造更有規模'),
+      mStep('D', 'manufacturing', 'A', 'manufacturing', '規模經濟使製造成本下降'),
+      mStep('A', 'manufacturing', 'B', 'oemBrand', '成本低提升對 OEM 客戶的談判力'),
+    ],
+  },
+  {
+    id: 'relocate', name: '工廠外移', page: 'S 348–349',
+    desc: '工廠移到新地區降低製造成本；零組件甲要在新地區找新供應商，零組件乙只能從原地運去，研發留在原地增加協調成本，但整體仍划算。',
+    steps: [
+      mStep('E', 'manufacturing', 'A', 'manufacturing', '工廠外移使生產成本降低'),
+      mStep('A', 'manufacturing', 'A', 'product', '製造成本低帶到產品'),
+      mStep('A', 'product', 'B', 'product', '產品供應原目標市場'),
+      mStep('E', 'manufacturing', 'E', 'partA', '零組件甲需與工廠同地'),
+      mStep('E', 'partA', 'B', 'partA', '在新地區找新的零組件甲供應商'),
+      mStep('E', 'manufacturing', 'E', 'partB', '零組件乙最好與工廠相鄰'),
+      mStep('E', 'partB', 'A', 'partB', '零組件乙無法外移，運費使成本增加'),
+      mStep('E', 'manufacturing', 'E', 'rd', '研發與工廠分隔兩地'),
+      mStep('E', 'rd', 'A', 'rd', '研發協調成本增加'),
+    ],
+  },
+  {
+    id: 'brand-talent', name: '品牌與人才資金', page: 'S 349–350',
+    desc: '領導人的能力讓品牌形象好，形象在資本市場與人才市場有吸引力；資金與人才強化研發，研發成果形成產品特色。',
+    steps: [
+      mStep('F', 'brand', 'A', 'brand', '領導人的特殊能力提升品牌形象'),
+      mStep('A', 'brand', 'B', 'capital', '品牌形象有助於在資本市場募資'),
+      mStep('B', 'capital', 'A', 'capital', '取得低廉的資金'),
+      mStep('A', 'brand', 'B', 'talent', '品牌形象有助於在人才市場招募'),
+      mStep('B', 'talent', 'A', 'talent', '吸引優秀人才'),
+      mStep('A', 'capital', 'A', 'talent', '資金充足也有助於吸引人才'),
+      mStep('A', 'capital', 'A', 'rd', '資金強化研發'),
+      mStep('A', 'talent', 'A', 'rd', '人才強化研發'),
+      mStep('A', 'rd', 'A', 'product', '研發成果形成產品特色'),
+      mStep('A', 'product', 'B', 'product', '產品特色滿足客戶'),
+    ],
+  },
+  {
+    id: 'license', name: '特許權與設廠時效', page: 'S 351–352',
+    desc: '和特許權核發者關係好，特許權下來得早；設廠因此及時、產品早上市，上市時機成為競爭優勢。',
+    steps: [
+      mStep('F', 'license', 'B', 'license', '與核發者建立良好關係'),
+      mStep('B', 'license', 'A', 'license', '特許權取得得早'),
+      mStep('A', 'license', 'A', 'manufacturing', '設廠時效特別快'),
+      mStep('A', 'manufacturing', 'A', 'product', '產品得以早上市'),
+      mStep('A', 'product', 'F', 'product', '上市時機成為競爭優勢'),
+    ],
+  },
+];
 
 // 箭頭形狀 → 建議要素（依 doc/reference Ch8Ch9 文件第四節；「B 列同格多產品相似」無箭頭對應，略過）
 // f／t = { row, col, out }，out＝是否為產出／產品欄（col >= productSepIdx）；ctx.sameCol／ctx.sameRow
@@ -2039,6 +2175,40 @@ let activeIdx = 0;
 
 // arrows[compIdx] = [ {from: {row,col}, to: {row,col}, note, elements: ['1-3', …]}, ... ]（elements＝ST-14b 策略要素 id）
 let arrows = [[], []];
+// ST-14f：策略模組。modules[compIdx] = [ { id, name, arrowIds: [箭頭 id…], note } ]，與 arrows 平行（每個策略構想一份）。
+// 成員掛箭頭 id、不用格子代號：欄位搬移時箭頭本身跟著 remap（保留 id），模組就不會錯位
+let modules = [[], []];
+let moduleSelId  = null;  // 「選取」中的模組 id：矩陣上其他箭頭變淡、清單中成員高亮
+let moduleEditId = null;  // 「圈選模式」中的模組 id：清單每條（目前策略構想的）箭頭前出現 checkbox
+
+function newArrowId()  { return 'a' + Math.random().toString(36).slice(2, 9); }
+function newModuleId() { return 'm' + Math.random().toString(36).slice(2, 9); }
+// 所有讀入點（loadState／匯入／範例／undo）呼叫：沒有 id（或重複）的箭頭補新 id
+function ensureArrowIds() {
+  const seen = new Set();
+  arrows.forEach(list => list.forEach(a => {
+    if (typeof a.id !== 'string' || !a.id || seen.has(a.id)) a.id = newArrowId();
+    seen.add(a.id);
+  }));
+}
+// modules 正規化：長度對齊 arrows、欄位補齊、清掉指向不存在箭頭的 arrowIds；選取／圈選中的模組不在目前策略構想就取消
+function normaliseModules() {
+  if (!Array.isArray(modules)) modules = [];
+  while (modules.length < arrows.length) modules.push([]);
+  while (modules.length > arrows.length) modules.pop();
+  modules = modules.map((list, ci) => {
+    const ids = new Set((arrows[ci] || []).map(a => a.id));
+    return (Array.isArray(list) ? list : []).filter(m => m && typeof m === 'object').map(m => ({
+      id:       typeof m.id === 'string' && m.id ? m.id : newModuleId(),
+      name:     typeof m.name === 'string' && m.name.trim() ? m.name : '未命名模組',
+      arrowIds: (Array.isArray(m.arrowIds) ? m.arrowIds : []).filter((x, i, arr) => ids.has(x) && arr.indexOf(x) === i),
+      note:     typeof m.note === 'string' ? m.note : '',
+    }));
+  });
+  const cur = modules[activeIdx] || [];
+  if (moduleSelId  && !cur.some(m => m.id === moduleSelId))  moduleSelId  = null;
+  if (moduleEditId && !cur.some(m => m.id === moduleEditId)) moduleEditId = null;
+}
 
 let pendingCell = null; // { row, col, el }
 let currentMode = 'draw';  // 'draw'＝點格子畫箭頭｜'view'＝檢視｜'describe'＝描述策略點（ST-14a）；點格子一律同步下方面板
@@ -2054,7 +2224,7 @@ let history = [];
 // 一般操作只記箭頭（存成陣列）；withColumns = true 時（展開到策略矩陣）連欄位結構一起記（存成物件）
 function pushHistory(withColumns = false) {
   // ST-03：快照一律帶短版矩陣狀態（view）；舊格式（純陣列）undo 時照樣相容
-  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes };  // ST-14a：一併記策略點描述
+  const snap = { arrows, view: { shortView, hiddenCols }, cellNotes, modules };  // ST-14a：一併記策略點描述；ST-14f：策略模組
   if (withColumns) snap.cols = { COLUMN_GROUPS, COLUMN_PATHS: getColumnPaths(), COLUMN_ROLES, productSepIdx };
   history.push(JSON.stringify(snap));
   if (history.length > 80) history.shift();
@@ -2084,7 +2254,10 @@ function undo() {
       hiddenCols = v.hiddenCols;
     }
     if (snap.cellNotes && typeof snap.cellNotes === 'object') cellNotes = snap.cellNotes;  // 舊快照沒有 → 不動
+    if (Array.isArray(snap.modules)) modules = snap.modules;  // ST-14f：舊快照沒有 → 不動（normalise 會清掉失效成員）
   }
+  ensureArrowIds();
+  normaliseModules();
   if (!history.length) document.getElementById('undoBtn').disabled = true;
   cancelPending();
   if (colsChanged) renderColEditor();
@@ -3519,6 +3692,7 @@ function onCellClick(rowId, colIdx, td) {
     // Second click — draw arrow
     pushHistory();
     arrows[activeIdx].push({
+      id: newArrowId(),
       from: { row: pendingCell.row, col: pendingCell.col },
       to:   { row: rowId, col: colIdx },
       note: '',
@@ -3828,6 +4002,7 @@ function drawLines() {
   });
   svg.appendChild(defs);
 
+  const focus = focusModuleArrowIds();  // ST-14f：選取／圈選中的模組 → 其他箭頭變淡
   arrows.forEach((compArrows, ci) => {
     const comp = competitors[ci];
     compArrows.forEach(arrow => {
@@ -3852,7 +4027,7 @@ function drawLines() {
       path.setAttribute('stroke-width', '13');
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke-linecap', 'butt');
-      path.setAttribute('opacity', '0.92');
+      path.setAttribute('opacity', focus && !(ci === activeIdx && focus.has(arrow.id)) ? '0.25' : '0.92');
       path.setAttribute('marker-end', `url(#arrow-${ci})`);
       svg.appendChild(path);
 
@@ -3870,6 +4045,9 @@ function renderArrowList() {
   const list = document.getElementById('arrowList');
   list.innerHTML = '';
   let total = 0;
+  normaliseModules();
+  renderModuleBar();  // ST-14f
+  const focus = focusModuleArrowIds();
 
   arrows.forEach((compArrows, ci) => {
     const comp = competitors[ci];
@@ -3899,6 +4077,24 @@ function renderArrowList() {
         hn.textContent = '（含隱藏欄）';
         label.appendChild(hn);
       }
+      // ST-14f：所屬模組（可屬多個）＋ 選取／圈選中的模組成員高亮
+      const modTags = (modules[ci] || []).filter(m => m.arrowIds.includes(arrow.id)).map(m => {
+        const t = document.createElement('span');
+        t.className = 'arrow-module-tag';
+        t.textContent = '🧩 ' + m.name;
+        return t;
+      });
+      if (focus && ci === activeIdx && focus.has(arrow.id)) item.classList.add('in-module');
+      let modCheck = null;
+      if (moduleEditId && ci === activeIdx) {
+        modCheck = document.createElement('input');
+        modCheck.type = 'checkbox';
+        modCheck.className = 'arrow-module-check';
+        modCheck.title = '加入／移出目前圈選的模組';
+        modCheck.checked = !!focus && focus.has(arrow.id);
+        modCheck.addEventListener('mousedown', e => e.stopPropagation());
+        modCheck.addEventListener('change', () => toggleModuleArrow(moduleEditId, arrow.id, modCheck.checked));
+      }
 
       const noteInp = document.createElement('input');
       noteInp.type = 'text';
@@ -3926,8 +4122,10 @@ function renderArrowList() {
       });
 
       item.appendChild(dragHandle);
+      if (modCheck) item.appendChild(modCheck);
       item.appendChild(colorDot);
       item.appendChild(label);
+      modTags.forEach(t => item.appendChild(t));
       item.appendChild(noteInp);
       item.appendChild(del);
       item.appendChild(buildArrowElementsRow(ci, ai));
@@ -3975,6 +4173,243 @@ function renderArrowList() {
   renderStrategySentences();
 }
 
+// ── ST-14f：策略模組（chip 列、圈選模式、套用書上模組）──────────────────────────
+// 選取或圈選中的模組成員（只看目前策略構想）；沒有 → null
+function focusModuleArrowIds() {
+  const id = moduleEditId || moduleSelId;
+  if (!id) return null;
+  const m = (modules[activeIdx] || []).find(x => x.id === id);
+  return m ? new Set(m.arrowIds) : null;
+}
+function findModule(id) { return (modules[activeIdx] || []).find(m => m.id === id) || null; }
+function refreshModuleViews() { drawLines(); renderArrowList(); saveState(); }
+
+function renderModuleBar() {
+  const box = document.getElementById('moduleBox');
+  if (!box) return;
+  box.innerHTML = '';
+  const comp = competitors[activeIdx];
+  const mods = modules[activeIdx] || [];
+
+  const head = document.createElement('div');
+  head.className = 'module-head';
+  const title = document.createElement('span');
+  title.className = 'module-head-title';
+  title.textContent = `🧩 策略模組（${comp ? comp.name : ''}）`;
+  head.appendChild(title);
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'module-btn';
+  addBtn.textContent = '＋ 新模組';
+  addBtn.title = '取名後勾選箭頭，把幾條箭頭圈成一個模組';
+  addBtn.addEventListener('click', createModule);
+  head.appendChild(addBtn);
+  const sel = document.createElement('select');
+  sel.className = 'module-tpl-select';
+  sel.title = '把書上的模組套用到自己的欄位（Ch9 [S 344–352]）';
+  sel.innerHTML = '<option value="">📚 套用書上模組…</option>'
+    + MODULE_TEMPLATES.map(t => `<option value="${t.id}">${escXml(t.name)}（${t.page}）</option>`).join('');
+  sel.addEventListener('change', () => { const v = sel.value; sel.value = ''; if (v) openModuleTemplateDialog(v); });
+  head.appendChild(sel);
+  box.appendChild(head);
+
+  const chips = document.createElement('div');
+  chips.className = 'module-chips';
+  if (!mods.length) {
+    const empty = document.createElement('span');
+    empty.className = 'module-empty';
+    empty.textContent = '尚無模組。按「＋ 新模組」把幾條箭頭圈成一組，或套用書上模組。';
+    chips.appendChild(empty);
+  }
+  mods.forEach(m => {
+    const chip = document.createElement('span');
+    chip.className = 'module-chip' + (m.id === moduleSelId ? ' active' : '') + (m.id === moduleEditId ? ' editing' : '');
+    chip.title = (m.note ? m.note + '\n' : '') + '點一下：只看這個模組的箭頭（再點一次取消）';
+    const nm = document.createElement('span');
+    nm.textContent = m.name;
+    const cnt = document.createElement('span');
+    cnt.className = 'module-chip-count';
+    cnt.textContent = `${m.arrowIds.length}`;
+    const act = (txt, tip, fn, extra = '') => {
+      const b = document.createElement('span');
+      b.className = 'module-chip-act' + extra;
+      b.textContent = txt;
+      b.title = tip;
+      b.addEventListener('click', e => { e.stopPropagation(); fn(); });
+      return b;
+    };
+    chip.appendChild(nm);
+    chip.appendChild(cnt);
+    chip.appendChild(act('✎', '改名', () => renameModule(m.id)));
+    chip.appendChild(act('☑', '編輯成員（勾選箭頭）', () => startModuleEdit(m.id)));
+    chip.appendChild(act('✕', '刪除模組（箭頭保留）', () => deleteModule(m.id), ' del'));
+    chip.addEventListener('click', () => {
+      moduleEditId = null;
+      moduleSelId = moduleSelId === m.id ? null : m.id;
+      drawLines();
+      renderArrowList();
+    });
+    chips.appendChild(chip);
+  });
+  box.appendChild(chips);
+
+  const editing = moduleEditId && findModule(moduleEditId);
+  if (editing) {
+    const bar = document.createElement('div');
+    bar.className = 'module-edit-bar';
+    const tip = document.createElement('span');
+    tip.textContent = `圈選中：「${editing.name}」— 在下方清單勾選要加入的箭頭（${editing.arrowIds.length} 條）`;
+    const done = document.createElement('button');
+    done.type = 'button';
+    done.className = 'module-btn';
+    done.textContent = '完成';
+    done.addEventListener('click', () => {
+      moduleSelId = moduleEditId;
+      moduleEditId = null;
+      refreshModuleViews();
+    });
+    bar.appendChild(tip);
+    bar.appendChild(done);
+    box.appendChild(bar);
+  }
+}
+
+function createModule() {
+  const name = (prompt('新模組名稱：', `模組${(modules[activeIdx] || []).length + 1}`) || '').trim();
+  if (!name) return;
+  pushHistory();
+  const m = { id: newModuleId(), name, arrowIds: [], note: '' };
+  modules[activeIdx].push(m);
+  moduleSelId = null;
+  moduleEditId = m.id;  // 直接進圈選模式
+  refreshModuleViews();
+}
+function renameModule(id) {
+  const m = findModule(id);
+  if (!m) return;
+  const name = (prompt('模組名稱：', m.name) || '').trim();
+  if (!name || name === m.name) return;
+  pushHistory();
+  m.name = name;
+  refreshModuleViews();
+}
+function deleteModule(id) {
+  const m = findModule(id);
+  if (!m || !confirm(`刪除模組「${m.name}」？（箭頭會保留）`)) return;
+  pushHistory();
+  modules[activeIdx] = modules[activeIdx].filter(x => x.id !== id);
+  if (moduleSelId === id) moduleSelId = null;
+  if (moduleEditId === id) moduleEditId = null;
+  refreshModuleViews();
+}
+// 圈選模式：進入時記一次復原點，期間勾選不另記（復原會回到這次編輯前）
+function startModuleEdit(id) {
+  if (!findModule(id)) return;
+  pushHistory();
+  moduleSelId = null;
+  moduleEditId = id;
+  drawLines();
+  renderArrowList();
+}
+function toggleModuleArrow(id, arrowId, on) {
+  const m = findModule(id);
+  if (!m) return;
+  m.arrowIds = m.arrowIds.filter(x => x !== arrowId);
+  if (on) m.arrowIds.push(arrowId);
+  refreshModuleViews();
+}
+
+// 套用書上模組：角色 → 欄位（預設依欄名關鍵字猜；product＝第一個產品欄；同一欄不重複分給兩個角色）
+function guessModuleRoleCols(roles) {
+  const used = new Set();
+  const out = {};
+  roles.forEach(r => {
+    let idx = -1;
+    if (r === 'product') {
+      idx = COLUMNS.findIndex((n, i) => i >= productSepIdx && !used.has(i));
+    } else {
+      const kw = MODULE_ROLES[r].kw;
+      // 先找完全命中第一個關鍵字的，再依序放寬（例：oemBrand 先找「OEM」才退回「品牌」）
+      for (const k of kw) {
+        idx = COLUMNS.findIndex((n, i) => i < productSepIdx && !used.has(i) && n.includes(k));
+        if (idx >= 0) break;
+      }
+    }
+    if (idx >= 0) { out[r] = idx; used.add(idx); }
+  });
+  return out;
+}
+function templateRoles(tpl) {
+  const roles = [];
+  tpl.steps.forEach(st => [st.fromRole, st.toRole].forEach(r => { if (!roles.includes(r)) roles.push(r); }));
+  return roles;
+}
+function openModuleTemplateDialog(tplId) {
+  const tpl = MODULE_TEMPLATES.find(t => t.id === tplId);
+  if (!tpl) return;
+  const roles = templateRoles(tpl);
+  const guess = guessModuleRoleCols(roles);
+  const colOpts = sel => '<option value="">（不套用：略過相關箭頭）</option>'
+    + COLUMNS.map((n, i) => `<option value="${i}" ${sel === i ? 'selected' : ''}>${String(i + 1).padStart(2, '0')} ${escXml(n)}${i >= productSepIdx ? '（產品）' : ''}</option>`).join('');
+  const stepLis = tpl.steps.map(st =>
+    `<li><span class="sm-modal-code">${MODULE_ROLES[st.fromRole].label} ${st.fromRow} → ${MODULE_ROLES[st.toRole].label} ${st.toRow}</span>：${escXml(st.note)}</li>`).join('');
+  const box = document.getElementById('moduleModalBox');
+  box.innerHTML = `
+    <h3>📚 套用書上模組：${escXml(tpl.name)}</h3>
+    <div>${escXml(tpl.desc)} <span class="cell-page">[${tpl.page}]</span></div>
+    <div class="sm-modal-sub">把模組用到的角色對應到你的欄位（套用到「${escXml(competitors[activeIdx].name)}」）</div>
+    ${roles.map(r => `<label class="module-map-row"><span>${MODULE_ROLES[r].label}</span><select data-role="${r}">${colOpts(guess[r])}</select></label>`).join('')}
+    <div class="sm-modal-sub">會建立的箭頭（已有相同起訖的箭頭會直接沿用）</div>
+    <ul class="sm-modal-list">${stepLis}</ul>
+    <div class="sm-modal-actions">
+      <button class="btn-ghost" id="moduleTplCancelBtn">取消</button>
+      <button class="btn-primary" id="moduleTplOkBtn">套用</button>
+    </div>`;
+  const modal = document.getElementById('moduleModal');
+  const close = () => modal.classList.remove('open');
+  box.querySelector('#moduleTplCancelBtn').addEventListener('click', close);
+  box.querySelector('#moduleTplOkBtn').addEventListener('click', () => {
+    const map = {};
+    box.querySelectorAll('select[data-role]').forEach(s => { if (s.value !== '') map[s.dataset.role] = Number(s.value); });
+    if (applyModuleTemplate(tpl, map)) close();
+  });
+  modal.classList.add('open');
+}
+// 依對應表在目前策略構想建立箭頭（相同起訖就重用）＋同名模組；可復原。回傳是否成功
+function applyModuleTemplate(tpl, map) {
+  const cells = tpl.steps.map(st => {
+    const fc = map[st.fromRole], tc = map[st.toRole];
+    if (fc === undefined || tc === undefined) return null;
+    if (fc === tc && st.fromRow === st.toRow) return null;
+    return { st, from: { row: st.fromRow, col: fc }, to: { row: st.toRow, col: tc } };
+  }).filter(Boolean);
+  if (!cells.length) { alert('沒有可建立的箭頭：請至少對應一組起訖角色。'); return false; }
+  pushHistory();
+  const list = arrows[activeIdx];
+  const ids = [];
+  cells.forEach(c => {
+    let a = list.find(x => x.from.row === c.from.row && x.from.col === c.from.col && x.to.row === c.to.row && x.to.col === c.to.col);
+    if (!a) {
+      a = { id: newArrowId(), from: c.from, to: c.to, note: c.st.note, elements: [] };
+      list.push(a);
+    }
+    if (!ids.includes(a.id)) ids.push(a.id);
+  });
+  const m = { id: newModuleId(), name: tpl.name, arrowIds: ids, note: `${tpl.desc} [${tpl.page}]` };
+  modules[activeIdx].push(m);
+  moduleEditId = null;
+  moduleSelId = m.id;
+  cancelPending();
+  drawLines();
+  renderArrowList();
+  updateStatus();
+  saveState();
+  return true;
+}
+document.getElementById('moduleModal').addEventListener('click', e => {
+  if (e.target.id === 'moduleModal') e.currentTarget.classList.remove('open');
+});
+
 // ── ST-14c：策略句型產生器 ────────────────────────────────────────────────
 // 格子預設文字：「製造的規模(D07)」；產品欄的 A 列用「特色」
 function cellDefaultText(cell) {
@@ -4006,10 +4441,31 @@ function arrowSentence(arrow, ci) {
   const list = arrows[ci] || [arrow];
   return `因為 ${sentenceFromText(arrow.from, list)}，使 ${sentenceToText([arrow])}`;
 }
-// 一個策略構想的所有句子（匯流＋一層鏈式）
+// 一個策略構想的所有句子（匯流＋一層鏈式）。ST-14f：有模組時依模組分組，每組前一行「【模組名】」，
+// 不屬任何模組的箭頭放最後「【其他】」；沒有模組（或模組都是空的）時跟原本一樣
 function buildStrategySentences(ci) {
   const list = (arrows[ci] || []);
   if (!list.length) return [];
+  const mods = (modules[ci] || []).filter(m => m.arrowIds.length);
+  if (!mods.length) return sentencesForArrows(list, list);
+  const out = [];
+  const inModule = new Set();
+  mods.forEach(m => {
+    const sub = list.filter(a => m.arrowIds.includes(a.id));  // 依箭頭清單順序
+    if (!sub.length) return;
+    sub.forEach(a => inModule.add(a.id));
+    out.push(`【${m.name}】`, ...sentencesForArrows(sub, list));
+  });
+  const rest = list.filter(a => !inModule.has(a.id));
+  if (rest.length) out.push('【其他】', ...sentencesForArrows(rest, list));
+  return out;
+}
+// ST-14f：模組標題行（「【…】」）不加句號
+function isSentenceHeader(t) { return /^【.*】$/.test(t); }
+function sentenceLine(t) { return isSentenceHeader(t) ? t : t + '。'; }
+// sub＝要造句的箭頭；ctx＝整個策略構想的箭頭（鏈式沿用 note 時從這裡找）
+function sentencesForArrows(sub, ctx) {
+  const list = sub;
   // 依終點分組（保持首次出現順序）
   const groups = [];
   const byKey = {};
@@ -4031,7 +4487,7 @@ function buildStrategySentences(ci) {
   const out = [];
   groups.forEach(g => {
     if (consumed.has(g)) return;
-    const froms = g.map(a => sentenceFromText(a.from, list));
+    const froms = g.map(a => sentenceFromText(a.from, ctx));
     let s = `因為 ${froms.join(' 與 ')}，使 ${sentenceToText(g)}`;
     let elemGroup = g;
     const nx = chainOf.get(g);
@@ -4053,9 +4509,15 @@ function renderStrategySentences() {
     ol.appendChild(li);
     return;
   }
-  ss.forEach(t => { const li = document.createElement('li'); li.textContent = t + '。'; ol.appendChild(li); });
+  let no = 0;
+  ss.forEach(t => {
+    const li = document.createElement('li');
+    if (isSentenceHeader(t)) { li.className = 'sentence-group'; li.textContent = t; }
+    else { li.value = ++no; li.textContent = t + '。'; }
+    ol.appendChild(li);
+  });
 }
-function strategySentencesText() { return buildStrategySentences(activeIdx).map(t => t + '。').join('\n'); }
+function strategySentencesText() { return buildStrategySentences(activeIdx).map(sentenceLine).join('\n'); }
 function copyStrategySentences() {
   const txt = strategySentencesText();
   if (!txt) return;
@@ -4245,8 +4707,11 @@ function renderCompetitorBar() {
     chip.addEventListener('click', e => {
       if (e.target === nameInp || e.target === rm) return;
       activeIdx = ci;
+      moduleSelId = moduleEditId = null;  // ST-14f：模組屬於各自的策略構想
       cancelPending();
       renderCompetitorBar();
+      drawLines();
+      renderArrowList();
       updateStatus();
     });
     bar.insertBefore(chip, addDiv);
@@ -4273,9 +4738,13 @@ function addCompetitor() {
   if (competitors.length >= 8) { alert('最多支援 8 個策略'); return; }
   competitors.push({ name, color: COLORS[competitors.length % COLORS.length] });
   arrows.push([]);
+  modules.push([]);
   activeIdx = competitors.length - 1;
+  moduleSelId = moduleEditId = null;
   inp.value = '';
   renderCompetitorBar();
+  drawLines();
+  renderArrowList();
   updateStatus();
   saveState();
 }
@@ -4285,6 +4754,8 @@ function removeCompetitor(ci) {
   pushHistory();
   competitors.splice(ci, 1);
   arrows.splice(ci, 1);
+  modules.splice(ci, 1);
+  moduleSelId = moduleEditId = null;
   if (activeIdx >= competitors.length) activeIdx = competitors.length - 1;
   cancelPending();
   renderCompetitorBar();
@@ -4298,6 +4769,8 @@ function clearAll() {
   if (!confirm('確定要清除所有箭頭？')) return;
   pushHistory();
   arrows = competitors.map(() => []);
+  modules = competitors.map(() => []);  // ST-14f：箭頭清光，模組一併清掉
+  moduleSelId = moduleEditId = null;
   cancelPending();
   drawLines();
   renderArrowList();
@@ -4308,6 +4781,8 @@ function clearAll() {
 function clearCompetitor() {
   pushHistory();
   arrows[activeIdx] = [];
+  modules[activeIdx] = [];
+  moduleSelId = moduleEditId = null;
   cancelPending();
   drawLines();
   renderArrowList();
@@ -4969,7 +5444,7 @@ async function exportPptx() {
   const finalNo = N + 1 + vcOffset;
   let finalDescText = document.getElementById('strategyDesc').value.trim();
   // ST-14c：總覽頁附策略句型（所有策略構想；最多 8 句）
-  const allSentences = competitors.flatMap((_, ci) => buildStrategySentences(ci).map(t => t + '。'));
+  const allSentences = competitors.flatMap((_, ci) => buildStrategySentences(ci).map(sentenceLine));
   if (allSentences.length) {
     const shown = allSentences.slice(0, 8);
     if (allSentences.length > 8) shown.push('…');
@@ -5041,6 +5516,7 @@ const STORAGE_KEY = 'strategyMatrix_v4';
 
 function saveState() {
   try {
+    normaliseModules();  // ST-14f：箭頭刪掉／欄位移除後，清掉模組裡失效的成員
     const state = {
       strategyTitle: document.getElementById('strategyTitle').value,
       strategyDesc:  document.getElementById('strategyDesc').value,
@@ -5050,6 +5526,7 @@ function saveState() {
       shortView,
       hiddenCols:    JSON.parse(JSON.stringify(hiddenCols)),
       cellNotes:     JSON.parse(JSON.stringify(cellNotes)),
+      modules:       JSON.parse(JSON.stringify(modules)),
       valueChain:    JSON.parse(JSON.stringify(valueChain)),
       competitors:  JSON.parse(JSON.stringify(competitors)),
       arrows:        JSON.parse(JSON.stringify(arrows)),
@@ -5134,6 +5611,10 @@ function loadState() {
     }
     while (arrows.length < competitors.length) arrows.push([]);
     while (arrows.length > competitors.length) arrows.pop();
+    // ST-14f：舊存檔箭頭沒有 id → 補；沒有 modules → 依 arrows 長度建空陣列
+    ensureArrowIds();
+    modules = Array.isArray(state.modules) ? state.modules : [];
+    normaliseModules();
     return true;
   } catch(e) { return false; }
 }
@@ -5235,15 +5716,27 @@ function loadExampleProject(id) {
   applyValueChainColumns(buildValueChainColumns(true));
   competitors = ex.competitors.map(c => ({ ...c }));
   const colIdx = name => COLUMNS.indexOf(name);  // 同名取第一個
-  arrows = ex.arrows.map(list => list.map(a => {
+  const exIds = [];  // ST-14f：exIds[ci][範例箭頭索引] = 新 id（略過的箭頭為 null）
+  arrows = ex.arrows.map((list, ci) => list.map((a, ai) => {
+    exIds[ci] = exIds[ci] || [];
+    exIds[ci][ai] = null;
     const fc = colIdx(a.from.col), tc = colIdx(a.to.col);
     if (fc < 0 || tc < 0) {
       console.warn(`[範例 ${ex.id}] 找不到欄：${fc < 0 ? a.from.col : a.to.col}（${a.note}），略過此箭頭`);
       return null;
     }
-    return { from: { row: a.from.row, col: fc }, to: { row: a.to.row, col: tc }, note: a.note, elements: [...a.elements] };
+    exIds[ci][ai] = newArrowId();
+    return { id: exIds[ci][ai], from: { row: a.from.row, col: fc }, to: { row: a.to.row, col: tc }, note: a.note, elements: [...a.elements] };
   }).filter(Boolean));
   while (arrows.length < competitors.length) arrows.push([]);
+  ensureArrowIds();
+  // ST-14f：範例模組（依書上圖序分段）；索引換成箭頭 id，找不到的箭頭略過
+  modules = competitors.map((_, ci) => ((ex.modules || [])[ci] || []).map(m => ({
+    id: newModuleId(), name: m.name, note: '',
+    arrowIds: m.idx.map(i => (exIds[ci] || [])[i]).filter(Boolean),
+  })));
+  moduleSelId = moduleEditId = null;
+  normaliseModules();
   activeIdx = 0;
   cellNotes = {};     // ST-14a：範例不帶策略點描述，清掉舊的
   currentCell = null;
