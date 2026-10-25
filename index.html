@@ -862,6 +862,11 @@
     <label class="palette-picker" title="切換價值鏈與策略矩陣的配色">🎨 配色
       <select id="paletteSelect" onchange="applyPalette(Number(this.value)); saveState();"></select>
     </label>
+    <label class="palette-picker" title="載入書上的完整策略範例（會取代目前的價值鏈、策略構想與箭頭）">
+      <select id="exampleSelect" onchange="if (this.value) loadExampleProject(this.value); this.value = '';">
+        <option value="">📚 載入範例…</option>
+      </select>
+    </label>
     <button class="btn-ghost" onclick="clearLocalStorage()">🔄 重設</button>
   </div>
 </div>
@@ -1353,6 +1358,97 @@ const VC_TEMPLATES = [
       products: ['產品一', '產品二', '產品三'].map(name => ({ name, type: 'unit', unitKind: 'activity' })),
       links: [],
     },
+  },
+];
+
+// ST-14e：範例專案（第一版：價值鏈＋策略構想＋箭頭＋備註＋要素）。內容依《策略管理新論》Ch9 案例自行改寫，非原文
+// 箭頭的欄位用「欄名」而非索引：載入時以展開後的 COLUMNS 查索引（同名取第一個），找不到就略過並 console.warn
+const exArrow = (fromRow, fromCol, toRow, toCol, note, elements = []) =>
+  ({ from: { row: fromRow, col: fromCol }, to: { row: toRow, col: toCol }, note, elements });
+const EXAMPLE_PROJECTS = [
+  {
+    id: 'bookstore-a', name: '網路書店 A 公司', source: 'S 352–360',
+    strategyTitle: '網路書店 A 公司：低價便利＋資訊能力',
+    strategyDesc: 'A 公司以網路平台銷售書籍，靠大量採購壓低進貨成本，讓書價比實體書店便宜；'
+      + '自建資訊系統與顧客資料庫，提供查書、推薦與快速配送的便利服務。'
+      + '未來方向是把物流據點與倉儲整合布局，並把既有顧客延伸到專業書與影音商品，發揮行銷綜效。'
+      + '（依《策略管理新論》Ch9 案例改寫）',
+    valueChain: {
+      primary: [
+        vcAsset('出版社關係'), vcAct('選書企劃'), vcAct('採購'), vcAct('資訊系統'), vcAct('網站平台'),
+        vcAsset('顧客資料庫'), vcAct('倉儲'), vcAct('訂單處理'), vcAct('物流運輸'), vcAsset('品牌'), vcAct('客服'),
+      ],
+      support: [],
+      products: ['中文書籍', '專業書籍', '影音商品'].map(n => vcAct(n)),
+      links: [],
+    },
+    competitors: [{ name: '現行策略', color: COLORS[0] }, { name: '未來方向', color: COLORS[1] }],
+    arrows: [
+      [
+        exArrow('A', '採購', 'A', '中文書籍', '採購成本低使書價便宜', ['1-2']),
+        exArrow('A', '資訊系統', 'A', '顧客資料庫', '資訊系統支援顧客資料', ['1-7']),
+        exArrow('C', '資訊系統', 'A', '資訊系統', '自建系統形成服務特色', ['3-1']),
+        exArrow('F', '資訊系統', 'A', '資訊系統', '資訊能力是核心優勢', ['6-2', '6-8']),
+        exArrow('B', '物流運輸', 'A', '物流運輸', '選好的運輸業者確保配送', ['2-5']),
+        exArrow('B', '中文書籍', 'D', '採購', '市場需求大帶來採購規模', ['2-3']),
+        exArrow('D', '採購', 'A', '採購', '採購量大壓低進貨成本', ['4-1', '1-3']),
+        exArrow('A', '網站平台', 'A', '中文書籍', '網站查書下單方便', ['1-2']),
+        exArrow('A', '物流運輸', 'A', '中文書籍', '快速到貨形成特色', ['1-2', '1-5']),
+        exArrow('D', '倉儲', 'A', '倉儲', '集中倉儲降低存貨成本', ['4-1', '1-3']),
+        exArrow('A', '中文書籍', 'B', '中文書籍', '低價吸引價格敏感讀者', ['1-1']),
+      ],
+      [
+        exArrow('E', '倉儲', 'A', '倉儲', '倉儲設在交通樞紐', ['5-1']),
+        exArrow('E', '倉儲', 'E', '物流運輸', '倉儲與物流據點同區', ['5-3']),
+        exArrow('E', '物流運輸', 'D', '物流運輸', '據點分散提升配送規模', ['5-5']),
+        exArrow('A', '顧客資料庫', 'A', '選書企劃', '顧客資料支援選書', ['1-7']),
+        exArrow('A', '品牌', 'B', '出版社關係', '品牌提升對出版社議價力', ['2-7']),
+        exArrow('A', '資訊系統', 'A', '專業書籍', '推薦系統帶動專業書銷售', ['1-2']),
+        exArrow('B', '中文書籍', 'B', '影音商品', '共用顧客群產生行銷綜效', ['1-10', '6-5']),
+      ],
+    ],
+  },
+  {
+    id: 'foundry-t', name: '晶圓代工 T 公司', source: 'S 360–368',
+    strategyTitle: '晶圓代工 T 公司：專業代工＋製程領先',
+    strategyDesc: 'T 公司只做晶圓代工、不推自有品牌晶片，避免與客戶競爭；'
+      + '以持續的製程研發、大規模產能與穩定良率，成為 IC 設計公司信賴的製造夥伴。'
+      + '未來方向是以 IP 庫強化設計支援、多地建廠分散風險，並往先進封裝延伸提供整合服務。'
+      + '（依《策略管理新論》Ch9 案例改寫）',
+    valueChain: {
+      primary: [
+        vcAct('製程研發'), vcAsset('設備'), vcAsset('矽晶圓原料'), vcAsset('廠房產能'), vcAct('晶圓製造'),
+        vcAct('品質管理'), vcAct('設計支援'), vcAsset('IP 庫'), vcAct('客戶服務'), vcAsset('品牌信譽'),
+      ],
+      support: [vcAsset('人才'), vcAsset('資金')],
+      products: ['先進製程代工', '成熟製程代工', '先進封裝'].map(n => vcAct(n)),
+      links: [],
+    },
+    competitors: [{ name: '現行策略', color: COLORS[0] }, { name: '未來方向', color: COLORS[1] }],
+    arrows: [
+      [
+        exArrow('C', '晶圓製造', 'A', '晶圓製造', '自有晶圓廠掌握製程', ['3-1']),
+        exArrow('D', '晶圓製造', 'A', '晶圓製造', '產能規模大降低單位成本', ['4-1', '1-3']),
+        exArrow('A', '製程研發', 'A', '先進製程代工', '製程領先形成產品特色', ['1-2']),
+        exArrow('F', '製程研發', 'A', '製程研發', '研發能力是核心優勢', ['6-2']),
+        exArrow('A', '人才', 'A', '製程研發', '工程人才支撐製程研發', ['1-7']),
+        exArrow('F', '資金', 'A', '資金', '雄厚財力支撐持續擴廠', ['6-6']),
+        exArrow('B', '先進製程代工', 'D', '晶圓製造', '眾多客戶訂單匯集產能', ['2-3']),
+        exArrow('A', '品質管理', 'A', '先進製程代工', '良率穩定確保品質', ['1-2', '1-4']),
+        exArrow('A', '設計支援', 'A', '先進製程代工', '設計支援縮短上市時間', ['1-2', '1-5']),
+        exArrow('B', '矽晶圓原料', 'A', '矽晶圓原料', '選定穩定的晶圓供應商', ['2-5']),
+        exArrow('A', '先進製程代工', 'B', '先進製程代工', '先進製程吸引高階客戶', ['1-1']),
+      ],
+      [
+        exArrow('A', 'IP 庫', 'A', '設計支援', 'IP 庫強化設計支援', ['1-7']),
+        exArrow('E', '製程研發', 'E', '廠房產能', '研發與量產廠區鄰近', ['5-3']),
+        exArrow('E', '廠房產能', 'D', '廠房產能', '多地建廠擴大總產能', ['5-5', '5-6']),
+        exArrow('A', '品牌信譽', 'B', '設備', '信譽與規模提升議價力', ['2-7']),
+        exArrow('B', '先進製程代工', 'B', '成熟製程代工', '新舊製程共享客戶', ['1-10', '6-5']),
+        exArrow('C', '先進封裝', 'A', '先進封裝', '自做封裝提供整合服務', ['3-1']),
+        exArrow('D', '晶圓製造', 'C', '先進封裝', '量產規模大值得自建封裝', ['3-4', '4-2']),
+      ],
+    ],
   },
 ];
 
@@ -2759,14 +2855,19 @@ function planValueChainExpand(supportFirst) {
   return { cols, newArrows, deleted, changed, before: COLUMNS.length, after: cols.names.length };
 }
 
+// 只換欄位結構（不記復原點、不動箭頭、不重繪）；cols 為 buildValueChainColumns 的回傳值。ST-14e 範例載入共用
+function applyValueChainColumns(cols) {
+  COLUMN_PATHS  = cols.paths;
+  COLUMN_GROUPS = pathsToColumnGroups(cols.names, cols.paths);
+  productSepIdx = cols.sepIdx;
+  syncColumns();
+}
+
 // 實際套用：先記復原點（含欄位），再換欄位與箭頭
 function expandValueChainToMatrix(supportFirst) {
   const plan = planValueChainExpand(supportFirst);
   pushHistory(true);
-  COLUMN_PATHS  = plan.cols.paths;
-  COLUMN_GROUPS = pathsToColumnGroups(plan.cols.names, plan.cols.paths);
-  productSepIdx = plan.cols.sepIdx;
-  syncColumns();
+  applyValueChainColumns(plan.cols);
   arrows = plan.newArrows;
   cancelPending();
   renderColEditor();
@@ -4400,6 +4501,51 @@ function loadValueChainTemplate(id) {
   commitValueChain();
 }
 
+// ST-14e：載入範例專案——取代策略名稱／說明、價值鏈、策略構想與箭頭，並直接展開到矩陣（不跳展開對話框）；配色不變
+function loadExampleProject(id) {
+  const ex = EXAMPLE_PROJECTS.find(x => x.id === id);
+  if (!ex) return;
+  if (!confirm('載入範例會取代目前的價值鏈、策略構想與箭頭，確定？')) return;
+  pushHistory(true);
+  document.getElementById('strategyTitle').value = ex.strategyTitle;
+  document.getElementById('strategyDesc').value  = ex.strategyDesc;
+  valueChain = normaliseValueChain(JSON.parse(JSON.stringify(ex.valueChain)));  // 深拷貝，避免改到範例常數
+  resetValueChainIds(valueChain);
+  commitValueChain();
+  applyValueChainColumns(buildValueChainColumns(true));
+  competitors = ex.competitors.map(c => ({ ...c }));
+  const colIdx = name => COLUMNS.indexOf(name);  // 同名取第一個
+  arrows = ex.arrows.map(list => list.map(a => {
+    const fc = colIdx(a.from.col), tc = colIdx(a.to.col);
+    if (fc < 0 || tc < 0) {
+      console.warn(`[範例 ${ex.id}] 找不到欄：${fc < 0 ? a.from.col : a.to.col}（${a.note}），略過此箭頭`);
+      return null;
+    }
+    return { from: { row: a.from.row, col: fc }, to: { row: a.to.row, col: tc }, note: a.note, elements: [...a.elements] };
+  }).filter(Boolean));
+  while (arrows.length < competitors.length) arrows.push([]);
+  activeIdx = 0;
+  cancelPending();
+  renderColEditor();
+  rebuildTable();
+  renderCompetitorBar();
+  renderLegend();
+  updateStatus();
+  saveState();
+}
+
+// 「📚 載入範例…」下拉選項
+function buildExampleSelect() {
+  const sel = document.getElementById('exampleSelect');
+  if (!sel) return;
+  EXAMPLE_PROJECTS.forEach(ex => {
+    const o = document.createElement('option');
+    o.value = ex.id;
+    o.textContent = `${ex.name}（${ex.source}）`;
+    sel.appendChild(o);
+  });
+}
+
 function clearLocalStorage() {
   if (!confirm('確定要清除所有存檔並重設為預設值？（此操作無法復原）')) return;
   localStorage.removeItem(STORAGE_KEY);
@@ -4409,6 +4555,7 @@ function clearLocalStorage() {
 // ── Init ──────────────────────────────────────────────────────────────────
 loadState();
 buildPaletteSelect();
+buildExampleSelect();
 applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 window.addEventListener('resize', drawLines);
