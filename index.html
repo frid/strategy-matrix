@@ -6516,7 +6516,7 @@ function buildArrowShapesXml(L, allSteps, activeStep, startId) {
 // 不量 DOM（編輯區可能被隱藏），改用與編輯器相同結構的自有版面計算：
 // 支援活動＝上方橫條（由上往下堆）、主要活動＝下方並排的欄（群組內子項垂直排列）、
 // 產品不畫（ST-01i）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）並加右側 Margin 箭頭。
-function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
+function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtraH = 0) {
   let id = startId;
   let xml = '';
   const rectById = {};                       // 連線用：節點 id → { x, y, w, h }
@@ -6534,16 +6534,64 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
   const contentX = areaX + labelW + gap;
   const contentW = areaW - labelW - gap - (arrowBg ? marginW + gap : 0);
 
-  // 每一欄需要幾個「單元高」：群組＝標題 + 子項數；單元＝1
-  const colRows = primary.map(n => (n.type === 'group' ? 1 + n.children.length : 1));
+  // ST-20：主要活動畫到第三層；第三層以下的節點全部攤平成第三層（深度優先），連線才找得到方塊
+  const vcKids = n => (n.children || []).filter(c => c.type === 'unit' || c.type === 'group');
+  let flattened = false;
+  const vcDesc = n => vcKids(n).flatMap(c => {
+    const sub = vcDesc(c);
+    if (sub.length) flattened = true;      // 孫項底下還有子項 → 第四層以下，攤平
+    return [c, ...sub];
+  });
+  const kidRows = k => (k.type === 'group' && vcKids(k).length ? 1 + vcDesc(k).length : 1);
+  // 每一欄需要幾個「單元高」：群組＝標題 + 各子項列數（子群組＝標題 + 攤平後的孫項數）；單元＝1
+  const colRows = primary.map(n => (n.type === 'group' ? 1 + vcKids(n).reduce((s, k) => s + kidRows(k), 0) : 1));
   const products = valueChain.products.filter(n => n.type === 'unit');  // ST-18：產品列（一列，等寬橫排）
   const prodGapH = in2emu(0.14);               // 主要活動與產品列之間留較寬的通道，連線橫走用
   const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1])) + (products.length ? 1 : 0);
   const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1) - (products.length ? prodGapH : 0);
-  const unitH  = Math.max(in2emu(0.2), Math.min(in2emu(0.42), Math.floor(availH / Math.max(totalRows, 1))));
+  let unitH    = Math.max(in2emu(0.2), Math.min(in2emu(0.42), Math.floor(availH / Math.max(totalRows, 1))));
+  const pad    = in2emu(0.04);
+  // ST-20：有第三層時改用精算版面（兩層以內不走這段，座標與 ST-18 相同）
+  //   孫項方塊與框標題列高 ≥ 一行字高＋上下內距；整欄塞不下時孫項／框標題字級 8 → 7 → 6pt，
+  //   6pt 仍塞不下才把孫項與框標題列等比壓縮（deepShrunk，匯出後狀態列提示）
+  const hasDeep = primary.some(n => n.type === 'group' && vcKids(n).some(k => k.type === 'group' && vcKids(k).length));
+  const deepIns = 9000;                                                    // 孫項／框標題的上下內距（EMU）
+  const vcTextMinH = sz => Math.ceil(sz / 100 * 12700 * 1.2) + deepIns * 2; // 一行字高（1.2 倍行距）＋上下內距
+  let deepSz = 800, deepMin = 0, deepScale = 1, deepShrunk = false;
+  // 給定 unitH，算出孫項高、框標題列高（一般子項仍是 unitH × 0.78）
+  const deepDims = u => {
+    const cH = Math.round(u * 0.78);
+    return { cH, subT: Math.round(Math.max(Math.round(cH * 0.75), deepMin) * deepScale),
+                 grand: Math.round(Math.max(Math.round(cH * 0.85), deepMin) * deepScale) };
+  };
+  const deepKidH = (k, d) => (k.type === 'group' && vcKids(k).length ? d.subT + vcDesc(k).length * (d.grand + pad) : d.cH);
+  const deepTotal = u => {                                                 // 價值鏈區總高（支援＋最高一欄＋產品列）
+    const d = deepDims(u);
+    const colH = Math.max(...primary.map(n => (n.type === 'group'
+      ? pad * 2 + u + vcKids(n).reduce((s, k) => s + deepKidH(k, d) + pad, 0) : u)));
+    return zoneTitleH * 2 + support.length * (u + gap) + colH + (products.length ? prodGapH + u : 0);
+  };
+  if (hasDeep) {
+    areaH += deepExtraH;                       // 價值鏈頁沒有說明文字區 → 有第三層時把那段高度也拿來用（右側 Margin 箭頭跟著拉長）
+    const uMin = in2emu(0.12), uMax = in2emu(0.42);
+    const maxU = () => {                                                   // 二分搜尋放得下的最大 unitH
+      let lo = uMin, hi = uMax;
+      if (deepTotal(hi) <= areaH) return hi;
+      while (hi - lo > 100) { const mid = Math.floor((lo + hi) / 2); (deepTotal(mid) <= areaH ? lo = mid : hi = mid); }
+      return lo;
+    };
+    const fitSz = [800, 700, 600].find(sz => { deepMin = vcTextMinH(sz); return deepTotal(uMin) <= areaH; });
+    if (fitSz) { deepSz = fitSz; deepMin = vcTextMinH(fitSz); unitH = maxU(); }
+    else {
+      deepSz = 600; deepMin = vcTextMinH(600); unitH = uMin; deepShrunk = true;
+      let lo = 0.05, hi = 1;
+      while (hi - lo > 0.005) { deepScale = (lo + hi) / 2; (deepTotal(unitH) <= areaH ? lo = deepScale : hi = deepScale); }
+      deepScale = lo;
+    }
+  }
 
   // 一個方塊
-  const box = (name, x, y, w, h, prst, fill, textColor, bold, sz) => {
+  const box = (name, x, y, w, h, prst, fill, textColor, bold, sz, ins = 18000) => {
     rectById[name.id] = { x, y, w, h };
     return `
       <p:sp>
@@ -6554,8 +6602,26 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
           <a:solidFill><a:srgbClr val="${fill}"/></a:solidFill>
           <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
         </p:spPr>
-        <p:txBody><a:bodyPr anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="18000" bIns="18000"><a:normAutofit/></a:bodyPr><a:lstStyle/>
+        <p:txBody><a:bodyPr anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="${ins}" bIns="${ins}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
           <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(name.name || '（未命名）')}</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>`;
+  };
+
+  // ST-20：子群組框（第二層群組）：淡底、細框、標題靠上；同樣登記 rectById
+  const frame = (node, x, y, w, h, titleH) => {
+    rectById[node.id] = { x, y, w, h };
+    return `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="${id++}" name="${escXml(node.name || '（未命名）')}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 8000"/></a:avLst></a:prstGeom>
+          <a:solidFill><a:srgbClr val="${P.vcChildBg}"/></a:solidFill>
+          <a:ln w="9525"><a:solidFill><a:srgbClr val="${P.vcPrimaryBg}"/></a:solidFill></a:ln>
+        </p:spPr>
+        <p:txBody><a:bodyPr anchor="t" wrap="square" lIns="36000" rIns="36000" tIns="${Math.max(0, Math.round((titleH - deepSz / 100 * 12700 * 1.2) / 2))}" bIns="0"/><a:lstStyle/>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${deepSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${P.vcChildText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(node.name || '（未命名）')}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
   };
@@ -6592,21 +6658,38 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
   const nCols = primary.length;
   const colW  = nCols ? Math.floor((contentW - gap * (nCols - 1)) / nCols) : contentW;
   const childH = Math.round(unitH * 0.78);
-  const pad    = in2emu(0.04);
 
   let primaryBottom = primaryTop;
   primary.forEach((n, i) => {
     const x = contentX + (colW + gap) * i;
     if (n.type === 'group') {
-      const kids   = n.children.filter(c => c.type === 'unit' || c.type === 'group');
-      const groupH = pad * 2 + unitH + kids.length * (childH + pad);
+      const kids   = vcKids(n);
+      // ST-20：子項若是有子項的群組 → 畫成框，框內放攤平後的孫項；沒有孫項的維持原樣（兩層以內座標不變）
+      const dd = deepDims(unitH);                     // 子群組框標題列高、孫項高（與 deepTotal 同一套算法）
+      const subTitleH = dd.subT, grandH = dd.grand;
+      const kidH = k => deepKidH(k, dd);
+      const groupH = pad * 2 + unitH + kids.reduce((s, k) => s + kidH(k) + pad, 0);
       xml += box(n, x, primaryTop, colW, groupH, boxPrst, P.vcPrimaryBg, P.vcPrimaryText, true, 1000);
       primaryBottom = Math.max(primaryBottom, primaryTop + groupH);
       let ky = primaryTop + pad + unitH;
+      const kW = colW - pad * 2 - (arrowBg ? in2emu(0.14) : 0);
       kids.forEach(k => {
+        if (k.type === 'group' && vcKids(k).length) {
+          const fh = kidH(k);
+          xml += frame(k, x + pad, ky, kW, fh, subTitleH);
+          let gy = ky + subTitleH;
+          vcDesc(k).forEach(g => {
+            const gAsset = g.unitKind === 'asset';
+            xml += box(g, x + pad * 2, gy, kW - pad * 2, grandH, 'roundRect',
+              gAsset ? P.vcAssetBg : 'FFFFFF', gAsset ? P.vcAssetText : P.vcChildText, false, deepSz, deepIns);
+            gy += grandH + pad;
+          });
+          ky += fh + pad;
+          return;
+        }
         const kFill = k.unitKind === 'asset' ? P.vcAssetBg : P.vcChildBg;
         const kTxt  = k.unitKind === 'asset' ? P.vcAssetText : P.vcChildText;
-        xml += box(k, x + pad, ky, colW - pad * 2 - (arrowBg ? in2emu(0.14) : 0), childH, 'roundRect', kFill, kTxt, false, 900);
+        xml += box(k, x + pad, ky, kW, childH, 'roundRect', kFill, kTxt, false, 900);
         ky += childH + pad;
       });
     } else {
@@ -6647,9 +6730,10 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
   // 相鄰→一條直線；跨越→上去、橫走、下來三條（前兩條無箭頭，最後一條帶箭頭）
   const allRects = Object.values(rectById);
   const rowUse = {};
+  let skippedLinks = 0;                        // ST-20：兩端找不到方塊的連線不再靜默跳過，匯出後在狀態列提示
   valueChain.links.forEach((link, i) => {
     const r1 = rectById[link.from], r2 = rectById[link.to];
-    if (!r1 || !r2) return;
+    if (!r1 || !r2) { skippedLinks++; return; }
     const route = vcLinkRoute(r1, r2, allRects, { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06) }, rowUse);
     const pts = route.pts.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
     for (let k = 0; k < pts.length - 1; k++) {
@@ -6658,6 +6742,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId) {
     }
   });
 
+  buildValueChainShapesXml.lastInfo = { skippedLinks, flattened, deepShrunk, deepSz };   // ST-20：給 exportPptx 狀態列提示
   return xml;
 }
 
@@ -7092,7 +7177,7 @@ async function exportPptx() {
   // ── 價值鏈頁（ST-01e）：非空才插入，永遠是第 1 張 ──────────────────
   if (hasValueChain) {
     const vcTitleText = titleText ? `${titleText}　價值鏈` : '價值鏈';
-    const vcBody = titleSp(vcTitleText) + buildValueChainShapesXml(areaX, areaY, areaW, areaH, 10);
+    const vcBody = titleSp(vcTitleText) + buildValueChainShapesXml(areaX, areaY, areaW, areaH, 10, descH);
     zip.folder('ppt/slides').file('slide1.xml', slideShell(vcBody));
     zip.folder('ppt/slides/_rels').file('slide1.xml.rels', slideRelsXml);
   }
@@ -7200,7 +7285,11 @@ async function exportPptx() {
 
   overlay.classList.remove('active');
   // 不擋人的提示：寫到矩陣區狀態列，約 8 秒後恢復（updateStatus 重算目前狀態）
-  const exportMsg = `📤 已匯出 ${totalSlides} 張` + (analysis.skipped.length ? `；未匯出：${analysis.skipped.join('、')}` : '');
+  const vcInfo = hasValueChain ? (buildValueChainShapesXml.lastInfo || {}) : {};
+  const exportMsg = `📤 已匯出 ${totalSlides} 張` + (analysis.skipped.length ? `；未匯出：${analysis.skipped.join('、')}` : '')
+    + (vcInfo.skippedLinks ? `；價值鏈頁略過 ${vcInfo.skippedLinks} 條連線` : '')
+    + (vcInfo.flattened ? '；價值鏈第四層以下已攤平成第三層' : '')
+    + (vcInfo.deepShrunk ? '；價值鏈頁第三層過多，已縮小字級' : '');
   console.info(exportMsg);
   const statusEl = document.getElementById('statusText');
   if (statusEl) {
