@@ -1,0 +1,679 @@
+{
+  "strategyTitle": "晶圓代工 T 公司：專業代工＋製程領先",
+  "strategyDesc": "T 公司只做晶圓代工、不推自有品牌晶片，避免與客戶競爭；以持續的製程研發、大規模產能與穩定良率，成為 IC 設計公司信賴的製造夥伴。未來方向是以 IP 庫強化設計支援、多地建廠分散風險，並往先進封裝延伸提供整合服務。（依《策略管理新論》Ch9 案例改寫）",
+  "COLUMN_GROUPS": [
+    {
+      "category": "支援活動",
+      "items": [
+        "人才",
+        "資金"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "製程研發"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "設備"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "矽晶圓原料"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "廠房產能"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "晶圓製造"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "品質管理"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "設計支援"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "IP 庫"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "客戶服務"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "品牌信譽"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "先進製程代工"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "成熟製程代工"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "先進封裝"
+      ]
+    }
+  ],
+  "COLUMN_PATHS": [
+    [
+      "支援活動"
+    ],
+    [
+      "支援活動"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "COLUMN_ROLES": {},
+  "shortView": false,
+  "hiddenCols": {},
+  "cellNotes": {
+    "製程研發|A": {
+      "text": "以製程領先為主要特色，持續改善良率與品質，並支援先進製程的開發 [S 361–362]",
+      "vi": "",
+      "bases": []
+    },
+    "先進製程代工|B": {
+      "text": "主要客戶是 IC 設計業者；IC 的成敗主導權責在設計端，所以以他們為目標市場 [S 362]",
+      "vi": "",
+      "bases": []
+    },
+    "晶圓製造|C": {
+      "text": "自有晶圓廠，專注 IC 製造這個環節，不碰下游封裝與自有品牌 [S 362]",
+      "vi": "make",
+      "bases": []
+    },
+    "設備|C": {
+      "text": "生產設備多由國外先進廠商供應，自己不製造設備，向外採購 [S 361]",
+      "vi": "buy",
+      "bases": []
+    },
+    "晶圓製造|D": {
+      "text": "規模大，成本有相對利益，排程與交期也較有彈性 [S 362]",
+      "vi": "",
+      "bases": []
+    },
+    "廠房產能|E": {
+      "text": "位於台灣，產能集中在單一地區，地理環境與互補產業的支援是重點 [S 362–363]",
+      "vi": "",
+      "bases": []
+    },
+    "製程研發|F": {
+      "text": "製程研發能力好，對晶圓品質與成本都有貢獻，是主要競爭優勢 [S 362]",
+      "vi": "",
+      "bases": [
+        "能力",
+        "時機"
+      ]
+    }
+  },
+  "modules": [
+    [
+      {
+        "id": "m3zjsrl0",
+        "name": "基本策略定位（圖 9.16）",
+        "arrowIds": [
+          "ao9lgghq",
+          "aq2fox4d",
+          "auqz424z",
+          "ah1y5nau"
+        ],
+        "note": ""
+      },
+      {
+        "id": "m8yfwptd",
+        "name": "主導權責與目標市場（圖 9.17）",
+        "arrowIds": [
+          "auh8cnmb"
+        ],
+        "note": ""
+      }
+    ],
+    [
+      {
+        "id": "mg7q0wny",
+        "name": "未來方向：客戶關係與 IP（圖 9.19）",
+        "arrowIds": [
+          "albo5xqh",
+          "ay0g50hg"
+        ],
+        "note": ""
+      },
+      {
+        "id": "m0v6uum7",
+        "name": "未來方向：垂直整合（圖 9.20）",
+        "arrowIds": [
+          "ayzhjv4w",
+          "a9grpkjr"
+        ],
+        "note": ""
+      }
+    ]
+  ],
+  "valueChain": {
+    "v": 1,
+    "primary": [
+      {
+        "id": "nv",
+        "name": "製程研發",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nw",
+        "name": "設備",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "nx",
+        "name": "矽晶圓原料",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "ny",
+        "name": "廠房產能",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "nz",
+        "name": "晶圓製造",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n10",
+        "name": "品質管理",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n11",
+        "name": "設計支援",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n12",
+        "name": "IP 庫",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "n13",
+        "name": "客戶服務",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n14",
+        "name": "品牌信譽",
+        "type": "unit",
+        "unitKind": "asset"
+      }
+    ],
+    "support": [
+      {
+        "id": "nt",
+        "name": "人才",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "nu",
+        "name": "資金",
+        "type": "unit",
+        "unitKind": "asset"
+      }
+    ],
+    "products": [
+      {
+        "id": "n15",
+        "name": "先進製程代工",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n16",
+        "name": "成熟製程代工",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "n17",
+        "name": "先進封裝",
+        "type": "unit",
+        "unitKind": "activity"
+      }
+    ],
+    "links": [],
+    "showArrowBg": true
+  },
+  "competitors": [
+    {
+      "name": "現行策略",
+      "color": "#d64545",
+      "kind": "current"
+    },
+    {
+      "name": "未來方向",
+      "color": "#3d7dd6",
+      "kind": "future"
+    }
+  ],
+  "overlayAll": true,
+  "clashNotes": {},
+  "actionPlans": [
+    [],
+    []
+  ],
+  "actionGroupByOwner": false,
+  "ctlOnlyKey": true,
+  "guideStep": "",
+  "guideOpen": true,
+  "arrows": [
+    [
+      {
+        "id": "ao9lgghq",
+        "from": {
+          "row": "C",
+          "col": 6
+        },
+        "to": {
+          "row": "A",
+          "col": 6
+        },
+        "note": "自有晶圓廠掌握製程",
+        "elements": [
+          "3-1"
+        ],
+        "premises": []
+      },
+      {
+        "id": "aq2fox4d",
+        "from": {
+          "row": "D",
+          "col": 6
+        },
+        "to": {
+          "row": "A",
+          "col": 6
+        },
+        "note": "產能規模大降低單位成本",
+        "elements": [
+          "4-1",
+          "1-3"
+        ],
+        "premises": []
+      },
+      {
+        "id": "auqz424z",
+        "from": {
+          "row": "A",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 12
+        },
+        "note": "製程領先形成產品特色",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "ah1y5nau",
+        "from": {
+          "row": "F",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 2
+        },
+        "note": "研發能力是核心優勢",
+        "elements": [
+          "6-2"
+        ],
+        "premises": [
+          {
+            "id": "p1dunlwu",
+            "type": "cond",
+            "text": "製程研發能力與製程水準高於同業 [S 375]",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "id": "ajdh6r75",
+        "from": {
+          "row": "A",
+          "col": 0
+        },
+        "to": {
+          "row": "A",
+          "col": 2
+        },
+        "note": "工程人才支撐製程研發",
+        "elements": [
+          "1-7"
+        ],
+        "premises": []
+      },
+      {
+        "id": "aykof6oy",
+        "from": {
+          "row": "F",
+          "col": 1
+        },
+        "to": {
+          "row": "A",
+          "col": 1
+        },
+        "note": "雄厚財力支撐持續擴廠",
+        "elements": [
+          "6-6"
+        ],
+        "premises": []
+      },
+      {
+        "id": "as2ovpak",
+        "from": {
+          "row": "B",
+          "col": 12
+        },
+        "to": {
+          "row": "D",
+          "col": 6
+        },
+        "note": "眾多客戶訂單匯集產能",
+        "elements": [
+          "2-3"
+        ],
+        "premises": [
+          {
+            "id": "pvnop1mv",
+            "type": "env",
+            "text": "台灣 IC 設計業者家數多、競爭力強 [S 374]",
+            "status": "ok"
+          },
+          {
+            "id": "pfcsrch1",
+            "type": "env",
+            "text": "可替代的晶圓代工業者不會大量出現 [S 374]",
+            "status": "unsure",
+            "ctl": {
+              "key": true,
+              "indicator": "新進代工業者的先進製程量產時程",
+              "light": "yellow",
+              "nextReview": "2026-12-01",
+              "lastNote": ""
+            }
+          }
+        ]
+      },
+      {
+        "id": "ayhbyg26",
+        "from": {
+          "row": "A",
+          "col": 7
+        },
+        "to": {
+          "row": "A",
+          "col": 12
+        },
+        "note": "良率穩定確保品質",
+        "elements": [
+          "1-2",
+          "1-4"
+        ],
+        "premises": []
+      },
+      {
+        "id": "alv9pi8h",
+        "from": {
+          "row": "A",
+          "col": 8
+        },
+        "to": {
+          "row": "A",
+          "col": 12
+        },
+        "note": "設計支援縮短上市時間",
+        "elements": [
+          "1-2",
+          "1-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a9a9bfhz",
+        "from": {
+          "row": "B",
+          "col": 4
+        },
+        "to": {
+          "row": "A",
+          "col": 4
+        },
+        "note": "選定穩定的晶圓供應商",
+        "elements": [
+          "2-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "auh8cnmb",
+        "from": {
+          "row": "A",
+          "col": 12
+        },
+        "to": {
+          "row": "B",
+          "col": 12
+        },
+        "note": "先進製程吸引高階客戶",
+        "elements": [
+          "1-1"
+        ],
+        "premises": [
+          {
+            "id": "pweemuox",
+            "type": "env",
+            "text": "PC 與消費電子等終端市場總量持續成長 [S 374]",
+            "status": "ok"
+          },
+          {
+            "id": "peya3sqe",
+            "type": "env",
+            "text": "PC 與消費電子產業聚落留在附近、不大舉外移 [S 374]",
+            "status": "no",
+            "ctl": {
+              "key": true,
+              "indicator": "主要客戶外移的產線與訂單比重",
+              "light": "red",
+              "nextReview": "2026-11-20",
+              "lastNote": ""
+            }
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "id": "albo5xqh",
+        "from": {
+          "row": "A",
+          "col": 9
+        },
+        "to": {
+          "row": "A",
+          "col": 8
+        },
+        "note": "IP 庫強化設計支援",
+        "elements": [
+          "1-7"
+        ],
+        "premises": []
+      },
+      {
+        "id": "asnf9d5b",
+        "from": {
+          "row": "E",
+          "col": 2
+        },
+        "to": {
+          "row": "E",
+          "col": 5
+        },
+        "note": "研發與量產廠區鄰近",
+        "elements": [
+          "5-3"
+        ],
+        "premises": []
+      },
+      {
+        "id": "au2f7bcd",
+        "from": {
+          "row": "E",
+          "col": 5
+        },
+        "to": {
+          "row": "D",
+          "col": 5
+        },
+        "note": "多地建廠擴大總產能",
+        "elements": [
+          "5-5",
+          "5-6"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a5ish0tu",
+        "from": {
+          "row": "A",
+          "col": 11
+        },
+        "to": {
+          "row": "B",
+          "col": 3
+        },
+        "note": "信譽與規模提升議價力",
+        "elements": [
+          "2-7"
+        ],
+        "premises": [
+          {
+            "id": "pusecpdr",
+            "type": "env",
+            "text": "設備製造商家數多，沒有合併或聯合壟斷 [S 374–375]",
+            "status": "unsure"
+          }
+        ]
+      },
+      {
+        "id": "ay0g50hg",
+        "from": {
+          "row": "B",
+          "col": 12
+        },
+        "to": {
+          "row": "B",
+          "col": 13
+        },
+        "note": "新舊製程共享客戶",
+        "elements": [
+          "1-10",
+          "6-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "ayzhjv4w",
+        "from": {
+          "row": "C",
+          "col": 14
+        },
+        "to": {
+          "row": "A",
+          "col": 14
+        },
+        "note": "自做封裝提供整合服務",
+        "elements": [
+          "3-1"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a9grpkjr",
+        "from": {
+          "row": "D",
+          "col": 6
+        },
+        "to": {
+          "row": "C",
+          "col": 14
+        },
+        "note": "量產規模大值得自建封裝",
+        "elements": [
+          "3-4",
+          "4-2"
+        ],
+        "premises": []
+      }
+    ]
+  ],
+  "activeIdx": 0,
+  "productSepIdx": 12,
+  "showIndustryLabels": false,
+  "colorPaletteIdx": 0
+}

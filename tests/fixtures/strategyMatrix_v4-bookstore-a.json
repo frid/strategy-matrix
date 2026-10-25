@@ -1,0 +1,884 @@
+{
+  "strategyTitle": "網路書店 A 公司：低價便利＋資訊能力",
+  "strategyDesc": "A 公司以網路平台銷售書籍，靠大量採購壓低進貨成本，讓書價比實體書店便宜；自建資訊系統與顧客資料庫，提供查書、推薦與快速配送的便利服務。未來方向是把物流據點與倉儲整合布局，並把既有顧客延伸到專業書與影音商品，發揮行銷綜效。（依《策略管理新論》Ch9 案例改寫）",
+  "COLUMN_GROUPS": [
+    {
+      "category": "",
+      "items": [
+        "出版社關係"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "選書企劃"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "採購"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "資訊系統"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "網站平台"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "顧客資料庫"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "倉儲"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "訂單處理"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "物流運輸"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "品牌"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "客服"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "中文書籍"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "專業書籍"
+      ]
+    },
+    {
+      "category": "",
+      "items": [
+        "影音商品"
+      ]
+    }
+  ],
+  "COLUMN_PATHS": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "COLUMN_ROLES": {},
+  "shortView": false,
+  "hiddenCols": {},
+  "cellNotes": {
+    "中文書籍|A": {
+      "text": "種類多、價格低，並附豐富的書籍資訊，產品線以廣度與低價為特色 [S 354]",
+      "vi": "",
+      "bases": []
+    },
+    "資訊系統|A": {
+      "text": "資訊系統支援書籍資料、顧客資料、倉儲存貨與運輸調度，也是網站好用與形象的基礎 [S 356]",
+      "vi": "",
+      "bases": []
+    },
+    "中文書籍|B": {
+      "text": "目標客群是分散各地、所得與知識水準較高的上網人士，書籍與資訊的呈現方式要配合他們 [S 354]",
+      "vi": "",
+      "bases": []
+    },
+    "資訊系統|C": {
+      "text": "自行發展，因為資訊系統是 A 公司特色的來源，不適合外包 [S 357]",
+      "vi": "make",
+      "bases": []
+    },
+    "物流運輸|C": {
+      "text": "運輸需要規模經濟又要分散各地，不宜自行處理，找合適的合作業者承擔 [S 357]",
+      "vi": "buy",
+      "bases": []
+    },
+    "採購|D": {
+      "text": "採購規模大、成本比較低，談判力來自市場需求與涵蓋地區夠大 [S 356]",
+      "vi": "",
+      "bases": []
+    },
+    "倉儲|E": {
+      "text": "倉儲與運輸需分散在各地，服務分散各地的顧客 [S 354、357]",
+      "vi": "",
+      "bases": []
+    },
+    "資訊系統|F": {
+      "text": "優勢來自經營團隊的技術能力，規模變大後更有利，也是網站形象與服務特色的來源 [S 356]",
+      "vi": "",
+      "bases": [
+        "能力",
+        "資訊科技"
+      ]
+    }
+  },
+  "modules": [
+    [
+      {
+        "id": "m829i0a4",
+        "name": "附加價值來源（圖 9.10）",
+        "arrowIds": [
+          "a28mb3p3",
+          "anhuq8nk",
+          "az1lx5hm",
+          "a1sqlrm2"
+        ],
+        "note": ""
+      },
+      {
+        "id": "m65d4fxy",
+        "name": "競爭優勢：資訊系統與採購（圖 9.11）",
+        "arrowIds": [
+          "abktb9ji",
+          "a9z2y7xz",
+          "aqz2sz3h",
+          "acwbl7nq"
+        ],
+        "note": ""
+      },
+      {
+        "id": "mepchuv2",
+        "name": "運輸與倉儲（圖 9.12）",
+        "arrowIds": [
+          "ae2w4mko",
+          "amq4eqlh"
+        ],
+        "note": ""
+      }
+    ],
+    [
+      {
+        "id": "me8ni6tf",
+        "name": "未來方向（圖 9.13）",
+        "arrowIds": [
+          "axctuq8x",
+          "akz3bxww",
+          "atijthr0",
+          "ae5ong20",
+          "aztjk7z3",
+          "a1fachb9",
+          "a6q3an5u"
+        ],
+        "note": ""
+      }
+    ],
+    []
+  ],
+  "valueChain": {
+    "v": 1,
+    "primary": [
+      {
+        "id": "nj",
+        "name": "出版社關係",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "nk",
+        "name": "選書企劃",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nl",
+        "name": "採購",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nm",
+        "name": "資訊系統",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nn",
+        "name": "網站平台",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "no",
+        "name": "顧客資料庫",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "np",
+        "name": "倉儲",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nq",
+        "name": "訂單處理",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "nr",
+        "name": "物流運輸",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "ns",
+        "name": "品牌",
+        "type": "unit",
+        "unitKind": "asset"
+      },
+      {
+        "id": "bk_cs",
+        "name": "客服",
+        "type": "unit",
+        "unitKind": "activity"
+      }
+    ],
+    "support": [],
+    "products": [
+      {
+        "id": "bk_p1",
+        "name": "中文書籍",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "bk_p2",
+        "name": "專業書籍",
+        "type": "unit",
+        "unitKind": "activity"
+      },
+      {
+        "id": "bk_p3",
+        "name": "影音商品",
+        "type": "unit",
+        "unitKind": "activity"
+      }
+    ],
+    "links": [
+      {
+        "id": "bk_l1",
+        "from": "bk_cs",
+        "to": "bk_p1"
+      }
+    ],
+    "showArrowBg": true
+  },
+  "competitors": [
+    {
+      "name": "現行策略",
+      "color": "#d64545",
+      "kind": "current"
+    },
+    {
+      "name": "未來方向",
+      "color": "#3d7dd6",
+      "kind": "future"
+    },
+    {
+      "name": "競爭者：連鎖書店（示範）",
+      "color": "#2ca05a",
+      "kind": "rival"
+    }
+  ],
+  "overlayAll": true,
+  "clashNotes": {},
+  "actionPlans": [
+    [
+      {
+        "id": "ximpfhxm",
+        "title": "強化資訊系統的獨特能力（查書、推薦功能）",
+        "arrowId": "a9z2y7xz",
+        "moduleId": "m65d4fxy",
+        "owner": "資訊系統",
+        "dept": "資訊部",
+        "start": "2026-07-01",
+        "end": "2026-12-31",
+        "status": "doing",
+        "crossDept": false,
+        "note": ""
+      },
+      {
+        "id": "x63a3vxo",
+        "title": "資訊系統串接顧客資料庫，整合購買紀錄",
+        "arrowId": "anhuq8nk",
+        "moduleId": "m829i0a4",
+        "owner": "顧客資料庫",
+        "dept": "資訊部＋行銷部",
+        "start": "2026-09-01",
+        "end": "2027-03-31",
+        "status": "doing",
+        "crossDept": true,
+        "note": ""
+      },
+      {
+        "id": "xsc0ovcq",
+        "title": "與主要出版社議定大量採購折扣",
+        "arrowId": "acwbl7nq",
+        "moduleId": "m65d4fxy",
+        "owner": "採購",
+        "dept": "採購部",
+        "start": "2026-03-01",
+        "end": "2026-06-30",
+        "status": "done",
+        "crossDept": false,
+        "note": ""
+      },
+      {
+        "id": "x5on4oty",
+        "title": "倉儲集中到單一物流中心，降低存貨",
+        "arrowId": "amq4eqlh",
+        "moduleId": "mepchuv2",
+        "owner": "倉儲",
+        "dept": "物流部",
+        "start": "2027-01-01",
+        "end": "2027-06-30",
+        "status": "todo",
+        "crossDept": false,
+        "note": ""
+      },
+      {
+        "id": "x68eqdvw",
+        "title": "篩選配送業者並訂定到貨服務水準",
+        "arrowId": "ae2w4mko",
+        "moduleId": "mepchuv2",
+        "owner": "物流運輸",
+        "dept": "物流部",
+        "start": "2026-11-01",
+        "end": "2027-01-31",
+        "status": "todo",
+        "crossDept": false,
+        "note": ""
+      },
+      {
+        "id": "xzo9aty4",
+        "title": "簡化網站查書與下單流程",
+        "arrowId": "az1lx5hm",
+        "moduleId": "m829i0a4",
+        "owner": "網站平台",
+        "dept": "電商部",
+        "start": "2026-05-01",
+        "end": "2026-08-31",
+        "status": "done",
+        "crossDept": false,
+        "note": ""
+      }
+    ],
+    [],
+    []
+  ],
+  "actionGroupByOwner": false,
+  "ctlOnlyKey": true,
+  "guideStep": "",
+  "guideOpen": true,
+  "arrows": [
+    [
+      {
+        "id": "a28mb3p3",
+        "from": {
+          "row": "A",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 11
+        },
+        "note": "採購成本低使書價便宜",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "anhuq8nk",
+        "from": {
+          "row": "A",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 5
+        },
+        "note": "資訊系統支援顧客資料",
+        "elements": [
+          "1-7"
+        ],
+        "premises": []
+      },
+      {
+        "id": "abktb9ji",
+        "from": {
+          "row": "C",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 3
+        },
+        "note": "自建系統形成服務特色",
+        "elements": [
+          "3-1"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a9z2y7xz",
+        "from": {
+          "row": "F",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 3
+        },
+        "note": "資訊能力是核心優勢",
+        "elements": [
+          "6-2",
+          "6-8"
+        ],
+        "premises": [
+          {
+            "id": "ppxt8o4i",
+            "type": "cond",
+            "text": "資訊系統有獨特能力，且不容易被模仿 [S 370]",
+            "status": "ok",
+            "ctl": {
+              "key": true,
+              "indicator": "競爭者推出同類查書／推薦功能的時間與數量",
+              "light": "green",
+              "nextReview": "2026-12-15",
+              "lastNote": "目前仍有明顯差異"
+            }
+          },
+          {
+            "id": "pz6rm6uy",
+            "type": "env",
+            "text": "沒有資訊能力更強、規模更大的同業出現（對陣點 F04／D04／A04）[S 372]",
+            "status": "no",
+            "ctl": {
+              "key": true,
+              "indicator": "大型連鎖書店網站的月訪客數與資訊投資公告",
+              "light": "red",
+              "nextReview": "2026-11-10",
+              "lastNote": "連鎖書店已開站，須評估轉移陣地"
+            }
+          }
+        ]
+      },
+      {
+        "id": "ae2w4mko",
+        "from": {
+          "row": "B",
+          "col": 8
+        },
+        "to": {
+          "row": "A",
+          "col": 8
+        },
+        "note": "選好的運輸業者確保配送",
+        "elements": [
+          "2-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "aqz2sz3h",
+        "from": {
+          "row": "B",
+          "col": 11
+        },
+        "to": {
+          "row": "D",
+          "col": 2
+        },
+        "note": "市場需求大帶來採購規模",
+        "elements": [
+          "2-3"
+        ],
+        "premises": [
+          {
+            "id": "peid8ses",
+            "type": "env",
+            "text": "上網買書的目標客群需求總量夠大，撐得起採購與資訊系統的規模經濟 [S 370]",
+            "status": "ok"
+          }
+        ]
+      },
+      {
+        "id": "acwbl7nq",
+        "from": {
+          "row": "D",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 2
+        },
+        "note": "採購量大壓低進貨成本",
+        "elements": [
+          "4-1",
+          "1-3"
+        ],
+        "premises": [
+          {
+            "id": "ptbdkxoa",
+            "type": "env",
+            "text": "出版商家數多、不過度集中，書店的採購談判力才不受限 [S 370]",
+            "status": "unsure",
+            "ctl": {
+              "key": true,
+              "indicator": "前三大出版商占進貨金額比重",
+              "light": "yellow",
+              "nextReview": "2026-11-30",
+              "lastNote": ""
+            }
+          }
+        ]
+      },
+      {
+        "id": "az1lx5hm",
+        "from": {
+          "row": "A",
+          "col": 4
+        },
+        "to": {
+          "row": "A",
+          "col": 11
+        },
+        "note": "網站查書下單方便",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a1sqlrm2",
+        "from": {
+          "row": "A",
+          "col": 8
+        },
+        "to": {
+          "row": "A",
+          "col": 11
+        },
+        "note": "快速到貨形成特色",
+        "elements": [
+          "1-2",
+          "1-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "amq4eqlh",
+        "from": {
+          "row": "D",
+          "col": 6
+        },
+        "to": {
+          "row": "A",
+          "col": 6
+        },
+        "note": "集中倉儲降低存貨成本",
+        "elements": [
+          "4-1",
+          "1-3"
+        ],
+        "premises": []
+      },
+      {
+        "id": "ah71s90i",
+        "from": {
+          "row": "A",
+          "col": 11
+        },
+        "to": {
+          "row": "B",
+          "col": 11
+        },
+        "note": "低價吸引價格敏感讀者",
+        "elements": [
+          "1-1"
+        ],
+        "premises": [
+          {
+            "id": "pgdokiai",
+            "type": "causal",
+            "text": "顧客覺得網站的低價與參考資料，抵得過沒有門市、不能立即取書的不便 [S 371]",
+            "status": "unsure"
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "id": "axctuq8x",
+        "from": {
+          "row": "E",
+          "col": 6
+        },
+        "to": {
+          "row": "A",
+          "col": 6
+        },
+        "note": "倉儲設在交通樞紐",
+        "elements": [
+          "5-1"
+        ],
+        "premises": []
+      },
+      {
+        "id": "akz3bxww",
+        "from": {
+          "row": "E",
+          "col": 6
+        },
+        "to": {
+          "row": "E",
+          "col": 8
+        },
+        "note": "倉儲與物流據點同區",
+        "elements": [
+          "5-3"
+        ],
+        "premises": []
+      },
+      {
+        "id": "atijthr0",
+        "from": {
+          "row": "E",
+          "col": 8
+        },
+        "to": {
+          "row": "D",
+          "col": 8
+        },
+        "note": "據點分散提升配送規模",
+        "elements": [
+          "5-5"
+        ],
+        "premises": []
+      },
+      {
+        "id": "ae5ong20",
+        "from": {
+          "row": "A",
+          "col": 5
+        },
+        "to": {
+          "row": "A",
+          "col": 1
+        },
+        "note": "顧客資料支援選書",
+        "elements": [
+          "1-7"
+        ],
+        "premises": []
+      },
+      {
+        "id": "aztjk7z3",
+        "from": {
+          "row": "A",
+          "col": 9
+        },
+        "to": {
+          "row": "B",
+          "col": 0
+        },
+        "note": "品牌提升對出版社議價力",
+        "elements": [
+          "2-7"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a1fachb9",
+        "from": {
+          "row": "A",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 12
+        },
+        "note": "推薦系統帶動專業書銷售",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a6q3an5u",
+        "from": {
+          "row": "B",
+          "col": 11
+        },
+        "to": {
+          "row": "B",
+          "col": 13
+        },
+        "note": "共用顧客群產生行銷綜效",
+        "elements": [
+          "1-10",
+          "6-5"
+        ],
+        "premises": [
+          {
+            "id": "pwcljz8b",
+            "type": "env",
+            "text": "書籍的顧客與忠誠度能轉移到影音商品市場 [S 371]",
+            "status": "unsure"
+          },
+          {
+            "id": "p9u6uhxq",
+            "type": "cond",
+            "text": "有採購影音商品的經驗與能力 [S 371]",
+            "status": "no"
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "id": "a8lduutn",
+        "from": {
+          "row": "F",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 3
+        },
+        "note": "對手也砸錢建資訊能力 [S 372]",
+        "elements": [
+          "6-2",
+          "6-8"
+        ],
+        "premises": []
+      },
+      {
+        "id": "anbmau6w",
+        "from": {
+          "row": "D",
+          "col": 3
+        },
+        "to": {
+          "row": "A",
+          "col": 3
+        },
+        "note": "資訊系統投資規模更大 [S 372]",
+        "elements": [
+          "4-1"
+        ],
+        "premises": []
+      },
+      {
+        "id": "aschjjea",
+        "from": {
+          "row": "D",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 2
+        },
+        "note": "連鎖規模帶來採購談判力",
+        "elements": [
+          "4-1",
+          "1-3"
+        ],
+        "premises": []
+      },
+      {
+        "id": "ajuxn7sc",
+        "from": {
+          "row": "A",
+          "col": 2
+        },
+        "to": {
+          "row": "A",
+          "col": 11
+        },
+        "note": "進貨成本低，網路書價跟進",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "a2pqjj84",
+        "from": {
+          "row": "A",
+          "col": 9
+        },
+        "to": {
+          "row": "B",
+          "col": 11
+        },
+        "note": "門市品牌把既有讀者帶上網",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      },
+      {
+        "id": "auh4f5fh",
+        "from": {
+          "row": "A",
+          "col": 4
+        },
+        "to": {
+          "row": "A",
+          "col": 11
+        },
+        "note": "新設網站查書下單",
+        "elements": [
+          "1-2"
+        ],
+        "premises": []
+      }
+    ]
+  ],
+  "activeIdx": 0,
+  "productSepIdx": 11,
+  "showIndustryLabels": false,
+  "colorPaletteIdx": 0
+}
