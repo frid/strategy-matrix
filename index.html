@@ -719,6 +719,7 @@
     #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-role-none {
       color: rgba(255,255,255,.9); border-color: rgba(255,255,255,.55); opacity: 1;
     }
+  }
   /* ST-35e hex 六角鏈式（G）：沿用 band 的橫帶與群組結構（zones 同時掛 vc-layout-band），只覆寫葉節點外觀：
      六角形 clip-path 左右各咬 18px、相鄰顆負 margin 互相咬合；一個頂層項目一個色相（JS 寫 --vc-hex／--vc-hex-j），
      群組內子項同色相、依序變深（白字對比 ≥ 4.5，所以用往黑混而不是變淡）；群組橫帶用同色相深版。
@@ -755,7 +756,8 @@
   /* ST-35d circle：圓形 icon 式（F）。結構沿用 band 的 group 容器＋row flex（JS 只掛 vc-layout-circle、不掛 band），外觀全部寫在這裡：
      主要活動每個葉節點＝48px 實色圓（.vc-icon-btn 放大；沒 icon 時顯示名稱首字 data-initial），名稱在圓下、標籤小字在名稱下；
      群組＝同色淡底板＋虛線框，群組名小字在上緣；支援活動＝白底膠囊；Margin＝黑色大 chevron。
-     八色相依主要活動葉節點順序循環（JS 寫 --vc-circle-idx；群組取其第一個葉節點的序號），與 COLOR_PALETTES 無關；≤800px 回直排、圓與名稱左右並排 */
+     八色相依主要活動葉節點順序循環（JS 寫 --vc-circle-idx；群組取其第一個葉節點的序號），與 COLOR_PALETTES 無關；≤800px 回直排、圓與名稱左右並排。
+     ST-35h 分色配色（.vc-per-unit）在 circle 下不生效：本區 #valueChainEditor 規則蓋過它，circle 本身已每顆一色（主 session 決定接受） */
   :root {
     --vc-circle-0: #2aa7b8; --vc-circle-1: #3b6fb6; --vc-circle-2: #7b5cc4; --vc-circle-3: #e3832c;
     --vc-circle-4: #d64a4a; --vc-circle-5: #e0b531; --vc-circle-6: #4a9d5c; --vc-circle-7: #8a7bb5;

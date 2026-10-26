@@ -29,7 +29,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++;
 async function fresh(h, file = html) { await h.open(file); await h.ev('localStorage.clear(); 0'); await h.open(file); }
 const goChain = async h => { await h.ev(`guideGoto('chain'); 0`); await sleep(700); };
 const goMatrix = async h => { await h.ev(`guideGoto('ideas'); 0`); await sleep(700); };
-const vcSig = `(()=>{const c=document.getElementById('valueChainEditor').cloneNode(true);c.querySelectorAll('svg,.vc-icon-btn').forEach(s=>s.remove());return c.innerHTML})()`;
+const vcSig = `(()=>{const c=document.getElementById('valueChainEditor').cloneNode(true);c.querySelectorAll('svg,.vc-icon-btn,.vc-layout-select option').forEach(s=>s.remove());return c.innerHTML})()`;  // 版型下拉的選項隨 VC_LAYOUTS 增加（ST-35d 起），不算 DOM 差異
 const theadSig = `document.querySelector('#matrixTable thead').innerHTML`;
 const setLayout = async (h, v) => { await h.ev(`(()=>{const s=document.querySelector('.vc-layout-select');s.value=${JSON.stringify(v)};s.dispatchEvent(new Event('change'));})(); 0`); await sleep(500); };
 async function exportSlides(h) {
