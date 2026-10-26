@@ -766,6 +766,115 @@
     #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: color-mix(in srgb, var(--vc-unit-color) 70%, black); }
   }
 
+  /* ST-35d circle：圓形 icon 式（F）。結構沿用 band 的 group 容器＋row flex（JS 只掛 vc-layout-circle、不掛 band），外觀全部寫在這裡：
+     主要活動每個葉節點＝48px 實色圓（.vc-icon-btn 放大；沒 icon 時顯示名稱首字 data-initial），名稱在圓下、標籤小字在名稱下；
+     群組＝同色淡底板＋虛線框，群組名小字在上緣；支援活動＝白底膠囊；Margin＝黑色大 chevron。
+     八色相依主要活動葉節點順序循環（JS 寫 --vc-circle-idx；群組取其第一個葉節點的序號），與 COLOR_PALETTES 無關；≤800px 回直排、圓與名稱左右並排。
+     ST-35h 分色配色（.vc-per-unit）在 circle 下不生效：本區 #valueChainEditor 規則蓋過它，circle 本身已每顆一色（主 session 決定接受） */
+  :root {
+    --vc-circle-0: #2aa7b8; --vc-circle-1: #3b6fb6; --vc-circle-2: #7b5cc4; --vc-circle-3: #e3832c;
+    --vc-circle-4: #d64a4a; --vc-circle-5: #e0b531; --vc-circle-6: #4a9d5c; --vc-circle-7: #8a7bb5;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 0"] { --vc-circle-c: var(--vc-circle-0); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 1"] { --vc-circle-c: var(--vc-circle-1); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 2"] { --vc-circle-c: var(--vc-circle-2); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 3"] { --vc-circle-c: var(--vc-circle-3); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 4"] { --vc-circle-c: var(--vc-circle-4); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 5"] { --vc-circle-c: var(--vc-circle-5); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 6"] { --vc-circle-c: var(--vc-circle-6); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 7"] { --vc-circle-c: var(--vc-circle-7); }
+  /* Margin：黑色大 chevron（clip-path 沿用） */
+  #valueChainEditor .vc-layout-circle .vc-margin-arrow { background: #2b2d31; color: #fff; }
+  /* 支援活動：白底膠囊、細框，仍是直排清單（蓋掉 Porter 漸層與斜切） */
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit {
+    background: #fff; border: 1px solid var(--grid-line); border-radius: 999px; clip-path: none;
+    color: var(--ink); font-weight: 500; padding: 4px 16px;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit.vc-asset { border-color: var(--vc-asset-border); }
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit :is(.vc-act, .vc-role-none) { color: var(--ink); }
+  /* 主要活動：葉節點本身透明（只看得到圓＋名稱），群組＝淡色底板 */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit {
+    background: transparent; border: none; border-radius: 0; clip-path: none; padding: 2px 4px; box-shadow: none;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-act,
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-role-none { color: var(--ink); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-node-head :is(input, textarea):focus { background: #fff; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn {
+    flex: 0 0 48px; width: 48px; height: 48px; padding: 0; border-radius: 50%; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--vc-circle-c, var(--vc-circle-0)); color: #fff; font-size: 22px; line-height: 1; opacity: 1;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn:hover { filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(0,0,0,0.12); }
+  /* 沒 icon：按鈕原本的淡色 ☺ 收起，改顯示名稱首字（JS 給 data-initial） */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn.vc-icon-empty[data-initial] { font-size: 0; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn.vc-icon-empty[data-initial]::before {
+    content: attr(data-initial); font-size: 20px; font-weight: 700;
+  }
+  /* 資產：淡黃底圓＋資產色框（與一般活動區分） */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit.vc-asset > .vc-node-head > .vc-icon-btn {
+    background: var(--vc-asset-bg); border: 2px solid var(--vc-asset-border); color: var(--vc-asset-text, var(--ink));
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group {
+    background: color-mix(in srgb, var(--vc-circle-c, var(--vc-circle-0)) 12%, white);
+    border: 1px dashed var(--vc-circle-c, var(--vc-circle-0)); border-radius: 10px; clip-path: none;
+    padding: 3px 4px 6px; gap: 2px;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head { min-height: 18px; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+    color: var(--vc-circle-c, var(--vc-circle-0)); font-size: var(--fs-xs); font-weight: 700; text-align: center;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus) { border-bottom-color: transparent; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body { margin: 0; padding: 0; border-color: transparent; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body.drag-over { border-color: var(--col-header); }
+  @media (min-width: 801px) {
+    /* 一列圓：每格固定寬，名稱在圓下置中、標籤小字在名稱下；頂層單元下移與群組內的圓同高 */
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-zone-body { align-items: flex-start; column-gap: 6px; row-gap: 14px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit {
+      flex: 0 0 auto; width: 84px; box-sizing: border-box; justify-content: center; align-items: flex-start;
+      text-align: center; white-space: normal;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-zone-body > .vc-unit { margin-top: 24px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head {
+      flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 1px; column-gap: 2px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn { margin: 0 calc(50% - 24px) 2px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100% !important; width: auto !important; text-align: center; font-weight: 600;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > :is(.vc-kind, .vc-role) {
+      margin: 0; font-size: 10px; line-height: 1.3; padding: 0 3px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-act { display: none; margin-top: 0; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit:hover > .vc-node-head > .vc-act { display: inline; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group {
+      flex: 0 0 auto; align-self: flex-start; min-width: max(84px, calc(var(--vc-name-len, 2) * var(--fs-xs) + 24px));
+      white-space: normal;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head {
+      flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 0; margin: 0; padding: 0 4px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100%; width: auto; height: auto !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > .vc-act { display: none; margin-top: 0; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head:hover > .vc-act { display: inline; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body {
+      flex-direction: row; align-items: flex-start; gap: 6px; min-height: 84px;
+    }
+  }
+  @media (max-width: 800px) {
+    /* 直排：圓與名稱同一行，標籤換到名稱下一行（左緣對齊名稱），名稱不被標籤擠成一字一行 */
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 1px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 1 calc(100% - 56px) !important; width: auto !important; min-width: 4em; font-weight: 600;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 51px; }
+  }
+
   /* ── Buttons ── */
   button {
     padding: 6px 14px; border-radius: 8px; font-size: var(--fs-base);
@@ -1659,6 +1768,7 @@ const VC_LAYOUTS = [
   { key: 'porter', label: '經典 Porter' },
   { key: 'band',   label: '橫帶式' },
   { key: 'segment', label: '同色分段式' },
+  { key: 'circle', label: '圓形 icon 式' },
   { key: 'hex',    label: '六角鏈式' },
 ];
 const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
@@ -4123,6 +4233,8 @@ function buildVcNode(node, zone) {
     inp.title = node.name;
     sizeVcInput(inp);
     if (el.style.getPropertyValue('--vc-name-len')) el.style.setProperty('--vc-name-len', Math.max(2, [...node.name].length));  // ST-35a 橫帶
+    const initBtn = head.querySelector('.vc-icon-btn[data-initial]');  // ST-35d 圓形：首字跟著改名
+    if (initBtn) initBtn.dataset.initial = [...node.name][0];
     saveState();
   });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
@@ -4178,6 +4290,21 @@ function buildVcNode(node, zone) {
   if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'segment') {
     const top = valueChain.primary.indexOf(node);
     if (top >= 0) el.style.setProperty('--vc-seg-idx', top % 4);
+  }
+  // ST-35d 圓形 icon 式：葉節點依主要活動的葉節點順序循環取 8 色（群組取其第一個葉節點的色，底板同色相）；
+  // 沒 icon 的單元在圓內顯示名稱首字（data-initial，CSS 顯示；點圓仍開 icon 選單）
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'circle') {
+    let seq = 0, idx = -1;
+    const walk = n => {
+      if (idx >= 0) return;
+      if (n === node && n.type === 'group') { idx = seq; return; }
+      if (n.type === 'group') n.children.forEach(walk);
+      else { if (n === node) idx = seq; seq++; }
+    };
+    valueChain.primary.forEach(walk);
+    if (idx >= 0) el.style.setProperty('--vc-circle-idx', idx % 8);
+    const circleBtn = head.querySelector('.vc-icon-btn');
+    if (circleBtn && !node.icon) circleBtn.dataset.initial = [...(node.name || '?')][0];
   }
   // ── ST-35e 六角鏈：頂層序決定色相（--vc-hex-0..6 輪替），群組內葉節點序決定深淺；其他版型不寫 ──
   if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'hex') {
@@ -4572,6 +4699,16 @@ function getVcNodeRect(id) {
   const el = editor.querySelector(`[data-vc-id="${id}"]`);
   return el ? vcOffsetRect(el) : null;
 }
+// ST-35d：連線端點用的矩形。圓形 icon 式下，主要活動的葉單元改用圓（.vc-icon-btn）的矩形，線接到圓外框（圓心對位）；
+// 其他版型與其他區照 getVcNodeRect
+function vcNodeRectForLayout(id) {
+  if (vcLayoutKey(valueChain.layout) === 'circle') {
+    const el = document.getElementById('valueChainEditor').querySelector(`.vc-zone-primary .vc-unit[data-vc-id="${id}"]`);
+    const btn = el && el.querySelector(':scope > .vc-node-head > .vc-icon-btn');
+    if (btn && btn.offsetWidth) return vcOffsetRect(btn);
+  }
+  return getVcNodeRect(id);
+}
 // 任一元素相對於 #valueChainEditor 的矩形（ST-23b：也拿來量 Margin 箭頭與產品欄）
 function vcOffsetRect(el) {
   const editor = document.getElementById('valueChainEditor');
@@ -4931,7 +5068,7 @@ function drawVcLinks() {
   svg.appendChild(defs);
 
   const editor = document.getElementById('valueChainEditor');
-  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(Boolean);
+  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => vcNodeRectForLayout(el.getAttribute('data-vc-id'))).filter(Boolean);
   const rowUse = {};
   // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
   const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
@@ -4949,8 +5086,8 @@ function drawVcLinks() {
   // ST-23c：活動之間的線不把產品直欄當障礙（產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線）；與 PPTX 一致
   const actRects = product && !product.horizontal ? rects.filter(o => !product.rects.has(o)) : rects;
   valueChain.links.forEach(link => {
-    const r1 = getVcNodeRect(link.from);
-    const r2 = getVcNodeRect(link.to);
+    const r1 = vcNodeRectForLayout(link.from);
+    const r2 = vcNodeRectForLayout(link.to);
     if (!r1 || !r2) return;
     const a = same(r1), b = same(r2);
     const toProd = product && (product.rects.has(a) || product.rects.has(b));
