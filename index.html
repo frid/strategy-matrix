@@ -646,6 +646,40 @@
     }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
   }
+  /* ST-35h per-unit colors：分色模式（COLOR_PALETTES[i].perUnit）。applyPerUnitColors() 在主要活動頂層節點寫 inline --vc-unit-color，
+     子項繼承；葉節點＝原色白字、群組底＝淡版（18% 混白）、群組名＝深版（70% 混黑）。支援活動色由該套 vars 給低彩度灰。
+     只在 .vc-zones.vc-per-unit（價值鏈）／#matrixTable.matrix-per-unit（矩陣表頭）下生效；Porter、橫帶式都適用 */
+  .vc-zones.vc-per-unit .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) {
+    background: var(--vc-unit-color); border-color: var(--vc-unit-color); color: #fff;
+  }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):not(:focus),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) :is(.vc-act, .vc-role-none) { color: #fff; }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group {
+    background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: transparent;
+  }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+    color: color-mix(in srgb, var(--vc-unit-color) 70%, black); border-bottom-color: var(--vc-unit-color);
+  }
+  @media (min-width: 801px) {
+    /* 橫帶式：群組本身透明（同 ST-35a），上方名稱橫帶＝淡版底＋深版字 */
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group { background: transparent; }
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: var(--vc-unit-color);
+    }
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+      color: color-mix(in srgb, var(--vc-unit-color) 70%, black);
+    }
+  }
+  /* 矩陣表頭：data-vc-top＝該欄對應的主要活動頂層序（支援活動／產品欄沒有）；群組表頭與無群組欄＝原色、細項表頭＝淡版 */
+  #matrixTable.matrix-per-unit thead th[data-vc-top]:is(.col-header-group, .col-header) {
+    background: var(--vc-unit-color); color: #fff;
+  }
+  #matrixTable.matrix-per-unit thead th[data-vc-top].col-header-leaf {
+    background: color-mix(in srgb, var(--vc-unit-color) 18%, white); color: color-mix(in srgb, var(--vc-unit-color) 70%, black);
+  }
 
   /* ── Buttons ── */
   button {
@@ -2864,6 +2898,87 @@ const COLOR_PALETTES = [
       '--vc-link': '#A0452E', '--vc-product-border': '#E2CBB0',
     },
   },
+  {
+    // ST-35h：分色模式（perUnit）候選 1 鮮彩六色（SlideEgg Linear 列）；各色已調暗到白字對比 ≥ 4.5
+    name: '分色・鮮彩',
+    perUnit: ['#A9650B', '#D73B24', '#2075CB', '#8E44AD', '#1E864A', '#128091'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#2075CB', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #2075CB, #2075CB)',
+      '--mx-corner-bg': '#3D4654', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#3D4654', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #3D4654, #3D4654)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #2075CB, #2075CB)', '--vc-primary-bg': '#2075CB',
+      '--vc-primary-border': '#2075CB', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #646B76, #646B76)', '--vc-support-bg': '#646B76',
+      '--vc-support-border': '#4F555E', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#E9EBEE', '--mx-support-leaf-text': '#3A414B',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#3D4654', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
+  {
+    // ST-35h：分色模式候選 3 沉穩土色（Download SC Slides）；白字對比 ≥ 4.5
+    name: '分色・沉穩土色',
+    perUnit: ['#2D3E66', '#8B2E3C', '#2A7F8C', '#6C7A33', '#8D721B', '#707580'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#2D3E66', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #2D3E66, #2D3E66)',
+      '--mx-corner-bg': '#3B3A38', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#3B3A38', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #3B3A38, #3B3A38)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #2D3E66, #2D3E66)', '--vc-primary-bg': '#2D3E66',
+      '--vc-primary-border': '#2D3E66', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #6B655D, #6B655D)', '--vc-support-bg': '#6B655D',
+      '--vc-support-border': '#55504A', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#ECEAE7', '--mx-support-leaf-text': '#45413C',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#3B3A38', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
+  {
+    // ST-35h：分色模式候選 4 藍綠紫（Creative chevron）；白字對比 ≥ 4.5
+    name: '分色・藍綠紫',
+    perUnit: ['#387BA2', '#4A813A', '#7A2E8E', '#587F2A', '#2B6CB0'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#387BA2', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #387BA2, #387BA2)',
+      '--mx-corner-bg': '#38404A', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#38404A', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #38404A, #38404A)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #387BA2, #387BA2)', '--vc-primary-bg': '#387BA2',
+      '--vc-primary-border': '#387BA2', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #626B72, #626B72)', '--vc-support-bg': '#626B72',
+      '--vc-support-border': '#4D545A', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#E9ECEE', '--mx-support-leaf-text': '#3B4247',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#38404A', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
 ];
 let colorPaletteIdx = 0; // 預設採用「價值鏈同調（藍橘）」（ST-01o）；由「專案」區的配色下拉選單切換
 
@@ -2875,7 +2990,46 @@ function applyPalette(idx) {
   // ST-12：配色下拉選單跟著顯示目前配色（載入存檔時）；價值鏈連線（SVG 寫死屬性）換色後重畫
   const sel = document.getElementById('paletteSelect');
   if (sel) sel.value = String(idx);
+  applyPerUnitColors();  // ST-35h
   drawVcLinks();
+}
+
+// ── 分色模式（ST-35h）：COLOR_PALETTES[i].perUnit＝主要活動頂層依序取色的 HEX 陣列；沒有此欄位＝單色模式 ──
+function currentPerUnitColors() {
+  const p = COLOR_PALETTES[colorPaletteIdx];
+  return p && Array.isArray(p.perUnit) && p.perUnit.length ? p.perUnit : null;
+}
+// 矩陣第 ci 欄對應的主要活動頂層序（valueChain.primary 的 index）：有群組看 path[0]、沒群組看欄名；支援活動／產品欄／對不上 → -1
+function vcTopIndexForColumn(ci, paths) {
+  const p = paths[ci];
+  if (ci >= productSepIdx || !Array.isArray(p) || isSupportColumnPath(p)) return -1;
+  const key = p.length ? p[0] : COLUMNS[ci];
+  return valueChain.primary.findIndex(n => (p.length ? n.type === 'group' : n.type !== 'group') && (n.name || '（未命名）') === key);
+}
+// 在價值鏈主要活動頂層節點與矩陣表頭（th[data-vc-top]）寫／清 inline --vc-unit-color；單色模式清乾淨（不留空 style／class）
+function applyPerUnitColors() {
+  const colors = currentPerUnitColors();
+  const setVar = (el, c) => {
+    if (c) { el.style.setProperty('--vc-unit-color', c); return; }
+    el.style.removeProperty('--vc-unit-color');
+    if (el.getAttribute('style') === '') el.removeAttribute('style');
+  };
+  const setCls = (el, cls) => {
+    el.classList.toggle(cls, !!colors);
+    if (el.getAttribute('class') === '') el.removeAttribute('class');
+  };
+  const zones = document.querySelector('#valueChainEditor .vc-zones');
+  if (zones) {
+    setCls(zones, 'vc-per-unit');
+    zones.querySelectorAll('.vc-zone-primary > .vc-zone-body > [data-vc-id]')
+      .forEach((el, i) => setVar(el, colors && colors[i % colors.length]));
+  }
+  const table = document.getElementById('matrixTable');
+  if (table) {
+    setCls(table, 'matrix-per-unit');
+    table.querySelectorAll('thead th[data-vc-top]')
+      .forEach(th => setVar(th, colors && colors[Number(th.dataset.vcTop) % colors.length]));
+  }
 }
 
 // ── 「專案」區「🎨 配色」下拉選單（ST-12／ST-12a）：選項由 COLOR_PALETTES 產生，選了就 applyPalette ──
@@ -4166,6 +4320,7 @@ function renderValueChainEditor() {
 
   drawVcLinks();
   renderGuideBar();  // ST-14d
+  applyPerUnitColors();  // ST-35h
 }
 
 // ── Value chain links：畫方塊間的細箭頭（連線清單資料 → SVG）──────────────
@@ -4690,6 +4845,8 @@ function buildTable() {
     if (ci === productSepIdx) { th.classList.add('product-separator'); th.style.borderLeft = '3px solid #000000'; }
     if (ci >= productSepIdx) th.classList.add('product-col-header');
     else if (isSupportColumnPath(paths[ci])) th.classList.add('support-col-header'); // ST-12a：支援活動欄用支援色
+    const top = vcTopIndexForColumn(ci, paths);  // ST-35h：分色模式用（顏色由 applyPerUnitColors 寫）
+    if (top >= 0) th.dataset.vcTop = String(top);
   };
   // 左上角 corner 儲存格（淺青綠底，配合 Y 軸列標籤）
   const cornerL = document.createElement('th');
@@ -4808,6 +4965,7 @@ function buildTable() {
   renderCellNoteMarks();
   renderCellPanel();
   renderGuideBar();  // ST-14d
+  applyPerUnitColors();  // ST-35h：表頭分色
 }
 
 // ── Cell Click — free arrow drawing ───────────────────────────────────────
@@ -7180,7 +7338,18 @@ function pptxPalette() {
     vcMarginBg:   pptxHex(vars['--vc-margin-bg'], '2E8B3D'),
     vcMarginText: pptxHex(vars['--vc-margin-text'], 'FFFFFF'),
     vcLink:       pptxHex(vars['--vc-link'], '5A4FCF'),
+    // ST-35h：分色模式色序（HEX 無 #）；單色模式 null
+    perUnit: (() => { const pu = currentPerUnitColors(); return pu ? pu.map(c => pptxHex(c, '1F7AC4')) : null; })(),
   };
+}
+
+// ST-35h：分色模式第 i 個頂層單元的 PPTX 色組 { c 原色, tint 淡版（18% 混白）, ink 深版（70% 混黑） }，同畫面 color-mix；單色模式 null
+function pptxPerUnit(P, i) {
+  if (!P.perUnit || i < 0) return null;
+  const c = P.perUnit[i % P.perUnit.length];
+  const mix = (w, pct) => [0, 2, 4].map(k => Math.round(parseInt(c.slice(k, k + 2), 16) * pct + parseInt(w.slice(k, k + 2), 16) * (1 - pct))
+    .toString(16).padStart(2, '0')).join('').toUpperCase();
+  return { c, tint: mix('FFFFFF', 0.18), ink: mix('000000', 0.7) };
 }
 
 // 競爭者色 → 淡化後的 HEX（同 colorToLight 的混白比例，只是輸出格式不同）
@@ -7299,10 +7468,13 @@ function buildMatrixTableXml(L, shapeId) {
       const isProd = ci >= productSepIdx;
       const isSup  = !isProd && isSupportColumnPath(paths[ci]); // ST-12a：支援活動欄用支援色
       const isGrp  = !!(g && g.isGroup);
+      // ST-35h：分色模式下主要活動欄依頂層單元取色（群組表頭／無群組欄＝原色白字、細項＝淡版深字）
+      const U = P.perUnit && !isProd && !isSup ? pptxPerUnit(P, vcTopIndexForColumn(ci, paths)) : null;
+      const uFull = isGrp || paths[ci].length === 0;
       const base = {
         thickLeft: ci === productSepIdx,
-        fill:  isProd ? P.prodHeadBg   : isSup ? (isGrp ? P.vcSupportBg   : P.supportLeafBg)   : (isGrp ? P.groupBg   : P.leafBg),
-        color: isProd ? P.prodHeadText : isSup ? (isGrp ? P.vcSupportText : P.supportLeafText) : (isGrp ? P.groupText : P.leafText),
+        fill:  U ? (uFull ? U.c : U.tint) : isProd ? P.prodHeadBg   : isSup ? (isGrp ? P.vcSupportBg   : P.supportLeafBg)   : (isGrp ? P.groupBg   : P.leafBg),
+        color: U ? (uFull ? P.vcPrimaryText : U.ink) : isProd ? P.prodHeadText : isSup ? (isGrp ? P.vcSupportText : P.supportLeafText) : (isGrp ? P.groupText : P.leafText),
         bold: true,
         sz: 1000,
       };
@@ -7499,7 +7671,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   };
 
   // ST-20：子群組框（第二層群組）：淡底、細框、標題靠上；同樣登記 rectById
-  const frame = (node, x, y, w, h, titleH) => {
+  const frame = (node, x, y, w, h, titleH, U = null) => {  // U：ST-35h 分色色組（null＝單色，輸出不變）
     rectById[node.id] = { x, y, w, h };
     return `
       <p:sp>
@@ -7507,11 +7679,11 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
         <p:spPr>
           <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
           <a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 8000"/></a:avLst></a:prstGeom>
-          <a:solidFill><a:srgbClr val="${P.vcChildBg}"/></a:solidFill>
-          <a:ln w="9525"><a:solidFill><a:srgbClr val="${P.vcPrimaryBg}"/></a:solidFill></a:ln>
+          <a:solidFill><a:srgbClr val="${U ? U.tint : P.vcChildBg}"/></a:solidFill>
+          <a:ln w="9525"><a:solidFill><a:srgbClr val="${U ? U.c : P.vcPrimaryBg}"/></a:solidFill></a:ln>
         </p:spPr>
         <p:txBody><a:bodyPr anchor="t" wrap="square" lIns="36000" rIns="36000" tIns="${Math.max(0, Math.round((titleH - deepSz / 100 * 12700 * 1.2) / 2))}" bIns="0"/><a:lstStyle/>
-          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${deepSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${P.vcChildText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(node.name || '（未命名）')}</a:t></a:r></a:p>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${deepSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${U ? U.ink : P.vcChildText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(node.name || '（未命名）')}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
   };
@@ -7552,6 +7724,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   let primaryBottom = primaryTop;
   primary.forEach((n, i) => {
     const x = contentX + (colW + gap) * i;
+    const U = pptxPerUnit(P, i);  // ST-35h：分色模式（群組＝淡版底深字、子項／頂層單元＝原色白字）；單色 null
     if (n.type === 'group') {
       const kids   = vcKids(n);
       // ST-20：子項若是有子項的群組 → 畫成框，框內放攤平後的孫項；沒有孫項的維持原樣（兩層以內座標不變）
@@ -7559,31 +7732,31 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
       const subTitleH = dd.subT, grandH = dd.grand;
       const kidH = k => deepKidH(k, dd);
       const groupH = pad * 2 + unitH + kids.reduce((s, k) => s + kidH(k) + pad, 0);
-      xml += box(n, x, primaryTop, colW, groupH, boxPrst, P.vcPrimaryBg, P.vcPrimaryText, true, 1000);
+      xml += box(n, x, primaryTop, colW, groupH, boxPrst, U ? U.tint : P.vcPrimaryBg, U ? U.ink : P.vcPrimaryText, true, 1000);
       primaryBottom = Math.max(primaryBottom, primaryTop + groupH);
       let ky = primaryTop + pad + unitH;
       const kW = colW - pad * 2 - (arrowBg ? in2emu(0.14) : 0);
       kids.forEach(k => {
         if (k.type === 'group' && vcKids(k).length) {
           const fh = kidH(k);
-          xml += frame(k, x + pad, ky, kW, fh, subTitleH);
+          xml += frame(k, x + pad, ky, kW, fh, subTitleH, U);
           let gy = ky + subTitleH;
           vcDesc(k).forEach(g => {
             const gAsset = g.unitKind === 'asset';
             xml += box(g, x + pad * 2, gy, kW - pad * 2, grandH, 'roundRect',
-              gAsset ? P.vcAssetBg : 'FFFFFF', gAsset ? P.vcAssetText : P.vcChildText, false, deepSz, deepIns);
+              gAsset ? P.vcAssetBg : U ? U.c : 'FFFFFF', gAsset ? P.vcAssetText : U ? P.vcPrimaryText : P.vcChildText, false, deepSz, deepIns);
             gy += grandH + pad;
           });
           ky += fh + pad;
           return;
         }
-        const kFill = k.unitKind === 'asset' ? P.vcAssetBg : P.vcChildBg;
-        const kTxt  = k.unitKind === 'asset' ? P.vcAssetText : P.vcChildText;
+        const kFill = k.unitKind === 'asset' ? P.vcAssetBg : U ? U.c : P.vcChildBg;
+        const kTxt  = k.unitKind === 'asset' ? P.vcAssetText : U ? P.vcPrimaryText : P.vcChildText;
         xml += box(k, x + pad, ky, kW, childH, 'roundRect', kFill, kTxt, false, 900);
         ky += childH + pad;
       });
     } else {
-      const fill = n.unitKind === 'asset' ? P.vcAssetBg : P.vcPrimaryBg;
+      const fill = n.unitKind === 'asset' ? P.vcAssetBg : U ? U.c : P.vcPrimaryBg;
       const txt  = n.unitKind === 'asset' ? P.vcAssetText : P.vcPrimaryText;
       xml += box(n, x, primaryTop, colW, unitH, boxPrst, fill, txt, true, 1000);
       primaryBottom = Math.max(primaryBottom, primaryTop + unitH);
