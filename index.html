@@ -646,6 +646,46 @@
     }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
   }
+  /* ST-35c fold 摺疊式（E）：zones 同時掛 vc-layout-band＋vc-layout-fold，沿用橫帶幾何；收合的群組＝一支 chevron＋右上「＋n」角標，
+     展開後在原位以橫帶撐開、角標變「▾」。收合狀態只在 JS 的 vcFoldState（不存檔）。≤800px 不套用（直排、全部展開、無角標） */
+  .vc-fold-badge { display: none; }
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group > .vc-node-head { position: relative; }
+    #valueChainEditor .vc-layout-fold .vc-fold-badge {
+      display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+      min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
+      font-size: var(--fs-xs); font-weight: 700; line-height: 1; cursor: pointer; user-select: none;
+      background: #fff; color: var(--vc-primary-border); box-shadow: 0 0 0 1px var(--vc-primary-border);
+    }
+    /* 展開的群組：「▾」放在橫帶右端，不佔名稱那一行 */
+    #valueChainEditor .vc-layout-fold .vc-group.vc-unfolded > .vc-node-head > .vc-fold-badge {
+      position: absolute; right: 4px; top: 5px; min-width: 18px; height: 18px;
+    }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-unfolded > .vc-node-head { padding-right: 26px; }
+    /* 展開的群組：最小寬也要容得下子項（收合的子群組比單支葉節點寬），JS 寫 --vc-fold-min＝子項最小寬總和 */
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-unfolded {
+      min-width: max(calc(var(--vc-leaves, 1) * 84px), calc(var(--vc-name-len, 2) * var(--fs-sm) + 58px), var(--vc-fold-min, 0px));
+    }
+    /* 收合的群組：本身畫成一支 chevron（與葉節點同幾何），標題列撐滿、子項整區隱藏 */
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded {
+      flex: 1 1 0; min-width: max(84px, calc(var(--vc-name-len, 2) * var(--fs-sm) + 76px)); min-height: 58px;
+      box-sizing: border-box; padding: 6px 0; justify-content: center; cursor: pointer;
+      background: var(--vc-primary-grad);
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+    }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded.vc-chev-first {
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+    }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded > .vc-node-head {
+      flex: 1 1 auto; min-height: 0; margin: 0 16px 0 18px; padding: 0 36px 0 0;
+      background: transparent; border: none; border-radius: 0;
+    }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded.vc-chev-first > .vc-node-head { margin-left: 8px; }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded > .vc-node-head > .vc-fold-badge {
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    }
+    #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded > .vc-group-body { display: none; }
+  }
 
   /* ── Buttons ── */
   button {
@@ -1509,6 +1549,7 @@ const VALUE_CHAIN_VERSION = 1;
 const VC_LAYOUTS = [
   { key: 'porter', label: '經典 Porter' },
   { key: 'band',   label: '橫帶式' },
+  { key: 'fold',   label: '摺疊式' },  // ST-35c：群組收成一支 chevron，點開以橫帶撐開
 ];
 const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
 
@@ -3817,6 +3858,26 @@ function buildVcNode(node, zone) {
     node.children.forEach(c => body.appendChild(buildVcNode(c, zone)));
     bindVcDropArea(body, zone, () => node.children, node.id);
     el.appendChild(body);
+    // ST-35c 摺疊式：有葉節點的群組預設收成一支 chevron＋「＋n」角標；點標題空白處或角標切換（狀態只在 vcFoldState，不存檔）
+    if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'fold' && vcLeafCount(node)) {
+      if (vcFocusId && vcNodeContains(node, vcFocusId)) vcFoldState.add(node.id);  // 剛新增的子項在裡面 → 自動展開才能聚焦
+      const folded = !vcFoldState.has(node.id);
+      el.classList.add(folded ? 'vc-folded' : 'vc-unfolded');
+      el.style.setProperty('--vc-leaves', folded ? 1 : vcFoldVisibleLeaves(node));
+      if (!folded) el.style.setProperty('--vc-fold-min', vcFoldMinExpr(node));
+      const badge = document.createElement('span');
+      badge.className = 'vc-fold-badge';
+      badge.textContent = folded ? '＋' + vcLeafCount(node) : '▾';
+      badge.title = folded ? `展開群組（含 ${vcLeafCount(node)} 個價值單元）` : '收合群組';
+      badge.addEventListener('mousedown', e => e.stopPropagation());
+      badge.addEventListener('click', e => { e.stopPropagation(); toggleVcFold(node.id); });
+      head.appendChild(badge);
+      head.addEventListener('click', e => {
+        if (vcLinkMode || e.target.closest('input, textarea, .vc-act, .vc-fold-badge')) return;
+        e.stopPropagation();
+        toggleVcFold(node.id);
+      });
+    }
   }
 
   // 拖曳排序：放到某節點上＝插在它前面（可跨群組，但不能跨區）
@@ -3971,11 +4032,25 @@ function renderValueChainEditor() {
     layoutSelect.appendChild(opt);
   });
   layoutSelect.value = vcLayoutKey(valueChain.layout);
+  layoutSelect.addEventListener('change', () => vcFoldState.clear());  // ST-35c：切換版型回到全收合（要在重畫之前清）
   layoutSelect.addEventListener('change', () => {
     valueChain.layout = vcLayoutKey(layoutSelect.value);
     commitValueChain();
   });
   toolbar.appendChild(layoutSelect);
+  // ST-35c：摺疊式的「全部展開／全部收合」（只改 UI 狀態，不存檔）
+  if (vcLayoutKey(valueChain.layout) === 'fold') {
+    [['open', '⊞ 全部展開', '展開所有群組'], ['close', '⊟ 全部收合', '把所有群組收成一支 chevron']].forEach(([key, label, tip]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'vc-expand-btn vc-fold-all';
+      b.dataset.fold = key;
+      b.textContent = label;
+      b.title = tip;
+      b.addEventListener('click', () => vcFoldAll(key === 'open'));
+      toolbar.appendChild(b);
+    });
+  }
 
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
@@ -3990,6 +4065,7 @@ function renderValueChainEditor() {
   zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
   const layout = vcLayoutKey(valueChain.layout);
   if (layout !== 'porter') zones.classList.add('vc-layout-' + layout);  // ST-35a：Porter 的 DOM 維持原樣
+  if (layout === 'fold') zones.classList.add('vc-layout-band');  // ST-35c：摺疊式沿用橫帶幾何
 
   // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
   const supportLabel = document.createElement('div');
@@ -4029,6 +4105,15 @@ function renderValueChainEditor() {
     if (z.key === 'primary' && layout === 'band') {
       const firstLeaf = body.querySelector('.vc-unit');
       if (firstLeaf) firstLeaf.classList.add('vc-chev-first');
+    }
+    // ST-35c 摺疊式：整列第一支看得到的 chevron（可能是收合的群組）不切左缺口
+    if (z.key === 'primary' && layout === 'fold') {
+      let first = body.firstElementChild;
+      while (first && first.classList.contains('vc-group') && !first.classList.contains('vc-folded')) {
+        const gb = first.querySelector(':scope > .vc-group-body');
+        first = gb && gb.firstElementChild;
+      }
+      if (first && (first.classList.contains('vc-unit') || first.classList.contains('vc-folded'))) first.classList.add('vc-chev-first');
     }
 
     // 區尾：新增最上層單元／群組
@@ -4508,6 +4593,53 @@ function vcRoundedPath(pts, r) {
   return d + ` L ${last.x} ${last.y}`;
 }
 
+// ── ST-35c 摺疊式（E）：群組收合狀態（只存 UI、不進存檔；切換版型或重新載入後回到全部收合）──
+const vcFoldState = new Set();  // 展開中的群組 id
+// 群組攤平後的葉節點數（角標「＋n」）
+function vcLeafCount(node) {
+  return node.type === 'group' ? node.children.reduce((s, c) => s + vcLeafCount(c), 0) : 1;
+}
+function vcNodeContains(node, id) {
+  return node.type === 'group' && node.children.some(c => c.id === id || vcNodeContains(c, id));
+}
+// 摺疊式下群組實際看得到的 chevron 數（收合的子群組算 1 支），給 --vc-leaves 撐寬
+function vcFoldVisibleLeaves(node) {
+  const count = n => n.type !== 'group' ? 1 : !vcLeafCount(n) ? 0 : !vcFoldState.has(n.id) ? 1 : n.children.reduce((s, c) => s + count(c), 0);
+  return Math.max(1, node.children.reduce((s, c) => s + count(c), 0));
+}
+// 展開群組的子項最小寬總和（CSS 字串，數字與上方 ST-35c fold CSS 的 min-width 一致）
+function vcFoldMinExpr(node) {
+  const one = n => {
+    if (n.type !== 'group') return '84px';
+    const len = Math.max(2, [...n.name].length);
+    if (!vcLeafCount(n)) return `max(84px, calc(${len} * var(--fs-sm) + 32px))`;
+    if (!vcFoldState.has(n.id)) return `max(84px, calc(${len} * var(--fs-sm) + 76px))`;
+    return `max(calc(${vcFoldVisibleLeaves(n)} * 84px), calc(${len} * var(--fs-sm) + 58px), ${vcFoldMinExpr(n)})`;
+  };
+  return node.children.length ? `calc(${node.children.map(one).join(' + ')})` : '0px';
+}
+function toggleVcFold(id) {
+  if (vcFoldState.has(id)) vcFoldState.delete(id); else vcFoldState.add(id);
+  renderValueChainEditor();
+}
+function vcFoldAll(open) {
+  vcFoldState.clear();
+  if (open) {
+    const walk = list => list.forEach(n => { if (n.type === 'group') { vcFoldState.add(n.id); walk(n.children); } });
+    walk(valueChain.primary);
+  }
+  renderValueChainEditor();
+}
+// 連線端點矩形：摺疊式下節點被收合群組包住（display:none 量不到）→ 改用最近看得到的祖先群組；其他版型＝getVcNodeRect
+function vcFoldEndRect(id) {
+  const r = getVcNodeRect(id);
+  if (!r || r.w || r.h || vcLayoutKey(valueChain.layout) !== 'fold') return r;
+  const el = document.querySelector(`#valueChainEditor [data-vc-id="${id}"]`);
+  let g = el.parentElement && el.parentElement.closest('.vc-group');
+  while (g && !g.offsetWidth) g = g.parentElement && g.parentElement.closest('.vc-group');
+  return g ? vcOffsetRect(g) : null;
+}
+
 function drawVcLinks() {
   const svg = document.getElementById('vcLineCanvas');
   if (!svg) return;
@@ -4534,7 +4666,7 @@ function drawVcLinks() {
   svg.appendChild(defs);
 
   const editor = document.getElementById('valueChainEditor');
-  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(Boolean);
+  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(r => r && (r.w || r.h));  // ST-35c：收合（量不到）的不當障礙
   const rowUse = {};
   // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
   const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
@@ -4552,10 +4684,11 @@ function drawVcLinks() {
   // ST-23c：活動之間的線不把產品直欄當障礙（產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線）；與 PPTX 一致
   const actRects = product && !product.horizontal ? rects.filter(o => !product.rects.has(o)) : rects;
   valueChain.links.forEach(link => {
-    const r1 = getVcNodeRect(link.from);
-    const r2 = getVcNodeRect(link.to);
+    const r1 = vcFoldEndRect(link.from);  // ST-35c：收合群組內的端點改接該群組
+    const r2 = vcFoldEndRect(link.to);
     if (!r1 || !r2) return;
     const a = same(r1), b = same(r2);
+    if (a === b) return;  // ST-35c：同一個收合群組內部的連線不畫
     const toProd = product && (product.rects.has(a) || product.rects.has(b));
     const route = vcLinkRoute(a, b, toProd ? rects : actRects, routeOpts, rowUse);
     const d = vcRoundedPath(route.pts, 8);
