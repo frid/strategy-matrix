@@ -10,6 +10,7 @@
 - b：載 bookstore-a、foundry-t 範例，六步 `guideProgress()` pct 與 v1.0.0 同範例結果相同（印對照表）。
 - c：兩範例各匯出 PPTX，`ppt/slides/slide*.xml` 與 v1.0.0 逐張完全相同、張數相同。
 - d：六張說明卡存在且 purpose 非空；`#step-3` 直連開在 ideas。
+- e（ST-22）：重新整理／他 tab 套用價值鏈後切回 ①，`textarea.vc-name-wrap` offsetHeight >10；主「載入」選價值鏈檔（`kind==="strategyMatrix.valueChain"`）不 reload、不取代 arrows／標題。
 
 結果以 exit code 回報（全過 0、有 FAIL 為 1）。截圖不進 git。
 最近一次結果：2026-10-26 ALL PASS（基準 v1.0.0；dev 916e5ac）。
