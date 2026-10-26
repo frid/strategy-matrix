@@ -34,3 +34,5 @@
 | 2026-10-26 | ST-21b | URL hash 用 history.replaceState，不進瀏覽器歷史 | 全域 history 變數是 undo 堆疊；且避免上一頁在 tab 間跳 | 中 |
 | 2026-10-26 | ST-21f | 手冊舊 26 個章節 id 全保留（14 個降為 h3 id），GUIDE_CONTENT.manual 指到六步 h2 | 外部連結與說明卡錨點不斷 | 易 |
 | 2026-10-26 | ST-21 | 21b 與 21d 合併由同一 worker 實作 | tab 骨架與區塊歸位改同一段 HTML，分開必撞 | — |
+| 2026-10-26 | ST-22b | 主「📂 載入」判定價值鏈檔以 kind 標記為主，另備援「有 valueChain 但無 arrows 陣列與 COLUMN_GROUPS」；匯入走原 confirm 再 alert 提示，不寫 localStorage 不 reload | 使用者誤選價值鏈檔不應整份蓋掉專案；舊版匯出的價值鏈檔可能沒 kind | 易：改 isValueChainFile |
+| 2026-10-26 | ST-22 | 整波 ST-22～28 在同一條分支 worktree-st22-28 逐項 commit，未聽到「merge」不併 dev | pre-push 只放行 dev／main，且使用者未授權 merge；ST-22 單獨 commit 可先 merge release v1.1.1 | 易 |

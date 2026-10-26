@@ -9,12 +9,12 @@
 規劃（2026-10-26）：建議順序 ST-22 → 26 → 24 → 23 → 25 → 27 → 28；ST-22 是 v1.1.0 迴歸，修完建議先 release v1.1.1。
 
 第 1 階段：修迴歸
-- [ ] ST-22 策略矩陣存檔載入失敗 ![](assets/20261026_144114.png), 檔案為 "策略矩陣_價值鏈.json"
+- [x] ST-22 策略矩陣存檔載入失敗 ![](assets/20261026_144114.png), 檔案為 "策略矩陣_價值鏈.json"（完成 2026-10-26：sizeVcInput 遇隱藏不寫 0px、切回 ① 重量名稱高度；主載入辨識價值鏈檔改走價值鏈匯入；回歸腳本加 e 區段 5 項與 tools/selftest/ST-22.mjs）
   - 原因（2026-10-26 headless 重現）：存檔格式正常、名稱都在；ST-21b 的 `.step-pane:not(.active){display:none}` 讓 `renderValueChainEditor()` 在 ① 頁籤隱藏時先渲染，主要活動名稱 `textarea.vc-name-wrap` 經 `sizeVcInput()` 量到 `scrollHeight=0` → `height:0px` 看不見；`guideGoto()` 切 tab 只重畫連線不重量高度。重新整理、主「載入」、在其他 tab 載範例都會中，v1.0.0 無此問題
   - 已定：測試不放使用者作業檔（HW2），改由測試腳本自產有群組＋多層的去名價值鏈
-  - [ ] ST-22a 切到 ① 頁籤（`guideGoto`／`guideRedrawLines` 的 rAF）時對 `#valueChainEditor textarea.vc-name-wrap` 重跑 `sizeVcInput`；`sizeVcInput` 遇 `scrollHeight===0` 清空 style.height 而非寫 0px
-  - [ ] ST-22b 主「📂 載入」（`importStateJSON`）偵測 `kind==='strategyMatrix.valueChain'`：改走 `importValueChainJSON` 匯入價值鏈並提示，不再整份取代專案
-  - [ ] ST-22c 回歸：`tests/st-21-regression.mjs` 加「重新整理後／他 tab 載入後切回 ①，主要活動名稱 offsetHeight > 10」與「主載入價值鏈檔」兩項；依賴 ST-22a、ST-22b
+  - [x] ST-22a 切到 ① 頁籤（`guideGoto`／`guideRedrawLines` 的 rAF）時對 `#valueChainEditor textarea.vc-name-wrap` 重跑 `sizeVcInput`；`sizeVcInput` 遇 `scrollHeight===0` 清空 style.height 而非寫 0px（完成 2026-10-26）
+  - [x] ST-22b 主「📂 載入」（`importStateJSON`）偵測 `kind==='strategyMatrix.valueChain'`：改走 `importValueChainJSON` 匯入價值鏈並提示，不再整份取代專案（完成 2026-10-26）
+  - [x] ST-22c 回歸：`tests/st-21-regression.mjs` 加「重新整理後／他 tab 載入後切回 ①，主要活動名稱 offsetHeight > 10」與「主載入價值鏈檔」兩項；依賴 ST-22a、ST-22b（完成 2026-10-26）
 
 第 2 階段：矩陣操作
 - [ ] ST-26 ![](assets/20261026_145546.png) 不同策略的箭頭，不要混在一起。用切換的

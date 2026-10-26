@@ -23,6 +23,22 @@
 ## 溝通
 - 用繁體中文回覆。
 
+## task-workflow 設定
+
+plugin `task-workflow` 的 skill／agent 會讀這一節。
+
+- 主程式檔：`index.html`（單檔網頁，約 8000 行，worker 不整份讀）
+- 版本日期標記：頁尾「最後更新日期：YYYY/MM/DD」
+- 部署網址：https://jack0630.github.io/strategy-matrix/（`main` 自動部署）
+- 語法檢查：plugin `tools/check-js.sh index.html`
+- release 閘門：`tools/release-check.sh`＋`node tests/st-21-regression.mjs`（零 npm 依賴，需 Chrome）
+- 舊存檔相容：localStorage key `strategyMatrix_v4`；基準存檔在 `tests/fixtures/`（bookstore-a、foundry-t）必須載入無 console error
+- 資料慣例：格子描述（cellNotes）、前提、模組成員掛「欄 id＋列字母」當 key，不用格子代號；箭頭（arrows）有 id，modules／actionPlans 與之平行；新欄位要讓舊存檔載入不出錯；PPTX 既有頁 XML 不應無故改變
+- 回歸必查功能：載入 fixtures 與兩範例、六 tab 切換與連線重畫、畫箭頭、匯出 PPTX 不拋例外
+- 參考資料索引：`doc/reference/README.md`（來源代號、頁碼標法與掃描 PDF 頁碼對照都在該檔）
+- 自測腳本目錄：`tools/selftest/<代號>.mjs`；共用 harness `tools/cdp-harness.mjs`
+- 決策／待手測／日誌：`doc/decisions.md`、`doc/pending-checks.md`、`doc/dev-log/YYYY-MM-DD.md`
+
 ## 工作流程
 
 待辦事項都記在 `TODO.md`（編號規則見該檔頂端「# 規則」）。做 TODO 的任務一律走下面流程：

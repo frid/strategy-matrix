@@ -3312,6 +3312,8 @@ function sizeVcInput(inp) {
       inp.style.flex = '0 0 auto';
     }
     inp.style.height = 'auto';
+    // 未掛 DOM 或祖先 display:none（例如隱藏的 ① 頁籤）時量不到高度：不要寫 0px，清空等顯示後由 guideRedrawLines 重量（ST-22）
+    if (inp.scrollHeight === 0) { inp.style.height = ''; return; }
     inp.style.height = inp.scrollHeight + 'px';
     return;
   }
@@ -7563,7 +7565,11 @@ function guideApplyPane(k) {
 }
 // 顯示後才取得到座標：重畫矩陣與價值鏈連線（隱藏時兩者會直接 return）
 function guideRedrawLines() {
-  requestAnimationFrame(() => { drawLines(); drawVcLinks(); });
+  requestAnimationFrame(() => {
+    // ST-22：① 在隱藏時渲染過，名稱 textarea 量到 0 高；顯示後重量
+    document.querySelectorAll('#valueChainEditor textarea.vc-name-wrap').forEach(sizeVcInput);
+    drawLines(); drawVcLinks();
+  });
 }
 function guideKeyFromHash() {  // #step-N（N＝1–6）→ 步驟 key；不合法回傳 ''
   const m = /^#step-([1-6])$/.exec(location.hash || '');
@@ -7838,7 +7844,12 @@ function importStateJSON() {
     if (!file) return;
     try {
       const text = await file.text();
-      JSON.parse(text); // validate JSON
+      const parsed = JSON.parse(text); // validate JSON
+      // ST-22b：選到「存價值鏈」匯出的檔，改走價值鏈匯入，不整份取代專案
+      if (isValueChainFile(parsed)) {
+        if (applyImportedValueChain(parsed)) alert('這是價值鏈檔：已匯入價值鏈（未取代專案；矩陣欄位要按「展開到策略矩陣」才會更新）。');
+        return;
+      }
       localStorage.setItem(STORAGE_KEY, text);
       location.reload();
     } catch(e) {
@@ -7861,6 +7872,27 @@ function exportValueChainJSON() {
   URL.revokeObjectURL(url);
 }
 
+// 是否為「只存價值鏈」的檔（ST-22b）：kind 標記，或有 valueChain 物件但沒有整份 state 的箭頭／欄位
+function isValueChainFile(parsed) {
+  if (!parsed || typeof parsed !== 'object') return false;
+  if (parsed.kind === 'strategyMatrix.valueChain') return true;
+  return !!(parsed.valueChain && typeof parsed.valueChain === 'object' && !Array.isArray(parsed.arrows) && !parsed.COLUMN_GROUPS);
+}
+// 取出價值鏈並套用（ST-22b，從 importValueChainJSON 抽出共用）：回傳 true＝已套用；格式不符丟錯、使用者取消回 false
+function applyImportedValueChain(parsed) {
+  let rawVc = null;
+  if (parsed && typeof parsed === 'object') {
+    if (parsed.valueChain && typeof parsed.valueChain === 'object') rawVc = parsed.valueChain; // 單獨存檔 或 整份 state
+    else if (parsed.primary) rawVc = parsed; // 裸的價值鏈物件
+  }
+  if (!rawVc) throw new Error('not a valueChain file');
+  if (!confirm('匯入會覆蓋目前的價值鏈；矩陣欄位要按「展開到策略矩陣」才會更新，確定要匯入嗎？')) return false;
+  valueChain = normaliseValueChain(rawVc);
+  resetValueChainIds(valueChain);
+  commitValueChain();
+  return true;
+}
+
 // 匯入單獨存的價值鏈 JSON（ST-01f）：相容「整份 state」格式與裸的價值鏈物件
 function importValueChainJSON() {
   const inp = document.createElement('input');
@@ -7872,16 +7904,7 @@ function importValueChainJSON() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      let rawVc = null;
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.valueChain && typeof parsed.valueChain === 'object') rawVc = parsed.valueChain; // 單獨存檔 或 整份 state
-        else if (parsed.primary) rawVc = parsed; // 裸的價值鏈物件
-      }
-      if (!rawVc) throw new Error('not a valueChain file');
-      if (!confirm('匯入會覆蓋目前的價值鏈；矩陣欄位要按「展開到策略矩陣」才會更新，確定要匯入嗎？')) return;
-      valueChain = normaliseValueChain(rawVc);
-      resetValueChainIds(valueChain);
-      commitValueChain();
+      applyImportedValueChain(parsed);
     } catch(e) {
       alert('檔案格式不正確，請選擇由「存價值鏈」匯出的 JSON 檔。');
     }

@@ -44,3 +44,7 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [x] ST-21c 真實瀏覽器點說明卡收合／展開手感；手冊 📖 連結在 GitHub Pages 上能跳到 manual.html 對應錨點
 - [x] ST-21f 瀏覽器點 manual.html 目錄各章與說明卡「📖 手冊」，確認落在正確章節；手機寬度看目錄排版
 - [x] ST-21f 人工翻一遍 manual/img 30 張重拍圖是否貼合各章文字（verifier 只抽看 3 張）
+
+## 2026-10-26 ST-22
+- [ ] ST-22 真實瀏覽器主「📂 載入」選自己的「策略矩陣_價值鏈.json」：先 confirm 再 alert「已匯入價值鏈」，專案未被取代、未 reload
+- [ ] ST-22 載入自己的整份存檔後重新整理、以及在 ②–⑥ 載範本後切回 ①，主要活動名稱都可見
