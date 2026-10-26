@@ -1176,6 +1176,32 @@
   .sm-modal-list .sm-modal-empty { color: var(--ink-light); font-style: italic; }
   .sm-modal-code { font-family: 'DM Mono', monospace; }
   .sm-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  /* ST-35i unit icon：價值單元名稱前的 icon 按鈕、icon 選單、矩陣欄頭 icon */
+  .vc-icon-btn {
+    flex: 0 0 auto; border: none; background: transparent; padding: 0 1px; margin: 0;
+    font-size: 1.05em; line-height: 1.2; cursor: pointer; color: inherit; border-radius: 3px;
+  }
+  .vc-icon-btn:hover { background: rgba(255,255,255,0.35); }
+  .vc-icon-btn.vc-icon-empty { opacity: 0.3; font-size: 0.95em; }
+  .vc-icon-btn.vc-icon-empty:hover { opacity: 0.8; }
+  .vc-icon-picker {
+    position: absolute; z-index: 9990; background: white; border: 1px solid #ccc; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18); padding: 8px; width: 236px; color: var(--ink);
+  }
+  .vc-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+  .vc-icon-grid button {
+    border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 2px 0;
+    font-size: 17px; line-height: 1.3; cursor: pointer;
+  }
+  .vc-icon-grid button:hover { background: var(--cell-hover); }
+  .vc-icon-grid button.vc-icon-cur { border-color: var(--col-header); }
+  .vc-icon-row { display: flex; gap: 4px; margin-top: 6px; }
+  .vc-icon-row input { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); padding: 2px 4px; }
+  .vc-icon-row button { flex: 0 0 auto; white-space: nowrap; font-size: var(--fs-sm); padding: 2px 6px; cursor: pointer; }
+  /* 產品欄名稱 textarea 原本佔滿一列只留 ✕ 的寬度（ST-31）；有 icon 按鈕時再讓出 icon 寬，icon、名稱、✕ 同列 */
+  .vc-products-body > .vc-unit > .vc-node-head > .vc-icon-btn + textarea.vc-name-wrap { flex-basis: calc(100% - 24px - 1.6em); }
+  #matrixTable thead th .col-icon { text-orientation: upright; margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -1363,6 +1389,7 @@
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()" title="切換左側標籤：策略矩陣／加上產業矩陣簡稱（產業矩陣出自司徒講義，非新論 Ch8／9）">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣；出自彭朱如講義 [P3 57]）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
+  <label class="short-view-toggle" title="矩陣欄頭（含 PPTX）在欄名前顯示價值單元的 icon；icon 在價值鏈頁名稱前的按鈕設定（ST-35i）"><input type="checkbox" id="unitIconChk" checked onchange="toggleUnitIcons(this.checked)"> 欄頭 icon</label>
   <label class="short-view-toggle step-pane" data-steps="ideas premise action control" title="矩陣上要畫哪些策略構想的箭頭：只看目前構想／目前＋競爭者／全部構想（非目前構想變淡、競爭者虛線）；含雙方時以 ⚔ 標出對陣點（ST-26a）">👁 檢視 <select id="matrixViewSel" onchange="setMatrixView(this.value)"><option value="current">只看目前構想</option><option value="rivals">目前＋競爭者</option><option value="all">全部構想</option></select></label>
   <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
@@ -1497,11 +1524,14 @@ let productSepIdx = 13;
 
 // 是否顯示左側「產業矩陣」欄標籤文字（預設隱藏，僅顯示策略矩陣）
 let showIndustryLabels = false;
+// ST-35i：矩陣欄頭（畫面＋PPTX）是否在欄名前加價值單元的 icon；由操作列「欄頭 icon」勾選切換，存檔；舊存檔沒有 → true
+let showUnitIcons = true;
 
 // ── Value Chain ───────────────────────────────────────────────────────────
 // 價值鏈資料（ST-01a）：矩陣欄位由價值鏈「展開到策略矩陣」產生（ST-01d），展開前矩陣維持原本欄位
 // 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
 //       unit 可選 unitRole: 'semi'|'lead'|'influencer'（ST-14i 特殊價值單元；沒有此欄位＝一般單元，舊存檔照常載入）
+//       unit 可選 icon: emoji 字串（ST-35i；≤ 4 字、去空白；沒有此欄位＝不畫 icon，舊存檔照常載入）；group 不帶 icon
 // valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg, layout }
 //   layout（ST-35a）：主要活動列的版型 key，見 VC_LAYOUTS；舊存檔沒有 → 'porter'
 const VALUE_CHAIN_VERSION = 1;
@@ -1603,6 +1633,23 @@ function makeDefaultValueChain() {
     layout: 'porter' };
 }
 
+// ST-35i：價值單元 icon 正規化：非字串／空白 → ''；去空白後超過 4 字（以 code point 計）只取前 4 字
+function normVcIcon(v) {
+  if (typeof v !== 'string') return '';
+  const s = v.replace(/\s+/g, '');
+  return s ? [...s].slice(0, 4).join('') : '';
+}
+// ST-35i：欄名 → icon（矩陣欄頭用；欄位與價值單元以名稱對應，同名取第一個有 icon 的）
+function vcIconByName() {
+  const map = new Map();
+  const walk = list => (list || []).forEach(n => {
+    if (n.type === 'group') walk(n.children);
+    else if (n.icon && !map.has(n.name || '（未命名）')) map.set(n.name || '（未命名）', n.icon);
+  });
+  walk(valueChain.support); walk(valueChain.primary); walk(valueChain.products);
+  return map;
+}
+
 // 驗證／正規化存檔中的 valueChain：丟掉壞節點、補預設欄位、id 去重、清掉斷掉的連線；不丟例外
 function normaliseValueChain(raw) {
   const src = (raw && typeof raw === 'object') ? raw : {};
@@ -1627,6 +1674,7 @@ function normaliseValueChain(raw) {
       } else {
         const unit = { id: takeId(n.id), name, type: 'unit', unitKind: n.unitKind === 'asset' ? 'asset' : 'activity' };
         if (vcRoleInfo(n.unitRole)) unit.unitRole = n.unitRole;  // ST-14i：只留合法角色，其他值（含舊存檔沒有）視為一般
+        if (normVcIcon(n.icon)) unit.icon = normVcIcon(n.icon);  // ST-35i：只留非空字串（≤ 4 字），其他值（含舊存檔沒有）不存
         out.push(unit);
       }
     });
@@ -2903,6 +2951,12 @@ function afterShortViewChange() {
   rebuildTable();
   saveState();
 }
+// ST-35i：欄頭 icon 開關（偏好設定，不記復原點）
+function toggleUnitIcons(on) {
+  showUnitIcons = !!on;
+  rebuildTable();
+  saveState();
+}
 function toggleShortView(on) {
   pushHistory();
   shortView = !!on;
@@ -3711,6 +3765,71 @@ function makeVcAction(text, title, onClick, extraClass = '') {
   return a;
 }
 
+// ── ST-35i：價值單元 icon 選單（常用 24 個 emoji＋自由輸入＋清除）──
+const VC_ICON_CHOICES = ['🔬','🧪','🧬','💊','🩺','🏥','⚙️','🏭','✅','📐','📦','🚚',
+                         '🏬','🛒','📣','🤝','💬','💻','📊','💰','👥','🎓','⭐','📚'];
+function closeVcIconPicker() {
+  const pop = document.getElementById('vcIconPicker');
+  if (pop) pop.remove();
+  document.removeEventListener('mousedown', vcIconPickerOutside, true);
+  document.removeEventListener('keydown', vcIconPickerKey, true);
+}
+function vcIconPickerOutside(e) {
+  const pop = document.getElementById('vcIconPicker');
+  if (pop && !pop.contains(e.target)) closeVcIconPicker();
+}
+function vcIconPickerKey(e) { if (e.key === 'Escape') closeVcIconPicker(); }
+function setVcIcon(node, v) {
+  const icon = normVcIcon(v);
+  if (icon) node.icon = icon; else delete node.icon;
+  closeVcIconPicker();
+  commitValueChain();
+  if (showUnitIcons) rebuildTable();  // 矩陣欄頭同步
+}
+function openVcIconPicker(node, anchor) {
+  closeVcIconPicker();
+  const pop = document.createElement('div');
+  pop.id = 'vcIconPicker';
+  pop.className = 'vc-icon-picker';
+  pop.addEventListener('mousedown', e => e.stopPropagation());
+  pop.addEventListener('click', e => e.stopPropagation());
+  const grid = document.createElement('div');
+  grid.className = 'vc-icon-grid';
+  VC_ICON_CHOICES.forEach(ic => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = ic;
+    if (ic === node.icon) b.classList.add('vc-icon-cur');
+    b.addEventListener('click', () => setVcIcon(node, ic));
+    grid.appendChild(b);
+  });
+  pop.appendChild(grid);
+  const row = document.createElement('div');
+  row.className = 'vc-icon-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = '自訂（最多 4 字）';
+  inp.value = node.icon || '';
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); setVcIcon(node, inp.value); } });
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.textContent = '套用';
+  ok.addEventListener('click', () => setVcIcon(node, inp.value));
+  const clr = document.createElement('button');
+  clr.type = 'button';
+  clr.textContent = '清除';
+  clr.addEventListener('click', () => setVcIcon(node, ''));
+  row.append(inp, ok, clr);
+  pop.appendChild(row);
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect();
+  const left = Math.max(8, Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 8));
+  pop.style.left = left + 'px';
+  pop.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  document.addEventListener('mousedown', vcIconPickerOutside, true);
+  document.addEventListener('keydown', vcIconPickerKey, true);
+}
+
 function buildVcNode(node, zone) {
   const isGroup = node.type === 'group';
   const el = document.createElement('div');
@@ -3730,6 +3849,18 @@ function buildVcNode(node, zone) {
   // ── 標題列：名稱 + （單元）活動／資產標記 + ＋同層 / ＋子項 / ✕ ──
   const head = document.createElement('div');
   head.className = 'vc-node-head';
+
+  // ST-35i：價值單元名稱前的 icon 按鈕（有 icon 顯示該 emoji，沒有顯示淡色 ☺）；點開 icon 選單（群組不帶 icon）
+  if (!isGroup) {
+    const iconBtn = document.createElement('button');
+    iconBtn.type = 'button';
+    iconBtn.className = 'vc-icon-btn' + (node.icon ? '' : ' vc-icon-empty');
+    iconBtn.textContent = node.icon || '☺';
+    iconBtn.title = node.icon ? '更換 icon' : '選 icon（矩陣欄頭與 PPTX 會畫在名稱前）';
+    iconBtn.addEventListener('mousedown', e => e.stopPropagation());
+    iconBtn.addEventListener('click', e => { e.stopPropagation(); openVcIconPicker(node, iconBtn); });
+    head.appendChild(iconBtn);
+  }
 
   // 主要活動區（群組標題＋子項）與產品欄（ST-31）名稱用 textarea 讓長名稱自動換行（ST-09）；其他區維持單行 input
   const wrapName = zone === 'primary' || zone === 'products';
@@ -4691,6 +4822,7 @@ function buildTable() {
     if (ci >= productSepIdx) th.classList.add('product-col-header');
     else if (isSupportColumnPath(paths[ci])) th.classList.add('support-col-header'); // ST-12a：支援活動欄用支援色
   };
+  const iconByName = vcIconByName();  // ST-35i
   // 左上角 corner 儲存格（淺青綠底，配合 Y 軸列標籤）
   const cornerL = document.createElement('th');
   cornerL.className = 'col-header-corner';
@@ -4720,6 +4852,12 @@ function buildTable() {
           const th = document.createElement('th');
           th.className = level === 0 ? 'col-header' : 'col-header-leaf';
           th.textContent = COLUMNS[ci];
+          if (showUnitIcons && iconByName.has(COLUMNS[ci])) {  // ST-35i：欄名前加 icon
+            const ic = document.createElement('span');
+            ic.className = 'col-icon';
+            ic.textContent = iconByName.get(COLUMNS[ci]);
+            th.prepend(ic);
+          }
           const role = getColumnRole(ci);  // ST-14i：特殊價值單元在欄名後加小標記
           if (role) {
             const tag = document.createElement('span');
@@ -7263,6 +7401,7 @@ function buildMatrixTableXml(L, shapeId) {
 
   // 先把每個表頭格算進 (level, k) 網格（k＝第幾個可見欄，ST-03），再逐列輸出，避免延續格漏掉
   const grid = Array.from({ length: depth + 1 }, () => new Array(nCols).fill(null));
+  const iconByName = vcIconByName();  // ST-35i
   for (let level = 0; level <= depth; level++) {
     let k = 0;
     while (k < nCols) {
@@ -7278,7 +7417,8 @@ function buildMatrixTableXml(L, shapeId) {
         if (p.length === level) {
           const rs = depth + 1 - level;
           const role = getColumnRole(ci);  // ST-14i：特殊價值單元標記，同畫面表頭
-          grid[level][k] = { text: COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
+          const icon = showUnitIcons ? iconByName.get(COLUMNS[ci]) : '';  // ST-35i：有 icon 才前置
+          grid[level][k] = { text: (icon ? icon + ' ' : '') + COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
           for (let l = level + 1; l <= depth; l++) grid[l][k] = { vMerge: true, ci };
         }
         k++;
@@ -7493,7 +7633,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
           <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
         </p:spPr>
         <p:txBody><a:bodyPr${vert ? ` vert="${vert}"` : ''} anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="${ins}" bIns="${ins}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
-          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(name.name || '（未命名）')}</a:t></a:r></a:p>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml((name.icon ? name.icon + ' ' : '') + (name.name || '（未命名）'))}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
   };
@@ -8455,6 +8595,7 @@ function saveState() {
       productSepIdx,
       showIndustryLabels,
       colorPaletteIdx,
+      showUnitIcons,                                      // ST-35i
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     renderGuideBar();  // ST-14d：任何存檔點都順便刷新完成度
@@ -8523,6 +8664,7 @@ function loadState() {
     if (typeof state.productSepIdx === 'number') productSepIdx = state.productSepIdx;
     if (typeof state.showIndustryLabels === 'boolean') showIndustryLabels = state.showIndustryLabels;
     if (typeof state.colorPaletteIdx === 'number' && COLOR_PALETTES[state.colorPaletteIdx]) colorPaletteIdx = state.colorPaletteIdx;
+    showUnitIcons = state.showUnitIcons !== false;  // ST-35i：舊存檔沒有 → true
     // 價值鏈：有存就正規化；舊存檔沒有 → 由欄位群組轉換（不自動補「品牌／商譽」）
     try {
       if (state.valueChain && typeof state.valueChain === 'object') {
@@ -8744,6 +8886,7 @@ buildExampleSelect();
 applyPalette(colorPaletteIdx);
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 syncShortViewControls();
+document.getElementById('unitIconChk').checked = showUnitIcons;  // ST-35i
 normaliseCompetitorKinds();  // ST-14h：預設構想（沒有存檔時）也補 kind
 syncMatrixViewControls();
 syncCompKindSelect();
