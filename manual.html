@@ -42,10 +42,15 @@
   .toc ol { columns: 2; column-gap: 28px; padding-left: 1.6em; font-size: 0.80rem; }
   .toc a { color: var(--ink); text-decoration: none; }
   .toc a:hover { color: var(--col-header); text-decoration: underline; }
+  .toc ol > li { break-inside: avoid; }
+  .toc ol ul { list-style: none; margin: 0 0 4px 0.2em; font-size: 0.72rem; }
+  .toc ol ul li { margin: 0; }
 
   section.panel { scroll-margin-top: 12px; }
   h2.sec { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--grid-line); }
   h3 { font-size: 0.92rem; font-weight: 700; color: var(--col-header); margin: 14px 0 4px; }
+  h3[id] { scroll-margin-top: 12px; margin-top: 20px; padding-top: 10px; border-top: 1px dashed var(--grid-line); }
+  h4 { font-size: 0.82rem; font-weight: 700; margin: 10px 0 2px; }
   p, li { font-size: 0.80rem; }
   p { margin: 6px 0; }
   ul, ol.steps { margin: 6px 0 6px 1.4em; }
@@ -80,37 +85,57 @@
 
 <a class="back" href="index.html">← 回到策略矩陣工具</a>
 <h1>策略矩陣分析工具 操作手冊</h1>
-<p class="lead">本手冊示範如何用本工具畫出一張策略矩陣。範例使用虛構的醫材公司「見安醫材」；內文中的「按鈕名稱」與畫面上的文字完全相同，方便對照。</p>
+<p class="lead">本手冊依工具的六個步驟（tab）分章，示範如何畫出一張策略矩陣。範例使用虛構的醫材公司「見安醫材」與內建範例「網路書店 A 公司」；內文中的「按鈕名稱」與畫面上的文字完全相同，方便對照。</p>
 
 <nav class="panel toc">
   <h2>目錄</h2>
   <ol start="0">
     <li><a href="#video">教學影片</a></li>
-    <li><a href="#quick">快速開始</a></li>
-    <li><a href="#guide">流程導引步驟條</a></li>
-    <li><a href="#title">策略名稱與說明</a></li>
-    <li><a href="#project">專案（存檔、匯出、配色、重設）</a></li>
-    <li><a href="#vc">價值鏈編輯</a></li>
-    <li><a href="#roles">價值單元角色</a></li>
-    <li><a href="#template">載入範本</a></li>
-    <li><a href="#links">價值鏈連線</a></li>
-    <li><a href="#products">產品面板</a></li>
-    <li><a href="#expand">展開到策略矩陣</a></li>
-    <li><a href="#shortview">短版矩陣</a></li>
-    <li><a href="#cells">策略點描述</a></li>
-    <li><a href="#ideas">策略構想</a></li>
-    <li><a href="#kinds">構想分型與對陣點</a></li>
-    <li><a href="#arrows">畫箭頭、補充說明、排序、復原、清除</a></li>
-    <li><a href="#modules">策略模組</a></li>
-    <li><a href="#elements">策略要素標記</a></li>
-    <li><a href="#sentences">策略句型產生器</a></li>
-    <li><a href="#premises">前提與 SWOT</a></li>
-    <li><a href="#actions">行動計畫</a></li>
-    <li><a href="#control">前提控制表</a></li>
-    <li><a href="#examples">載入範例</a></li>
+    <li><a href="#quick">快速開始（六個 tab 走一遍）</a></li>
+    <li><a href="#guide">分步引導與教材說明卡</a></li>
+    <li><a href="#project">專案列（存檔、載入、匯出、配色、範例、重設）</a>
+      <ul>
+        <li><a href="#save">3.1 存檔／載入／重設</a></li>
+        <li><a href="#examples">3.2 載入範例</a></li>
+      </ul>
+    </li>
+    <li><a href="#vc">① 經營流程</a>
+      <ul>
+        <li><a href="#title">4.1 策略名稱與說明</a></li>
+        <li><a href="#vc-edit">4.2 價值鏈編輯</a></li>
+        <li><a href="#roles">4.3 價值單元角色</a></li>
+        <li><a href="#template">4.4 載入範本</a></li>
+        <li><a href="#links">4.5 價值鏈連線</a></li>
+        <li><a href="#products">4.6 產品面板</a></li>
+        <li><a href="#expand">4.7 展開到策略矩陣</a></li>
+      </ul>
+    </li>
+    <li><a href="#cells">② 策略點描述</a>
+      <ul>
+        <li><a href="#matrix">5.1 矩陣基本操作</a></li>
+        <li><a href="#shortview">5.2 短版矩陣</a></li>
+        <li><a href="#cell-panel">5.3 策略點面板與填寫進度</a></li>
+      </ul>
+    </li>
+    <li><a href="#ideas">③ 策略構想</a>
+      <ul>
+        <li><a href="#kinds">6.1 構想分型與疊圖</a></li>
+        <li><a href="#arrows">6.2 畫箭頭、補充說明、排序、復原、清除</a></li>
+        <li><a href="#modules">6.3 策略模組</a></li>
+        <li><a href="#elements">6.4 策略要素標記</a></li>
+        <li><a href="#sentences">6.5 策略句型產生器</a></li>
+      </ul>
+    </li>
+    <li><a href="#premises">④ 前提驗證</a>
+      <ul>
+        <li><a href="#swot">7.1 前提與 SWOT</a></li>
+        <li><a href="#clash">7.2 對陣點</a></li>
+      </ul>
+    </li>
+    <li><a href="#actions">⑤ 行動計畫</a></li>
+    <li><a href="#control">⑥ 策略控制（前提控制表）</a></li>
     <li><a href="#industry">產業矩陣切換與配色</a></li>
     <li><a href="#pptx">匯出 PPTX</a></li>
-    <li><a href="#save">存檔／載入／重設</a></li>
     <li><a href="#faq">常見問題</a></li>
   </ol>
 </nav>
@@ -124,15 +149,21 @@
 </section>
 
 <section class="panel" id="quick">
-  <h2 class="sec">1. 快速開始（五步完成一張策略矩陣）</h2>
+  <h2 class="sec">1. 快速開始（六個 tab 走一遍）</h2>
+  <p>工具把整個策略分析拆成六步，每一步是頁面上的一個 tab。照著 tab 從左到右做，就能完成一份策略矩陣分析：</p>
   <ol class="steps">
-    <li><b>填策略名稱與說明</b>：在頁面最上方的「策略名稱」輸入框打上名稱。</li>
-    <li><b>編輯價值鏈</b>：用「📋 載入範本…」選一個接近你產業的範本，再改名、增刪方塊；也可以從空白開始自己加。</li>
-    <li><b>按 <span class="btn">📐 展開到策略矩陣</span></b>：價值鏈的每個單元會變成矩陣的一欄，確認對話框後按「確定」。</li>
-    <li><b>設定策略構想</b>：在「策略構想」區改名、新增（最多 8 個），點選要畫的那一個。</li>
-    <li><b>畫箭頭</b>：在矩陣上點起點格（變黃）、再點終點格，就畫出一條箭頭；完成後可到頁面上方的「專案」區按 <span class="btn">📊 匯出 PPTX</span> 或 <span class="btn">💾 存檔</span>。</li>
+    <li><b>① 經營流程</b>：填「策略名稱」，用「📋 載入範本…」選一個接近你產業的價值鏈，再改名、增刪方塊；完成後按 <span class="btn">📐 展開到策略矩陣</span>，價值鏈的每個單元會變成矩陣的一欄。</li>
+    <li><b>② 策略點描述</b>：自動切到「📝 描述策略點」模式，點矩陣上的格子，在下方面板填寫每個策略點的現況。</li>
+    <li><b>③ 策略構想</b>：自動切到「✏️ 繪製箭頭」模式。在「策略構想」區新增或改名構想（最多 8 個），點起點格（變黃）、再點終點格就畫出一條箭頭；替箭頭寫補充說明、標策略要素、圈成模組。</li>
+    <li><b>④ 前提驗證</b>：在箭頭上加前提並標成立度，這一頁會彙整成 SWOT 與對陣點。</li>
+    <li><b>⑤ 行動計畫</b>：按 <span class="btn">✨ 從箭頭產生行動項目</span>，再補負責單元與期程。</li>
+    <li><b>⑥ 策略控制</b>：挑出關鍵前提，填觀察指標與燈號。完成後到頁面上方的「專案」列按 <span class="btn">📊 匯出 PPTX</span> 或 <span class="btn">💾 存檔</span>。</li>
   </ol>
-  <p>頁面上的「流程導引步驟條」會陪你走完更完整的六步（見下一節）。</p>
+  <p>每個 tab 頂端都有一張「📘 教材說明」卡，說明這一步在教科書裡的目的與檢查點（見下一節）。想先看完整的成品，可以在「專案」列選 <span class="btn">📚 載入範例…</span>。</p>
+  <figure>
+    <img src="manual/img/01-header-title.png" alt="頁首、專案列、tab 列與策略名稱">
+    <figcaption>頁面上方：頁首（含「📖 操作手冊」連結）、「專案」列、六步 tab 列，以及 ① 經營流程 tab 的說明卡（收合）與策略名稱。</figcaption>
+  </figure>
   <figure>
     <img src="manual/img/13-matrix.png" alt="完成的策略矩陣範例">
     <figcaption>完成的策略矩陣：左側是價值鏈單元（欄），右側兩欄是產品，彩色箭頭是各個策略構想。</figcaption>
@@ -140,121 +171,153 @@
 </section>
 
 <section class="panel" id="guide">
-  <h2 class="sec">2. 流程導引步驟條</h2>
-  <p>「專案」區下方的步驟條，把整個分析拆成六步：① 經營流程、② 策略點描述、③ 策略構想、④ 前提驗證、⑤ 行動計畫、⑥ 策略控制。</p>
+  <h2 class="sec">2. 分步引導與教材說明卡</h2>
+  <p>「專案」列下方的 <b>tab 列</b>，把分析拆成六步：① 經營流程、② 策略點描述、③ 策略構想、④ 前提驗證、⑤ 行動計畫、⑥ 策略控制。點一個 tab，下方只顯示這一步要用的區塊。</p>
+  <figure>
+    <img src="manual/img/20-guide-tabs.png" alt="六步 tab 列">
+    <figcaption>tab 列：目前所在的 tab 以紫底標示；每格有自己的完成度條與說明，完成的步驟打勾；右下是整體完成度。</figcaption>
+  </figure>
+  <h3>完成度</h3>
   <ul>
-    <li>每一步有自己的<b>完成度</b>（百分比與進度條），右端顯示「整體 %」；完成的步驟會打勾。</li>
-    <li>下方的「教科書要點」面板會依目前進行到的步驟，列出要點、頁碼與「下一步建議」。</li>
-    <li>點任一步驟節點，會捲到對應區塊並展開折疊區；要點面板右側的 <span class="btn">前往 ▸</span> 也有同樣作用。</li>
-    <li>窄螢幕時，六個步驟會排成 3×2。</li>
+    <li>每個 tab 顯示百分比、進度條與一行摘要（例如「已描述 8／81 格」「5 項前提、2 待驗證」）；達 100% 時編號換成 ✓。</li>
+    <li>右下角的「整體 %」是六步的平均。</li>
+    <li>窄螢幕時，六個 tab 會排成 3×2。</li>
+  </ul>
+  <h3>切 tab 時會自動做的事</h3>
+  <ul>
+    <li><b>② 到 ⑥ 共用同一張策略矩陣</b>（① 不顯示矩陣），切 tab 時矩陣不會重畫或清掉。</li>
+    <li>模式會跟著切換：② 切到「📝 描述策略點」、③ 切到「✏️ 繪製箭頭」、④⑤⑥ 切到「👁 檢視模式」，避免誤點畫出箭頭。切過去之後仍可自己再換模式。</li>
+    <li>目前所在的 tab 會記在存檔裡，下次開啟會回到同一步。</li>
+  </ul>
+  <h3>教材說明卡</h3>
+  <p>每個 tab 第一塊是「📘 教材說明」卡，整理自《策略管理新論》：</p>
+  <ul>
+    <li><b>左欄</b>：這一步的目的、一兩句書上原文（附頁碼）與延伸閱讀頁碼。</li>
+    <li><b>右欄</b>：「在這裡做什麼」與「完成檢查點」，以及下一步建議。</li>
+    <li><b>底部</b>：<span class="btn">📖 手冊</span> 連到本手冊對應的章節；<span class="btn">‹ 上一步</span>、<span class="btn">下一步 ›</span> 切換 tab。</li>
+    <li>點標題可收合；六張卡共用同一個收合狀態，並會記住。</li>
   </ul>
   <figure>
-    <img src="manual/img/20-guide-bar.png" alt="流程導引步驟條">
-    <figcaption>流程導引步驟條：六步完成度、整體百分比與教科書要點。</figcaption>
+    <img src="manual/img/30-guide-card.png" alt="教材說明卡">
+    <figcaption>① 經營流程的教材說明卡（展開）：左欄目的與引文，右欄做什麼與檢查點，底部手冊連結與「下一步 ›」。</figcaption>
   </figure>
-</section>
-
-<section class="panel" id="title">
-  <h2 class="sec">3. 策略名稱與說明</h2>
-  <p>頁面最上方的「策略名稱與說明」區有兩個欄位：</p>
-  <ul>
-    <li><b>策略名稱</b>：會用在存檔檔名（<code>&lt;策略名稱&gt;_存檔.json</code>、<code>&lt;策略名稱&gt;_價值鏈.json</code>）與匯出的 PPTX 標題。</li>
-    <li><b>說明</b>：可以用格子代號寫成一段文字，例如「…為連鎖診所通路製造高階超音波設備(A24)…」。</li>
-  </ul>
-  <figure>
-    <img src="manual/img/01-header-title.png" alt="頁首與策略名稱與說明">
-    <figcaption>頁首標題旁有「📖 操作手冊」連結（就是本頁）；下方是策略名稱與說明。輸入後會自動暫存。</figcaption>
-  </figure>
+  <h3>用網址直接開某一步</h3>
+  <p>網址後面加 <code>#step-1</code>～<code>#step-6</code> 可直接開到對應 tab，例如 <code>index.html#step-4</code> 開在 ④ 前提驗證。切 tab 時網址也會跟著改，方便複製給同學或放進教材。</p>
 </section>
 
 <section class="panel" id="project">
-  <h2 class="sec">4. 專案（存檔、匯出、配色、重設）</h2>
-  <p>「策略名稱與說明」下方的「專案」區，放的是整個專案層級的操作。這一區在頁面往下捲動時會<b>固定在視窗頂端</b>，隨時都能存檔或匯出。</p>
+  <h2 class="sec">3. 專案列（存檔、載入、匯出、配色、範例、重設）</h2>
+  <p>頁首下方的「專案」列，放的是整個專案層級的操作，不屬於任何一步。這一列在頁面往下捲動時會<b>固定在視窗頂端</b>，在哪個 tab 都能存檔或匯出。</p>
   <figure>
-    <img src="manual/img/01b-project-panel.png" alt="專案區">
-    <figcaption>「專案」區：存檔、載入、匯出 PPTX、配色、重設。</figcaption>
+    <img src="manual/img/01b-project-panel.png" alt="專案列">
+    <figcaption>「專案」列：存檔、載入、匯出 PPTX、配色、載入範例、重設。</figcaption>
   </figure>
   <ul>
-    <li><span class="btn">💾 存檔</span>：把整張策略矩陣存成 JSON 檔（詳見「存檔／載入／重設」）。</li>
-    <li><span class="btn">📂 載入</span>：讀回之前存的 JSON 檔。</li>
-    <li><span class="btn">📊 匯出 PPTX</span>：產生可編輯的 PowerPoint（詳見「匯出 PPTX」）。</li>
-    <li><span class="btn">🎨 配色</span>：下拉選單，切換價值鏈、策略矩陣與匯出 PPTX 的配色（詳見「產業矩陣切換與配色」）。</li>
+    <li><span class="btn">💾 存檔</span>／<span class="btn">📂 載入</span>：把整張策略矩陣存成 JSON 檔、讀回（見 3.1）。</li>
+    <li><span class="btn">📊 匯出 PPTX</span>：產生可編輯的 PowerPoint（見「匯出 PPTX」）。</li>
+    <li><span class="btn">🎨 配色</span>：下拉選單，切換價值鏈、策略矩陣與匯出 PPTX 的配色（見「產業矩陣切換與配色」）。</li>
+    <li><span class="btn">📚 載入範例…</span>：載入書上的完整範例（見 3.2）。</li>
     <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態。</li>
   </ul>
+
+  <h3 id="save">3.1 存檔／載入／重設</h3>
+  <ul>
+    <li><span class="btn">💾 存檔</span>：把整張策略矩陣（價值鏈、欄位、策略構想、箭頭、策略點描述、前提、行動計畫、配色、目前 tab）存成 <code>&lt;策略名稱&gt;_存檔.json</code>。</li>
+    <li><span class="btn">📂 載入</span>：選擇之前存的 JSON 檔還原。</li>
+    <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態；會先確認，且無法復原。</li>
+  </ul>
+  <h4>瀏覽器自動存檔</h4>
+  <p>工具會在你操作時，自動把目前內容存在這台電腦的瀏覽器裡（localStorage），下次用同一個瀏覽器開啟網頁時會自動還原。但這只是「暫存」：換電腦、換瀏覽器、使用無痕視窗，或清除瀏覽器資料後，內容都會不見。</p>
+  <div class="note">重要的作品請務必按「💾 存檔」存成檔案，並自行保管。</div>
+
+  <h3 id="examples">3.2 載入範例</h3>
+  <p>想先看一份完整的策略長什麼樣子，可以載入內建範例。</p>
+  <ol class="steps">
+    <li>在「專案」列按 <span class="btn">📚 載入範例…</span> 下拉選單。</li>
+    <li>選一個範例：<b>網路書店 A 公司</b> 或 <b>晶圓代工 T 公司</b>（內容依《策略管理新論》Ch9 案例改寫）。</li>
+    <li>跳出確認視窗，按「確定」後會<b>取代目前的價值鏈、策略構想與箭頭</b>；載入前請先「💾 存檔」備份。</li>
+  </ol>
+  <p>範例已包含六步的完整內容：價值鏈、<b>策略點描述</b>、箭頭與<b>策略模組</b>、<b>前提</b>（含關鍵前提與燈號）、<b>行動計畫</b>，以及網路書店的<b>競爭者構想</b>（連鎖書店），可以逐個 tab 查看。載入後可直接修改、匯出，或按「↩ 復原」回到載入前。</p>
+  <figure>
+    <img src="manual/img/19-example.png" alt="專案列的載入範例下拉">
+    <figcaption>「專案」列的「📚 載入範例…」；圖為載入網路書店 A 公司後的狀態。本手冊 ②–⑥ 的部分截圖就是用這份範例拍的。</figcaption>
+  </figure>
 </section>
 
 <section class="panel" id="vc">
-  <h2 class="sec">5. 價值鏈編輯</h2>
+  <h2 class="sec">4. ① 經營流程</h2>
+  <p>第一步把整個產業從原料到最終顧客的經營流程畫成價值鏈，作為策略矩陣的欄位。這個 tab 只有「策略名稱與說明」與「價值鏈」兩塊，不顯示矩陣。網址直連：<code>#step-1</code>。</p>
+  <figure>
+    <img src="manual/img/31-step-chain.png" alt="① 經營流程 tab 全貌">
+    <figcaption>① 經營流程 tab：tab 列、教材說明卡（收合）、策略名稱與說明、價值鏈編輯區。</figcaption>
+  </figure>
+
+  <h3 id="title">4.1 策略名稱與說明</h3>
+  <ul>
+    <li><b>策略名稱</b>：會用在存檔檔名（<code>&lt;策略名稱&gt;_存檔.json</code>、<code>&lt;策略名稱&gt;_價值鏈.json</code>）與匯出的 PPTX 標題。</li>
+    <li><b>說明</b>：可以用格子代號寫成一段文字，例如「…為連鎖診所通路製造高階超音波設備(A24)…」；③ 的「策略句型」也能一鍵填進來。</li>
+  </ul>
+  <p>輸入後會自動暫存。</p>
+
+  <h3 id="vc-edit">4.2 價值鏈編輯</h3>
   <p>價值鏈分成三個區：上方的<b>支援活動</b>、中間的<b>主要活動</b>、下方的<b>產品</b>。展開到矩陣時，這些單元會成為矩陣的欄位。</p>
   <figure>
     <img src="manual/img/02-value-chain.png" alt="價值鏈編輯區">
     <figcaption>價值鏈編輯區（載入「醫療器材製造」範本後）。右側綠色大箭頭是「Margin／利潤」背景。</figcaption>
   </figure>
-
-  <h3>新增與刪除</h3>
+  <h4>新增與刪除</h4>
   <ul>
     <li>支援活動區最後的 <span class="btn">＋ 單元</span>：加一個支援活動（支援活動區只能放單元，不能放群組）。</li>
     <li>主要活動區最後的 <span class="btn">＋ 單元</span>、<span class="btn">＋ 群組</span>：加一個單元或一個群組（群組是把相關的子項歸在同一大類下，如「研發」下有「產品設計」「打樣」）。</li>
     <li>每個方塊上的 <span class="btn">＋同層</span>：在它旁邊加一個同層的新方塊；群組還有 <span class="btn">＋子項</span>，在群組內加子項。</li>
     <li>方塊上的 <span class="btn">✕</span>：刪除。刪除有內容的群組會先跳出確認視窗。</li>
   </ul>
-
-  <h3>改名</h3>
+  <h4>改名</h4>
   <p>直接點方塊上的名稱就能修改，按 Enter 或點別處即確定（名稱最多 20 字；過長會自動換行）。</p>
-
-  <h3>活動／資產</h3>
+  <h4>活動／資產</h4>
   <p>每個單元右側有「活動」或「資產」標籤，點一下就切換。資產方塊以淡黃色顯示，代表這個單元是企業擁有的資源（如品牌）而非一個流程步驟。</p>
   <figure class="narrow">
     <img src="manual/img/04-vc-node-group.png" alt="群組方塊">
     <figcaption>群組「研發」與它的兩個子項。</figcaption>
   </figure>
-
-  <h3>拖曳排序</h3>
+  <h4>拖曳排序</h4>
   <ul>
     <li>按住方塊拖到另一個方塊上：放在目標的前半就插到它前面，放在後半就插到它後面；畫面上會出現虛線空位預覽。</li>
     <li>拖到群組的空白處＝放進該群組的最後面。</li>
     <li>不能跨區（例如主要活動不能拖到支援活動）。</li>
   </ul>
-
-  <h3>大箭頭背景</h3>
+  <h4>大箭頭背景</h4>
   <p>價值鏈工具列右側的「大箭頭背景」勾選框，可顯示／隱藏右側「Margin／利潤」的大箭頭背景（只影響價值鏈的外觀）。</p>
-
   <figure>
     <img src="manual/img/03-vc-toolbar.png" alt="價值鏈工具列">
     <figcaption>價值鏈工具列：連線模式、展開到策略矩陣、存／載價值鏈、載入範本、大箭頭背景。</figcaption>
   </figure>
   <div class="note">價值鏈的編輯<b>不能</b>用「↩ 復原」還原，請小心刪除；若擔心改壞，可先按 <span class="btn">💾 存價值鏈</span> 備份。</div>
-</section>
 
-<section class="panel" id="roles">
-  <h2 class="sec">6. 價值單元角色</h2>
+  <h3 id="roles">4.3 價值單元角色</h3>
   <p>每個價值單元方塊上，「活動／資產」旁邊有一個 <span class="btn">＋角色</span> 標籤，點一下會依序循環：一般 → <b>半成品</b> → <b>主導</b> → <b>影響者</b> → 一般。</p>
   <ul>
     <li><b>半成品</b>：流程中途的產出不再往下加工，部分直接賣給其他產業。</li>
     <li><b>主導</b>：由誰主導整條上下游、承擔風險並享受利潤，其他階段只是代工。</li>
     <li><b>影響者</b>：不直接買賣、卻左右採購決策的單位（如政府主管機關、互補業者）。</li>
   </ul>
-  <p>設了角色的單元，展開後在矩陣表頭與匯出的 PPTX 都會帶〔角色〕標記。價值鏈的「📋 載入範本…」「理論骨架」新增了三個範本：<b>半成品外售流程</b>、<b>仲介型經營流程</b>、<b>多重產業共用市場</b>，可當成這幾種特殊結構的起點。</p>
+  <p>設了角色的單元，展開後在矩陣表頭與匯出的 PPTX 都會帶〔角色〕標記。價值鏈的「📋 載入範本…」「理論骨架」有三個範本：<b>半成品外售流程</b>、<b>仲介型經營流程</b>、<b>多重產業共用市場</b>，可當成這幾種特殊結構的起點。</p>
   <figure>
     <img src="manual/img/21-vc-roles.png" alt="單元角色與半成品範本">
     <figcaption>載入「半成品外售流程」範本：半成品單元（右下）以藍綠色〔半成品〕標籤顯示，其他單元為淡色「＋角色」。</figcaption>
   </figure>
-</section>
 
-<section class="panel" id="template">
-  <h2 class="sec">7. 載入範本</h2>
+  <h3 id="template">4.4 載入範本</h3>
   <p>價值鏈工具列的 <span class="btn">📋 載入範本…</span> 下拉選單，內建以下範本，選一個即可套用：</p>
   <ul>
     <li><b>生醫</b>：醫療器材製造、藥廠在台銷售、連鎖藥局、連鎖復健科診所、連鎖醫美診所、醫療設備代理</li>
     <li><b>其他產業</b>：工業電腦、醫師網紅經紀、原物料製造、連鎖加盟</li>
-    <li><b>理論骨架</b>：通用基本價值鏈</li>
+    <li><b>理論骨架</b>：通用基本價值鏈、半成品外售流程、仲介型經營流程、多重產業共用市場</li>
   </ul>
   <p>載入範本會<b>取代目前整條價值鏈（含產品）</b>，因此會先跳出確認視窗。載入後矩陣不會自動更新，要再按「📐 展開到策略矩陣」才會套用。範本只是起點，載入後可自由改名、增刪。</p>
   <p>另外 <span class="btn">💾 存價值鏈</span> 會把目前價值鏈存成 <code>&lt;策略名稱&gt;_價值鏈.json</code>，<span class="btn">📂 載價值鏈</span> 可讀回，方便在不同專案間重複使用同一條價值鏈。</p>
-</section>
 
-<section class="panel" id="links">
-  <h2 class="sec">8. 價值鏈連線</h2>
+  <h3 id="links">4.5 價值鏈連線</h3>
   <p>價值鏈連線用來標示兩個方塊之間的順序或關係（例如「產品設計 → 試產」）。</p>
   <ol class="steps">
     <li>按 <span class="btn">🔗 連線模式</span> 開啟（按鈕變成紫底白字，提示文字改變）。</li>
@@ -271,13 +334,10 @@
     <img src="manual/img/06-vc-links.png" alt="已建立連線的價值鏈">
     <figcaption>連線完成：價值鏈上出現細箭頭，下方有連線清單。</figcaption>
   </figure>
-
-  <h3>連線的走線規則</h3>
+  <h4>連線的走線規則</h4>
   <p>連線會自動避開方塊：相鄰的方塊畫直線；同一列但不相鄰時，從方塊上方繞過去；跨列的連線則走列與列之間的通道（必要時走側邊通道），不會斜穿其他方塊的名稱。</p>
-</section>
 
-<section class="panel" id="products">
-  <h2 class="sec">9. 產品面板</h2>
+  <h3 id="products">4.6 產品面板</h3>
   <p>價值鏈下方的「產品」區，放的是這張矩陣要分析的產品（或產品線）；展開後會成為矩陣<b>右側的產品欄</b>。</p>
   <ul>
     <li><span class="btn">＋ 產品</span>：新增一個產品。</li>
@@ -288,16 +348,14 @@
     <img src="manual/img/07-vc-products.png" alt="產品面板與連線清單">
     <figcaption>產品面板（上）與連線清單（下）。</figcaption>
   </figure>
-</section>
 
-<section class="panel" id="expand">
-  <h2 class="sec">10. 展開到策略矩陣</h2>
-  <p>按價值鏈工具列的 <span class="btn">📐 展開到策略矩陣</span>，會把價值鏈的所有單元依序變成矩陣的欄位（價值鏈至少要有 2 個單元，否則會提示無法展開）。</p>
+  <h3 id="expand">4.7 展開到策略矩陣</h3>
+  <p>按價值鏈工具列的 <span class="btn">📐 展開到策略矩陣</span>，會把價值鏈的所有單元依序變成矩陣的欄位（價值鏈至少要有 2 個單元，否則會提示無法展開）。這是 ① 的最後一個動作；展開後到 ② 就能看到矩陣。</p>
   <figure class="narrow">
     <img src="manual/img/08-expand-dialog.png" alt="展開到策略矩陣對話框">
     <figcaption>展開前的確認對話框。</figcaption>
   </figure>
-  <h3>對話框內容</h3>
+  <h4>對話框內容</h4>
   <ul>
     <li><b>支援活動放：</b>選「最前面（預設）」或「主活動後面」，決定支援活動欄位排在矩陣的左側或接在主要活動之後。</li>
     <li><b>欄位數：</b>顯示展開前 → 展開後的欄位數。</li>
@@ -312,8 +370,28 @@
   <div class="note">展開可以用 <span class="btn">↩ 復原</span> 還原，所以可以放心嘗試。</div>
 </section>
 
-<section class="panel" id="shortview">
-  <h2 class="sec">11. 短版矩陣</h2>
+<section class="panel" id="cells">
+  <h2 class="sec">5. ② 策略點描述</h2>
+  <p>矩陣的每一格是一個「策略點」（投入欄或產出欄 × A–F 六列）。第二步是逐格了解現況：切到這個 tab 時會自動進入「📝 描述策略點」模式，點格子就在矩陣下方的面板填寫。網址直連：<code>#step-2</code>。</p>
+  <figure>
+    <img src="manual/img/32-step-cells.png" alt="② 策略點描述 tab 全貌">
+    <figcaption>② 策略點描述 tab：說明卡下方是共用的策略矩陣，操作列已切在「📝 描述策略點」。</figcaption>
+  </figure>
+
+  <h3 id="matrix">5.1 矩陣基本操作</h3>
+  <p>② 到 ⑥ 共用同一張策略矩陣：欄是 ① 展開來的價值單元（右側是產品欄），列是 A 產品、B 市場、C 垂直、D 規模、E 地理、F 競優。每格有代號（如 A05），說明與句型都用這個代號指稱格子。</p>
+  <figure>
+    <img src="manual/img/12-action-bar.png" alt="操作列">
+    <figcaption>矩陣上方的操作列：模式切換、策略矩陣／產業矩陣、短版矩陣、疊圖、自動隱藏無箭頭欄、復原、清除（最右邊是目前狀態文字）。存檔、載入、匯出、重設在「專案」列。</figcaption>
+  </figure>
+  <ul>
+    <li><b>模式</b>：<span class="btn">✏️ 繪製箭頭</span>（點兩格畫箭頭）、<span class="btn">👁 檢視模式</span>（純瀏覽、避免誤點）、<span class="btn">📝 描述策略點</span>（點格子填描述）。切 tab 時會自動切到該步適合的模式，也可以自己換。</li>
+    <li><span class="btn">策略矩陣</span>：切換列標籤為產業矩陣用語（見「產業矩陣切換與配色」）。</li>
+    <li><span class="btn">🔀 疊圖</span>：同時顯示所有策略構想的箭頭（見 6.1）。</li>
+    <li><span class="btn">↩ 復原</span>、<span class="btn">清除目前策略</span>、<span class="btn">🗑 清除全部</span>：見 6.2。</li>
+  </ul>
+
+  <h3 id="shortview">5.2 短版矩陣</h3>
   <p>策略矩陣欄位很多時，可以只留跟產品特色有關的欄位。操作列的 <label style="font-size:0.74rem"><input type="checkbox" disabled> ✂ 短版矩陣</label> 核取方塊打勾後，進入短版模式：</p>
   <ul>
     <li><span class="btn">自動隱藏無箭頭欄</span>：把所有策略構想都沒有箭頭起訖的投入欄一次隱藏，並自動開啟短版。</li>
@@ -326,27 +404,29 @@
     <img src="manual/img/22-short-view.png" alt="短版矩陣">
     <figcaption>短版矩陣：只留有箭頭的欄位，下方 chip 列顯示被隱藏的欄。</figcaption>
   </figure>
-</section>
 
-<section class="panel" id="cells">
-  <h2 class="sec">12. 策略點描述</h2>
-  <p>矩陣的每一格是一個「策略點」。操作列模式切換的第三顆 <span class="btn">📝 描述策略點</span>，讓你點格子後在矩陣下方的面板填寫描述。</p>
+  <h3 id="cell-panel">5.3 策略點面板與填寫進度</h3>
   <ol class="steps">
-    <li>切到「📝 描述策略點」，點矩陣上任一格。</li>
-    <li>面板顯示該格的<b>定義</b>（依投入欄／產出欄 × 列不同，附教科書頁碼）與<b>引導問題</b>。</li>
+    <li>在 ② tab（「📝 描述策略點」模式）點矩陣上任一格。</li>
+    <li>矩陣下方的面板顯示該格的<b>定義</b>（依投入欄／產出欄 × 列不同，附教科書頁碼）與<b>引導問題</b>。</li>
     <li>在文字框填寫描述；有些列有專用選項：<b>C 列（垂直整合）</b>可選 <span class="btn">○ 自製</span>、<span class="btn">✕ 外包</span>、<span class="btn">◐ 局部整合</span>（再點一次取消），<b>F 列（競爭優勢）</b>可勾選優勢基礎（能力、獨佔、時機、財力、綜效、關係、資訊科技）。</li>
-    <li>面板右上角顯示「已描述 N／總格數」與進度條。</li>
+    <li>面板右上角顯示「已描述 N／總格數」與進度條，tab 列上 ② 的完成度也跟著更新。</li>
   </ol>
-  <p>已填的格子會有小圓點標記；C 列格子顯示 ○✕◐，F 列顯示「優勢×N」。產品欄的 C 列不適用，面板會說明。</p>
+  <p>已填的格子會有小圓點標記；C 列格子顯示 ○✕◐，F 列顯示「優勢×N」。產品欄的 C 列不適用，面板會說明。策略點面板在 ④ 前提驗證 tab 也看得到，方便邊看描述邊寫前提。</p>
   <figure>
     <img src="manual/img/23-cell-panel.png" alt="策略點面板">
-    <figcaption>「📝 描述策略點」模式：下方面板顯示 C04 的定義、引導問題與自製選項；矩陣上 C04 顯示 ○。</figcaption>
+    <figcaption>「📝 描述策略點」模式：下方面板顯示 C 列格子的定義、引導問題與自製選項；矩陣上該格顯示 ○。</figcaption>
   </figure>
 </section>
 
 <section class="panel" id="ideas">
-  <h2 class="sec">13. 策略構想</h2>
-  <p>一張策略矩陣可以同時比較多個「策略構想」，每個構想用一種顏色的箭頭表示。</p>
+  <h2 class="sec">6. ③ 策略構想</h2>
+  <p>第三步用箭頭表達策略要素之間的因果，把相關的箭頭圈成模組。切到這個 tab 會自動進入「✏️ 繪製箭頭」模式；tab 內由上而下是：已繪製的箭頭（含模組、要素、前提、句型）、策略構想列、圖例與矩陣。網址直連：<code>#step-3</code>。</p>
+  <figure>
+    <img src="manual/img/33-step-ideas.png" alt="③ 策略構想 tab 全貌">
+    <figcaption>③ 策略構想 tab（網路書店範例）：說明卡下方是箭頭清單，往下是策略構想列與矩陣。</figcaption>
+  </figure>
+  <p>一張策略矩陣可以同時比較多個「策略構想」，每個構想用一種顏色的箭頭表示。策略構想列在 ③ 到 ⑥ 都看得到，可以隨時切換目前構想。</p>
   <figure>
     <img src="manual/img/10-competitors.png" alt="策略構想列">
     <figcaption>策略構想列：目前選取的構想外框會加粗。</figcaption>
@@ -357,70 +437,53 @@
     <li><b>刪除：</b>點 <span class="btn">✕</span>，至少要保留 1 個。</li>
     <li><b>新增：</b>在「新增策略名稱」輸入框打上名稱後，按 <span class="btn">＋ 新增</span> 或 Enter，最多 8 個。</li>
   </ul>
-</section>
 
-<section class="panel" id="kinds">
-  <h2 class="sec">14. 構想分型與對陣點</h2>
+  <h3 id="kinds">6.1 構想分型與疊圖</h3>
   <p>策略構想的名稱前有一個短標，標示它的類型，<b>點一下就循環切換</b>：</p>
   <ul>
     <li><b>〔本〕</b>本公司現行策略；<b>〔未〕</b>未來方向；<b>〔競〕</b>競爭者的策略構想。</li>
     <li>新增構想時，「＋ 新增」旁的下拉選單可先選好類型。</li>
     <li>競爭者的箭頭以<b>虛線</b>畫出。</li>
     <li>操作列的 <span class="btn">🔀 疊圖（顯示所有構想）</span> 打勾時，所有構想的箭頭同時畫在同一張矩陣上（非目前構想變淡）；取消則只畫目前構想。</li>
-    <li>本公司與競爭者用到<b>同一個策略點</b>的格子，會標上 ⚔，稱為「對陣點」。</li>
+    <li>本公司與競爭者用到<b>同一個策略點</b>的格子，會標上 ⚔，稱為「對陣點」；對陣點的判斷在 ④（見 7.2）。</li>
   </ul>
   <figure>
     <img src="manual/img/24-kinds.png" alt="構想分型與疊圖">
     <figcaption>〔本〕〔未〕〔競〕構想並列、疊圖開啟；有 ⚔ 的格子是對陣點。</figcaption>
   </figure>
-  <p>「已繪製的箭頭」區的 <span class="btn">⚔ 對陣點（本公司 vs 競爭者）</span> 折疊區，列出所有對陣點、雙方各有幾條箭頭，並讓你逐點判斷：<span class="btn">可強化</span>（我方有機會創造優勢）、<span class="btn">須轉移</span>（必須轉移陣地）或未定，並寫下理由；可按 <span class="btn">📋 複製</span>。</p>
-  <figure>
-    <img src="manual/img/25-clash.png" alt="對陣點列表">
-    <figcaption>對陣點列表：每個對陣點可標「可強化／須轉移」並填理由。</figcaption>
-  </figure>
-</section>
 
-<section class="panel" id="arrows">
-  <h2 class="sec">15. 畫箭頭、補充說明、排序、復原、清除</h2>
-  <h3>畫箭頭</h3>
-  <p>確認操作列的 <span class="btn">✏️ 繪製箭頭</span> 是選取狀態，然後：</p>
+  <h3 id="arrows">6.2 畫箭頭、補充說明、排序、復原、清除</h3>
+  <h4>畫箭頭</h4>
+  <p>在 ③ tab，操作列的 <span class="btn">✏️ 繪製箭頭</span> 已是選取狀態：</p>
   <ol class="steps">
     <li>點矩陣上的起點格，該格變成黃色。</li>
     <li>再點終點格，就畫出一條帶箭頭的連線，顏色為目前策略的顏色。</li>
     <li>若想取消起點，再點一次黃色的格子。</li>
   </ol>
-  <p>要純粹瀏覽、避免誤點時，切換到 <span class="btn">👁 檢視模式</span>。</p>
   <figure>
     <img src="manual/img/14-draw-pending.png" alt="繪製中的起點格">
-    <figcaption>起點格 A18 變成黃色，狀態列提示「請點終點」。</figcaption>
+    <figcaption>起點格變成黃色，狀態列提示「請點終點」。</figcaption>
   </figure>
-
-  <h3>箭頭清單與補充說明</h3>
-  <p>「策略矩陣展開」區會列出所有箭頭，格式為「策略名：A04 → A05」。</p>
+  <h4>箭頭清單與補充說明</h4>
+  <p>tab 上方的「已繪製的箭頭」列出目前策略構想的所有箭頭，格式為「策略名：A04 → A05」。</p>
   <ul>
     <li><b>補充說明…</b>輸入框：寫下這條箭頭的意義，匯出 PPTX 時會放進該箭頭的步驟頁。</li>
     <li><b>⠿ 拖曳</b>：調整順序，只能在同一個策略內排序（順序會影響 PPTX 步驟頁的先後）。</li>
     <li><b>✕</b>：刪除這條箭頭。</li>
+    <li>每條箭頭下方還有「要素」列（見 6.4）與「前提」列（見 7.1）。</li>
   </ul>
   <figure>
-    <img src="manual/img/11-arrow-list.png" alt="圖例與箭頭清單">
-    <figcaption>圖例（各策略的顏色）與已繪製的箭頭清單。</figcaption>
+    <img src="manual/img/11-arrow-list.png" alt="已繪製的箭頭清單">
+    <figcaption>已繪製的箭頭清單：模組列、每條箭頭的補充說明、要素與前提列，最下方是策略句型。</figcaption>
   </figure>
-
-  <h3>操作列</h3>
-  <figure>
-    <img src="manual/img/12-action-bar.png" alt="操作列">
-    <figcaption>操作列：模式切換、策略矩陣切換、復原、清除目前策略、清除全部（最右邊是目前狀態文字）。存檔、載入、匯出、重設已移到「專案」區。</figcaption>
-  </figure>
+  <h4>復原與清除</h4>
   <ul>
     <li><span class="btn">↩ 復原</span>：還原上一個動作，最多 80 步。可復原新增／刪除／排序箭頭、刪除策略、清除、展開到策略矩陣；<b>價值鏈的編輯不能復原</b>。</li>
     <li><span class="btn">清除目前策略</span>：清掉目前選取策略的所有箭頭，<b>不會詢問</b>，但可以用「↩ 復原」救回。</li>
     <li><span class="btn">🗑 清除全部</span>：清掉所有策略的所有箭頭，會先確認。</li>
   </ul>
-</section>
 
-<section class="panel" id="modules">
-  <h2 class="sec">16. 策略模組</h2>
+  <h3 id="modules">6.3 策略模組</h3>
   <p>「已繪製的箭頭」區頂端的模組列，可以把目前策略構想中相關的幾條箭頭圈成一個有名字的<b>策略模組</b>（例如「競爭優勢：資訊系統與採購」）。</p>
   <ul>
     <li>每個模組是一個 chip，顯示名稱與箭頭數；chip 上 <span class="btn">✎</span> 改名、<span class="btn">☑</span> 勾選成員箭頭、<span class="btn">✕</span> 刪除。</li>
@@ -432,10 +495,8 @@
     <img src="manual/img/26-modules.png" alt="策略模組">
     <figcaption>模組 chip 列與箭頭清單；箭頭前有 🧩 模組小標。</figcaption>
   </figure>
-</section>
 
-<section class="panel" id="elements">
-  <h2 class="sec">17. 策略要素標記</h2>
+  <h3 id="elements">6.4 策略要素標記</h3>
   <p>每條箭頭可以標上「策略要素」（《策略管理新論》Ch9 的 51 項要素，例如「1-3 價值單元成本之降低」），用來說明這條箭頭的策略意義。</p>
   <ol class="steps">
     <li>在「已繪製的箭頭」清單中，每條箭頭下方有一列<b>要素標籤</b>。</li>
@@ -447,15 +508,13 @@
     <img src="manual/img/17-elements.png" alt="箭頭的策略要素標籤與勾選面板">
     <figcaption>箭頭下方的要素標籤列與勾選面板。</figcaption>
   </figure>
-</section>
 
-<section class="panel" id="sentences">
-  <h2 class="sec">18. 策略句型產生器</h2>
+  <h3 id="sentences">6.5 策略句型產生器</h3>
   <p>箭頭清單下方的「📝 策略句型」會依各條箭頭自動組成策略敘述（相連的箭頭會合併成匯流句或鏈式句）。</p>
   <ol class="steps">
     <li>點開 <span class="btn">📝 策略句型</span> 展開句型框，查看目前策略的句子。</li>
     <li>按 <span class="btn">📋 複製</span> 把句子複製到剪貼簿，貼到報告或簡報。</li>
-    <li>按 <span class="btn">⬇ 填入說明</span> 把句子寫進頁面最上方的「策略說明」欄。</li>
+    <li>按 <span class="btn">⬇ 填入說明</span> 把句子寫進 ① 的「策略說明」欄。</li>
   </ol>
   <p>匯出 PPTX 時，步驟頁與最後的總覽頁也會附上策略句型。</p>
   <figure>
@@ -465,23 +524,41 @@
 </section>
 
 <section class="panel" id="premises">
-  <h2 class="sec">19. 前提與 SWOT</h2>
-  <p>策略成立往往靠一些前提。在箭頭清單每條箭頭的「前提」列，按 <span class="btn">＋ 前提</span> 新增一個前提 chip，點 chip 展開編輯：</p>
+  <h2 class="sec">7. ④ 前提驗證</h2>
+  <p>每個策略動作或因果關係都有前提。第四步檢查這些前提是否成立，並依方案彙整成 SWOT；同時檢查本公司與競爭者正面交鋒的對陣點。切到這個 tab 會進入「👁 檢視模式」，矩陣下方仍有策略點面板可參考。網址直連：<code>#step-4</code>。</p>
+  <figure>
+    <img src="manual/img/34-step-premise.png" alt="④ 前提驗證 tab 全貌">
+    <figcaption>④ 前提驗證 tab：說明卡下方是「前提與 SWOT」與「對陣點」兩個折疊區。</figcaption>
+  </figure>
+
+  <h3 id="swot">7.1 前提與 SWOT</h3>
+  <p>前提是掛在箭頭上的。在 ③ 的箭頭清單，每條箭頭的「前提」列按 <span class="btn">＋ 前提</span> 新增一個前提 chip，點 chip 展開編輯：</p>
   <ul>
     <li><b>類型</b>：環境、條件、因果認知（因果認知為本工具自訂類別）。</li>
     <li><b>內容</b>：一句話寫下前提。</li>
     <li><b>成立度</b>：成立、待驗證、不成立等；chip 尾端的小圓點顯示狀態。</li>
   </ul>
-  <p>「🧭 前提與 SWOT」折疊區會把目前策略構想的所有前提，依類型與成立度彙整成 S／W／O／T 四象限，另列「待驗證」與「因果」清單；按 <span class="btn">📋 複製 SWOT</span> 可貼到報告。</p>
+  <p>④ tab 的「🧭 前提與 SWOT」會把目前策略構想的所有前提，依類型與成立度彙整成 S／W／O／T 四象限，另列「待驗證」與「因果」清單；按 <span class="btn">📋 複製 SWOT</span> 可貼到報告。待驗證的前提都釐清後，tab 列上 ④ 就會到 100%。</p>
   <figure>
     <img src="manual/img/27-premise-swot.png" alt="前提與 SWOT">
     <figcaption>前提與 SWOT 折疊區（展開後）。</figcaption>
   </figure>
+
+  <h3 id="clash">7.2 對陣點</h3>
+  <p>「⚔ 對陣點（本公司 vs 競爭者）」折疊區，列出本公司（現行／未來方向）與競爭者構想用到同一個策略點的格子、雙方各有幾條箭頭，並讓你逐點判斷：<span class="btn">可強化</span>（我方有機會創造優勢）、<span class="btn">須轉移</span>（必須轉移陣地）或未定，並寫下理由；可按 <span class="btn">📋 複製</span>。要看到對陣點，至少要有一個〔競〕構想（見 6.1）。</p>
+  <figure>
+    <img src="manual/img/25-clash.png" alt="對陣點列表">
+    <figcaption>對陣點列表：每個對陣點可標「可強化／須轉移」並填理由。</figcaption>
+  </figure>
 </section>
 
 <section class="panel" id="actions">
-  <h2 class="sec">20. 行動計畫</h2>
-  <p>「🗂 行動計畫」折疊區把選定的策略構想拆成可執行的行動項目：</p>
+  <h2 class="sec">8. ⑤ 行動計畫</h2>
+  <p>第五步與形成策略的方向相反：把選定的策略構想拆回箭頭與要素，變成可執行的行動項目。切到這個 tab 會進入「👁 檢視模式」。網址直連：<code>#step-5</code>。</p>
+  <figure>
+    <img src="manual/img/35-step-action.png" alt="⑤ 行動計畫 tab 全貌">
+    <figcaption>⑤ 行動計畫 tab：說明卡下方是行動計畫表。</figcaption>
+  </figure>
   <ul>
     <li><span class="btn">✨ 從箭頭產生行動項目</span>：為每條還沒有行動項目的箭頭各建一筆；也可按 <span class="btn">＋ 行動項目</span> 手動新增。</li>
     <li>表格欄位：行動項目、來源箭頭、模組、<b>負責單元</b>（下拉選價值單元）、部門／負責人、開始與結束日期、狀態（待辦／進行中／完成）、跨部門。</li>
@@ -496,8 +573,12 @@
 </section>
 
 <section class="panel" id="control">
-  <h2 class="sec">21. 前提控制表</h2>
-  <p>策略定案後，要持續檢查前提是否仍成立。「🚦 策略前提控制表」折疊區列出前提，讓你挑出<b>關鍵前提</b>來追蹤：</p>
+  <h2 class="sec">9. ⑥ 策略控制（前提控制表）</h2>
+  <p>策略定案後，要持續檢查前提是否仍成立。第六步的「🚦 策略前提控制表」列出前提，讓你挑出<b>關鍵前提</b>來追蹤。網址直連：<code>#step-6</code>。</p>
+  <figure>
+    <img src="manual/img/36-step-control.png" alt="⑥ 策略控制 tab 全貌">
+    <figcaption>⑥ 策略控制 tab：說明卡下方是前提控制表。</figcaption>
+  </figure>
   <ul>
     <li>勾選最左欄的 <b>★ 關鍵</b>，把前提納入控制；也可打勾「只顯示關鍵前提」。</li>
     <li>為關鍵前提填<b>觀察指標</b>（要看什麼數據來偵測）、<b>燈號</b>（綠／黃／紅）、<b>下次檢視日</b>與備註。</li>
@@ -510,32 +591,17 @@
   </figure>
 </section>
 
-<section class="panel" id="examples">
-  <h2 class="sec">22. 載入範例</h2>
-  <p>想先看一份完整的策略長什麼樣子，可以載入內建範例。</p>
-  <ol class="steps">
-    <li>在「專案」區按 <span class="btn">📚 載入範例…</span> 下拉選單。</li>
-    <li>選一個範例：<b>網路書店 A 公司</b> 或 <b>晶圓代工 T 公司</b>（內容依《策略管理新論》Ch9 案例改寫）。</li>
-    <li>跳出確認視窗，按「確定」後會<b>取代目前的價值鏈、策略構想與箭頭</b>；載入前請先「💾 存檔」備份。</li>
-  </ol>
-  <p>範例已包含完整內容：價值鏈、箭頭、<b>策略點描述</b>、<b>策略模組</b>、<b>前提</b>（含關鍵前提與燈號）、<b>行動計畫</b>，以及網路書店的<b>競爭者構想</b>（連鎖書店），可直接逐區查看。載入後可直接修改、匯出，或按「↩ 復原」回到載入前。</p>
-  <figure>
-    <img src="manual/img/19-example.png" alt="專案區的載入範例下拉">
-    <figcaption>「專案」區的「📚 載入範例…」；圖為載入網路書店 A 公司後的狀態。</figcaption>
-  </figure>
-</section>
-
 <section class="panel" id="industry">
-  <h2 class="sec">23. 產業矩陣切換與配色</h2>
+  <h2 class="sec">10. 產業矩陣切換與配色</h2>
   <h3>產業矩陣切換</h3>
-  <p>操作列的 <span class="btn">策略矩陣</span> 按鈕按一下會切成「策略矩陣＋產業矩陣」，矩陣左側的列標籤改為產業矩陣用語：關聯、市場、垂直、規模、地理、KSF's（再按一次切回）。</p>
+  <p>操作列的 <span class="btn">策略矩陣</span> 按鈕按一下會切成「策略矩陣＋產業矩陣」，矩陣左側的列標籤改為產業矩陣用語：關聯、市場、垂直、規模、地理、KSF's（再按一次切回）。② 到 ⑥ 共用同一張矩陣，所以切換後每個 tab 都一樣。</p>
   <figure>
     <img src="manual/img/16-industry-matrix.png" alt="策略矩陣＋產業矩陣">
     <figcaption>切換後左側列標籤變為「關聯／市場／垂直／規模／地理／KSF's」。</figcaption>
   </figure>
 
   <h3>配色</h3>
-  <p>配色在頁面上方「專案」區的 <span class="btn">🎨 配色</span> 下拉選單，共六組：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白、莫蘭迪柔和、森林大地。選一個即可套用。</p>
+  <p>配色在「專案」列的 <span class="btn">🎨 配色</span> 下拉選單，共六組：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白、莫蘭迪柔和、森林大地。選一個即可套用。</p>
   <ul>
     <li><b>換色範圍：</b>價值鏈、策略矩陣與匯出的 PPTX 會一起換色；策略構想（各條箭頭）的顏色不變。</li>
     <li><b>顏色對應：</b>價值鏈主要活動群組內的子項，底色與字色和矩陣的細項欄一致；矩陣上屬於支援活動的欄位，表頭使用支援活動的顏色（預設為橘色系）。</li>
@@ -543,7 +609,7 @@
   </ul>
   <figure>
     <img src="manual/img/15a-palette-morandi-vc.png" alt="莫蘭迪柔和配色的價值鏈">
-    <figcaption>換成「莫蘭迪柔和」配色後的價值鏈。</figcaption>
+    <figcaption>換成「莫蘭迪柔和」配色後的價值鏈（① tab）。</figcaption>
   </figure>
   <figure>
     <img src="manual/img/15b-palette-morandi-matrix.png" alt="莫蘭迪柔和配色的策略矩陣">
@@ -552,35 +618,31 @@
 </section>
 
 <section class="panel" id="pptx">
-  <h2 class="sec">24. 匯出 PPTX</h2>
-  <p>按「專案」區的 <span class="btn">📊 匯出 PPTX</span>，工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
+  <h2 class="sec">11. 匯出 PPTX</h2>
+  <p>按「專案」列的 <span class="btn">📊 匯出 PPTX</span>（在哪個 tab 都可以），工具會產生一份可編輯的 PowerPoint，內容依序為：</p>
   <ol class="steps">
-    <li>價值鏈頁。</li>
+    <li>價值鏈頁（①）。</li>
     <li>每一條箭頭一張步驟頁（顯示該步驟的矩陣位置，並帶入你寫的「補充說明」）。</li>
     <li>總覽頁。</li>
-    <li>總覽頁之後依序接以下新頁（<b>沒有資料的頁會跳過</b>，並在狀態列提示）：策略點描述頁、策略模組頁（每個模組一張，含矩陣與句型）、前提／SWOT 頁、對陣點頁（競爭者以虛線）、行動計畫頁、前提控制頁。</li>
+    <li>總覽頁之後依序接以下新頁（<b>沒有資料的頁會跳過</b>，並在狀態列提示）：策略點描述頁（②）、策略模組頁（③，每個模組一張，含矩陣與句型）、前提／SWOT 頁與對陣點頁（④，競爭者以虛線）、行動計畫頁（⑤）、前提控制頁（⑥）。</li>
   </ol>
   <p>匯出過程會顯示進度視窗，完成後瀏覽器會下載檔案；簡報會使用你目前選的配色。短版矩陣開啟時，只會畫可見的欄位。想讓簡報更好講，建議先替每條箭頭寫好補充說明、排好順序。</p>
 </section>
 
-<section class="panel" id="save">
-  <h2 class="sec">25. 存檔／載入／重設</h2>
-  <p>這三個按鈕都在頁面上方的「專案」區：</p>
-  <ul>
-    <li><span class="btn">💾 存檔</span>：把整張策略矩陣（價值鏈、欄位、策略構想、箭頭、配色）存成 <code>&lt;策略名稱&gt;_存檔.json</code>。</li>
-    <li><span class="btn">📂 載入</span>：選擇之前存的 JSON 檔還原。</li>
-    <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態；會先確認，且無法復原。</li>
-  </ul>
-  <h3>瀏覽器自動存檔</h3>
-  <p>工具會在你操作時，自動把目前內容存在這台電腦的瀏覽器裡（localStorage），下次用同一個瀏覽器開啟網頁時會自動還原。但這只是「暫存」：換電腦、換瀏覽器、使用無痕視窗，或清除瀏覽器資料後，內容都會不見。</p>
-  <div class="note">重要的作品請務必按「💾 存檔」存成檔案，並自行保管。</div>
-</section>
-
 <section class="panel" id="faq">
-  <h2 class="sec">26. 常見問題</h2>
+  <h2 class="sec">12. 常見問題</h2>
   <dl>
     <dt>Q：價值鏈改錯了，可以按「↩ 復原」嗎？</dt>
     <dd>不行。「↩ 復原」只管矩陣這一側的動作（箭頭、策略、清除、展開）。價值鏈的編輯不能復原；建議大改前先按「💾 存價值鏈」備份。</dd>
+
+    <dt>Q：在 ① 經營流程看不到策略矩陣？</dt>
+    <dd>這是設計如此：① 只編價值鏈，矩陣從 ② 開始才顯示。改完價值鏈記得按「📐 展開到策略矩陣」，再切到 ② 或 ③。</dd>
+
+    <dt>Q：在 ④⑤⑥ 點矩陣格子沒有反應？</dt>
+    <dd>這幾個 tab 預設是「👁 檢視模式」，避免誤畫箭頭。要畫箭頭請回 ③，或在操作列自己切回「✏️ 繪製箭頭」。</dd>
+
+    <dt>Q：箭頭清單、句型在哪？</dt>
+    <dd>都在 ③ 策略構想 tab。前提也是在 ③ 的箭頭清單上新增，④ 負責彙整。</dd>
 
     <dt>Q：策略構想最多幾個？</dt>
     <dd>最多 8 個，名稱最多 14 個字；至少要保留 1 個。</dd>
