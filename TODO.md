@@ -5,7 +5,8 @@
 
 # 新增功能
 
-- [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）
+## Complete
+- [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）（release v1.1.0）
   - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
   - 第 1 階段：文案
   - [x] ST-21a 教材說明卡文案常數 `GUIDE_CONTENT`：六步各含「目的／課本怎麼說（短引文）／在這裡做什麼／完成檢查點／延伸頁碼／手冊錨點」；由 subagent 讀掃描 PDF 指定頁，定稿同步補進摘要檔第三節 [S 270–281、285–286、343–346、369–379]（完成 2026-10-26：index.html 純新增常數 129 行，key 同 GUIDE_STEPS（chain／cells／ideas／premise／action／control）、每步 purpose／quote[{text,page}]／todo／checks／pages／manual；11 則引文各 ≤40 字；定稿見 doc/reference/策略管理新論-分步引導版面.md 第三節）
@@ -16,8 +17,6 @@
   - 第 3 階段：驗證與文件
   - [x] ST-21e 回歸驗證：兩個 fixtures 舊存檔載入後六 tab 截圖與連線重畫、載範例後各 tab 完成度、PPTX 匯出 XML 與 v1.0.0 一致（用 tools/cdp-harness.mjs，腳本放 tests/）；依賴 ST-21d（完成 2026-10-26：tests/st-21-regression.mjs 42 項全 PASS——兩份 fixtures 六 tab 截圖與連線重畫（③ 24／18 條、座標無 0、往返不變）、兩範例六步 pct 與 v1.0.0 相同、PPTX 34／25 張 slide XML 逐張相同、說明卡與 #step-3 直連；跑法見 tests/README.md）
   - [x] ST-21f manual.html 與 README 改為依六步分章、重拍截圖（tools/capture-manual.mjs 配合 tab 切換）；index.html 說明卡連到對應錨點；依賴 ST-21e（完成 2026-10-26：手冊重組 13 章（0–3 總論、4–9 對應 ①–⑥、10–12 配色／PPTX／FAQ），舊 26 個 id 全保留（14 個改 h3）；capture-manual.mjs 每張圖先 guideGoto 切 tab 再截，38 張重拍（刪 20-guide-bar、新增 tab 列／說明卡／六 tab 全貌 8 張）；README 功能介紹與使用方式改六步；GUIDE_CONTENT.manual 直接對到六章 id；自測 tools/selftest/ST-21f.mjs）
-
-## Complete
 - [x] ST-03 短版策略矩陣：只顯示跟產品特色有關的欄位（可勾選隱藏其他欄）[P3 56]（完成 2026-10-25：✂ 短版矩陣開關、自動隱藏無箭頭欄、表頭 ✕ 個別隱藏、chip 列回復；代號維持原編號；PPTX 依可見欄匯出）（release v1.0.0）
 - [x] ST-05 價值鏈連線美化：相鄰方塊的短線看不清楚；長線會壓過同一列方塊的名稱（ST-01c 驗證時發現）（完成 2026-10-25：相鄰改直短箭頭、同列跨越改走方塊上方圓角繞行＋白描邊，PPTX 同步三段連接器）（release v1.0.0）
 - [x] ST-15 價值鏈跨列連線仍是斜直線，會壓過中間方塊名稱（ST-05 驗證時發現；需另定跨列繞行規則）（完成 2026-10-25：vcCrossRoute 四點列間通道折線、夾列時改六點側邊通道、仍撞才退回直線；PPTX 多段連接器自動支援）（release v1.0.0）
