@@ -1297,18 +1297,18 @@
 
 <!-- Action bar -->
 <div class="action-bar">
-  <div class="mode-toggle">
+  <div class="mode-toggle step-pane" data-steps="ideas premise action control">
     <button class="mode-btn active" id="modeDrawBtn" onclick="setMode('draw')">✏️ 繪製箭頭</button>
     <button class="mode-btn" id="modeViewBtn" onclick="setMode('view')">👁 檢視模式</button>
     <button class="mode-btn" id="modeDescBtn" onclick="setMode('describe')" title="點格子在右側面板（窄螢幕在下方）看策略點定義並填寫描述（ST-14a）">📝 描述策略點</button>
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
-  <label class="short-view-toggle" title="矩陣上要畫哪些策略構想的箭頭：只看目前構想／目前＋競爭者／全部構想（非目前構想變淡、競爭者虛線）；含雙方時以 ⚔ 標出對陣點（ST-26a）">👁 檢視 <select id="matrixViewSel" onchange="setMatrixView(this.value)"><option value="current">只看目前構想</option><option value="rivals">目前＋競爭者</option><option value="all">全部構想</option></select></label>
-  <button class="btn-ghost" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
+  <label class="short-view-toggle step-pane" data-steps="ideas premise action control" title="矩陣上要畫哪些策略構想的箭頭：只看目前構想／目前＋競爭者／全部構想（非目前構想變淡、競爭者虛線）；含雙方時以 ⚔ 標出對陣點（ST-26a）">👁 檢視 <select id="matrixViewSel" onchange="setMatrixView(this.value)"><option value="current">只看目前構想</option><option value="rivals">目前＋競爭者</option><option value="all">全部構想</option></select></label>
+  <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
-  <button class="btn-ghost" onclick="clearCompetitor()">清除目前策略</button>
-  <button class="btn-ghost" onclick="clearAll()">🗑 清除全部</button>
+  <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="clearCompetitor()">清除目前策略</button>
+  <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="clearAll()">🗑 清除全部</button>
   <span class="status" id="statusText"></span>
 </div>
 
@@ -3119,6 +3119,7 @@ function setMode(mode) {
   document.querySelectorAll('td.cell').forEach(td => {
     td.style.cursor = cellCursor();
   });
+  drawLines();  // ST-33：describe 不畫箭頭，切模式即時生效
 }
 
 // ── Column Editor（兩層：大類 + 細項）───────────────────────────────────────
@@ -5007,6 +5008,11 @@ function drawLines() {
   svg.innerHTML = '';
   // Clear used class from all cells
   document.querySelectorAll('td.cell.used').forEach(td => td.classList.remove('used'));
+  // ST-33：② 描述策略點不顯示箭頭（箭頭到 ③ 才處理）；一併清掉 ⚔ 對陣點標記
+  if (currentMode === 'describe') {
+    document.querySelectorAll('#matrixTable td.cell.clash').forEach(td => td.classList.remove('clash'));
+    return;
+  }
 
   // Defs: thick arrow markers per competitor
   const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
