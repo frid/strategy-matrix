@@ -35,8 +35,10 @@ const KNOWN_RENAMES = [
   ["的KSF's", '的優勢'], ["的KSF&apos;s", '的優勢'], ['的關聯', '的貢獻'],
   ["KSF's", 'KSF'], ['KSF&apos;s', 'KSF'], ['〔主導〕', '〔主導權責〕'], ['須轉移', '轉移陣地'],
   ['○ 自製', '○ 自行負責'], ['策略前提控制（監測）', '策略前提控制表'], ['產品品質之確保', '產品品質之保證'],
+  // ST-34c 優勢基礎改書上名稱（只在「、」或標籤邊界之間的整個詞才替換，避免誤改「資訊能力」等文字）
+  [/(?<=>|、)資訊科技(?=、|<)/g, '資訊科技之運用'], [/(?<=>|、)能力(?=、|<)/g, '獨特能力'], [/(?<=>|、)獨佔(?=、|<)/g, '獨佔力'],
 ];
-const applyRenames = x => KNOWN_RENAMES.reduce((t, [a, b]) => t.split(a).join(b), x);
+const applyRenames = x => KNOWN_RENAMES.reduce((t, [a, b]) => a instanceof RegExp ? t.replace(a, b) : t.split(a).join(b), x);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fail = 0;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++; };

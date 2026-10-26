@@ -1955,7 +1955,7 @@ const EXAMPLE_PROJECTS = [
       '物流運輸|C': { text: '運輸需要規模經濟又要分散各地，不宜自行處理，找合適的合作業者承擔 [S 357]', vi: 'buy' },
       '採購|D': { text: '採購規模大、成本比較低，談判力來自市場需求與涵蓋地區夠大 [S 356]' },
       '倉儲|E': { text: '倉儲與運輸需分散在各地，服務分散各地的顧客 [S 354、357]' },
-      '資訊系統|F': { text: '優勢來自經營團隊的技術能力，規模變大後更有利，也是網站形象與服務特色的來源 [S 356]', bases: ['能力', '資訊科技'] },
+      '資訊系統|F': { text: '優勢來自經營團隊的技術能力，規模變大後更有利，也是網站形象與服務特色的來源 [S 356]', bases: ['獨特能力', '資訊科技之運用'] },
     },
   },
   {
@@ -2030,7 +2030,7 @@ const EXAMPLE_PROJECTS = [
       '設備|C': { text: '生產設備多由國外先進廠商供應，自己不製造設備，向外採購 [S 361]', vi: 'buy' },
       '晶圓製造|D': { text: '規模大，成本有相對利益，排程與交期也較有彈性 [S 362]' },
       '廠房產能|E': { text: '位於台灣，產能集中在單一地區，地理環境與互補產業的支援是重點 [S 362–363]' },
-      '製程研發|F': { text: '製程研發能力好，對晶圓品質與成本都有貢獻，是主要競爭優勢 [S 362]', bases: ['能力', '時機'] },
+      '製程研發|F': { text: '製程研發能力好，對晶圓品質與成本都有貢獻，是主要競爭優勢 [S 362]', bases: ['獨特能力', '時機'] },
     },
   },
 ];
@@ -2450,14 +2450,16 @@ const STRATEGY_POINT_DEFS = {
               questions: ['這項產品在哪些地區銷售？'] } },
   F: { label: '競爭優勢',
     input:  { def: '此價值單元是否為競爭優勢的來源，以及優勢建立在什麼基礎上', page: 'S 281',
-              questions: ['跟同業比，這個價值單元是不是競爭優勢的來源？', '若是，優勢建立在什麼基礎上（能力、獨佔、時機、財力、綜效、關係、資訊科技）？'] },
+              questions: ['跟同業比，這個價值單元是不是競爭優勢的來源？', '若是，優勢建立在什麼基礎上（獨特能力、獨佔力、時機、綜效、財力、關係、資訊科技之運用）？'] },
     output: { def: '該產品的競爭優勢', page: 'S 279',
               questions: ['顧客為什麼選這項產品、不選競爭者的？', '它的競爭優勢是什麼？'] } },
 };
 // C 列垂直整合標記 [S 280；局部整合見策略要素 3-5]
 const VI_OPTIONS = [{ k: 'make', sym: '○', label: '自行負責' }, { k: 'buy', sym: '✕', label: '外包' }, { k: 'partial', sym: '◐', label: '局部整合' }];
-// F 列優勢基礎 [S 281；分類同策略要素 6-2～6-8，S 338–339]
-const ADV_BASES = ['能力', '獨佔', '時機', '財力', '綜效', '關係', '資訊科技'];
+// F 列優勢基礎 [S 281；分類同策略要素 6-2～6-8，S 338–339]；ST-34c：名稱與順序照書 [S 331–339]
+const ADV_BASES = ['獨特能力', '獨佔力', '時機', '綜效', '財力', '關係', '資訊科技之運用'];
+// ST-34c：舊存檔的優勢基礎名稱 → 新名稱（載入時由 normaliseCellNote 轉換）
+const ADV_BASE_ALIASES = { 能力: '獨特能力', 獨佔: '獨佔力', 資訊科技: '資訊科技之運用' };
 // ST-14g：箭頭前提類型。先有方案再驗證前提＝SWOT [S 369]；環境前提成立＝機會、不成立＝威脅 [S 374]；
 // 條件前提（自身能力資源）成立＝優勢、不成立＝劣勢 [S 370, 375]。「因果認知」為工具自訂（依「每個策略動作或因果關係都有前提」[S 369]，
 // 例：顧客是否覺得低價抵得過沒有門市的不便 [S 371]），不歸入 SWOT。詳見 doc/reference/策略管理新論-Ch9-前提與SWOT.md
@@ -3088,7 +3090,13 @@ function undo() {
       shortView  = v.shortView;
       hiddenCols = v.hiddenCols;
     }
-    if (snap.cellNotes && typeof snap.cellNotes === 'object') cellNotes = snap.cellNotes;  // 舊快照沒有 → 不動
+    if (snap.cellNotes && typeof snap.cellNotes === 'object') {  // 舊快照沒有 → 不動
+      cellNotes = {};  // ST-34c：逐格正規化（舊優勢基礎名稱轉新名稱）
+      Object.keys(snap.cellNotes).forEach(key => {
+        const n = normaliseCellNote(snap.cellNotes[key], key.slice(key.lastIndexOf('|') + 1));
+        if (n) cellNotes[key] = n;
+      });
+    }
     if (Array.isArray(snap.modules)) modules = snap.modules;  // ST-14f：舊快照沒有 → 不動（normalise 會清掉失效成員）
     if (snap.clashNotes && typeof snap.clashNotes === 'object') clashNotes = normaliseClashNotes(snap.clashNotes);  // ST-14h
     if (Array.isArray(snap.actionPlans)) actionPlans = snap.actionPlans;  // ST-14j：舊快照沒有 → 不動
@@ -4390,6 +4398,7 @@ let expandSupportFirst = true;  // 對話框選項：支援活動放最前面（
 function cellCode(cell) { return `${cell.row}${String(cell.col+1).padStart(2,'0')}`; }
 
 // 支援活動欄在 COLUMN_PATHS 的最上層群組名（ST-12a：矩陣表頭／PPTX 據此把支援活動欄改用支援色）
+// ST-34c：書上無「支援活動」一詞（Porter 用語），但此字串會寫進存檔的 COLUMN_PATHS，故不改
 const SUPPORT_COLUMN_GROUP = '支援活動';
 function isSupportColumnPath(path) { return Array.isArray(path) && path[0] === SUPPORT_COLUMN_GROUP; }
 
@@ -4754,13 +4763,18 @@ function cellNoteKey(colIdx, rowId) { return `${COLUMNS[colIdx]}|${rowId}`; }
 function isOutputCol(colIdx) { return colIdx >= productSepIdx; }
 // C 列產品欄不適用（書上 C 列只對價值單元有意義）
 function cellPointApplies(rowId, colIdx) { return !(rowId === 'C' && isOutputCol(colIdx)); }
+// ST-34c：優勢基礎陣列 → 舊名轉新名、濾掉不認得的、依 ADV_BASES 順序去重
+function normaliseAdvBases(arr) {
+  const set = new Set(arr.map(b => ADV_BASE_ALIASES[b] || b));
+  return ADV_BASES.filter(b => set.has(b));
+}
 // 正規化一格的描述；vi 只留在 C 列、bases 只留在 F 列；沒內容回 null
 function normaliseCellNote(raw, rowId) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const n = {
     text:  typeof raw.text === 'string' ? raw.text : '',
     vi:    rowId === 'C' && VI_OPTIONS.some(o => o.k === raw.vi) ? raw.vi : '',
-    bases: rowId === 'F' && Array.isArray(raw.bases) ? ADV_BASES.filter(b => raw.bases.includes(b)) : [],
+    bases: rowId === 'F' && Array.isArray(raw.bases) ? normaliseAdvBases(raw.bases) : [],
   };
   return cellNoteHasContent(n) ? n : null;
 }
