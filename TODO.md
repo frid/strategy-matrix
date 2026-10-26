@@ -23,11 +23,11 @@
   - [x] ST-24a 步驟 ②／④：`#cellPanel` 改為矩陣右側 sticky 側欄（top 讓出 `.project-panel`、max-height 視窗高、內捲），矩陣保留自己的橫向捲動；`selectCell` 拿掉 `scrollIntoView`（窄螢幕保留）；側欄改變矩陣寬度後重跑 `drawLines()`；≤800px 維持上下排（完成 2026-10-26：.matrix-row flex、側欄 360px sticky top 82、cellPanelReveal() 窄螢幕才捲、ResizeObserver 重畫；自測 tools/selftest/ST-24a.mjs）
 
 第 3 階段：價值鏈版面
-- [ ] ST-23 產出的產品改放價值鏈最右邊，利潤的右側 ![](assets/20261026_144914.png)，用垂直的整條
+- [x] ST-23 產出的產品改放價值鏈最右邊，利潤的右側 ![](assets/20261026_144914.png)，用垂直的整條（完成 2026-10-26：產品改放價值鏈最右邊 Margin 右側直條（編輯器＋PPTX），連線正交接入；修 PPTX Margin 箭頭旋轉錯誤）
   - 已定：編輯器與 PPTX 價值鏈頁都改
-  - [ ] ST-23a 編輯器：`.vc-zones` grid 加第 4 欄 products（三列全高），產品改直條（`writing-mode: vertical-rl`），上下拖曳排序，「＋ 產品」放欄底；不依賴 `showArrowBg`；≤800px 回到橫列
-  - [ ] ST-23b 連線：直條產品的接入規則（從右緣出、接直條左緣，繞過 Margin 箭頭），在 `vcLinkRoute`／`vcCrossRoute` 用 opts 旗標區分，不影響 23c 以外的呼叫；依賴 ST-23a
-  - [ ] ST-23c PPTX 價值鏈頁（`buildValueChainShapesXml`）產品改在 Margin 右側直條：重算 `contentW`、`totalRows`、ST-20 `deepTotal`；更新 `tests/st-21-regression.mjs` 價值鏈頁 XML 比對基準（其他頁仍須一致）；依賴 ST-23b
+  - [x] ST-23a 編輯器：`.vc-zones` grid 加第 4 欄 products（三列全高），產品改直條（`writing-mode: vertical-rl`），上下拖曳排序，「＋ 產品」放欄底；不依賴 `showArrowBg`；≤800px 回到橫列（完成 2026-10-26：產品改為 .vc-zones 第 4 欄直排全高、上下拖曳、＋產品在欄底；大箭頭關閉三欄版型；≤800px 回橫列；自測 tools/selftest/ST-23a.mjs）
+  - [x] ST-23b 連線：直條產品的接入規則（從右緣出、接直條左緣，繞過 Margin 箭頭），在 `vcLinkRoute`／`vcCrossRoute` 用 opts 旗標區分，不影響 23c 以外的呼叫；依賴 ST-23a（完成 2026-10-26：vcProductRoute：到產品的線右緣出→三段槽位通道→產品左緣，全程正交；舊路徑輸出不變；自測 tools/selftest/ST-23b.mjs）
+  - [x] ST-23c PPTX 價值鏈頁（`buildValueChainShapesXml`）產品改在 Margin 右側直條：重算 `contentW`、`totalRows`、ST-20 `deepTotal`；更新 `tests/st-21-regression.mjs` 價值鏈頁 XML 比對基準（其他頁仍須一致）；依賴 ST-23b（完成 2026-10-26：產品 0.5" 直欄在 Margin 右側、連線走 vcProductRoute、非產品線排除產品障礙；順手修 Margin 箭頭 rot=90° 的 OOXML 尺寸錯誤改 downArrow；regression c 區段 slide1 另驗、--strict-slide1 可全比；自測 tools/selftest/ST-23c.mjs）
 
 第 4 階段：字級（在 23／24／26 之後，因為會掃過全部 CSS）
 - [ ] ST-25 ![](assets/20261026_145342.png) 字的大小不一致，檢查全部的網頁，調整成適合的大小。
@@ -45,6 +45,9 @@
 
 第 6 階段：文件
 - [ ] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27
+
+- [ ] ST-29 價值鏈編輯器：主要活動欄太多折成第二列時，跨列連線（如醫美範本「中醫門診→中醫調理」，1400px 寬）`vcCrossRoute` 找不到通道退回斜直線（v1.0.0 即如此；ST-23c 驗證時確認）；需在折列情況補「列間水平通道」規則
+- [ ] ST-30 tools/selftest/ST-20.mjs 的 [A]「連線條數 新＝基準＋1」需要 ST-20 之前的基準版，用 v1.0.0 之後當基準必 FAIL；改為固定比對數字或移除（ST-23c 驗證時確認）
 
 ## Complete
 - [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）（release v1.1.0）

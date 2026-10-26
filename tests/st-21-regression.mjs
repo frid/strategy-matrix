@@ -1,9 +1,11 @@
 // ST-21 回歸腳本：舊存檔 fixtures、範例完成度、PPTX 與 v1.0.0 基準比對、說明卡。零 npm 依賴。
-// 跑法：node tests/st-21-regression.mjs [--base <舊版 index.html>] [--out <截圖目錄>]
+// 跑法：node tests/st-21-regression.mjs [--base <舊版 index.html>] [--out <截圖目錄>] [--strict-slide1]
 //   --base 預設：git show v1.0.0:index.html 到暫存檔
 //   --out  預設：$CLAUDE_JOB_DIR/tmp/st21e，無則 os.tmpdir()/st21e
 // 測：a 兩份 fixtures 載入無 console error、六 tab 截圖、③ lineCanvas 連線／①vcLineCanvas 連線、往返重畫；
-//     b 兩範例六步 pct 與基準版相同；c 兩範例 PPTX 的 slide*.xml 與基準版逐張相同；d 六張說明卡、#step-3 直連；
+//     b 兩範例六步 pct 與基準版相同；c 兩範例 PPTX 的 slide*.xml 與基準版逐張相同（ST-23c 起 slide1＝價值鏈頁改產品直欄，
+//     預設不比 slide1、改驗產品方塊數／產品在 Margin 右側／連接器正交／每條連線至少一段／skippedLinks 0；--strict-slide1 恢復逐張全比）；
+//     d 六張說明卡、#step-3 直連；
 //     e ST-22 重新整理／他 tab 套用價值鏈後切回 ①，主要活動名稱高度 >10；主「載入」價值鏈檔不取代專案。
 // 預期：全 PASS、exit 0。FAIL 時印出差異，exit 1。
 import { launch } from '../tools/cdp-harness.mjs';
@@ -25,6 +27,7 @@ if (!base) {
   base = out + '/v100-index.html';
   writeFileSync(base, execFileSync('git', ['show', 'v1.0.0:index.html'], { cwd: root, maxBuffer: 1 << 28 }));
 }
+const strictSlide1 = argv.includes('--strict-slide1');
 const KEYS = ['chain', 'cells', 'ideas', 'premise', 'action', 'control'];
 const EXAMPLES = ['bookstore-a', 'foundry-t'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -47,7 +50,9 @@ async function exampleInfo(file, id) {
       const z = await h.zipEntries(idx);
       for (const n of z.names.filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)).sort()) slides[n] = await z.read(n);
     }
-    return { pct, slides };
+    const vc = await h.ev(`({products:valueChain.products.filter(n=>n.type==='unit').map(n=>n.name),links:valueChain.links.length,arrow:!!valueChain.showArrowBg,
+      info:(typeof buildValueChainShapesXml==='function'&&buildValueChainShapesXml.lastInfo)||{}})`);
+    return { pct, slides, vc };
   } finally { await h.close(); }
 }
 
@@ -96,8 +101,26 @@ for (const id of EXAMPLES) {
     ok(nw.pct[k] === old.pct[k] && typeof nw.pct[k] === 'number', `[b ${id}] ${k} pct 新=${nw.pct[k]} 舊=${old.pct[k]}`); }
   const nn = Object.keys(nw.slides), on = Object.keys(old.slides);
   ok(nn.length > 0 && nn.length === on.length, `[c ${id}] PPTX 張數 新 ${nn.length} 舊 ${on.length}`);
-  const diff = on.filter(n => nw.slides[n] !== old.slides[n]);
-  ok(diff.length === 0, `[c ${id}] slide*.xml 逐張相同${diff.length ? '；不同：' + diff.join(',') : ''}`);
+  const S1 = 'ppt/slides/slide1.xml';
+  const diff = on.filter(n => (strictSlide1 || n !== S1) && nw.slides[n] !== old.slides[n]);
+  ok(diff.length === 0, `[c ${id}] slide*.xml 逐張相同${strictSlide1 ? '' : '（slide1 除外）'}${diff.length ? '；不同：' + diff.join(',') : ''}`);
+  if (!strictSlide1) {
+    // ST-23c：slide1（價值鏈頁）產品改在 Margin 右側直欄 → 改驗版面性質
+    const x1 = nw.slides[S1] || '';
+    const sps = [...x1.matchAll(/<p:(sp|cxnSp)>[\s\S]*?<\/p:\1>/g)].map(m => {
+      const s = m[0], o = s.match(/<a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(\d+)" cy="(\d+)"/) || [];
+      return { kind: m[1], name: (s.match(/name="([^"]*)"/) || [])[1], x: +o[1], w: +o[3], h: +o[4], vert: /<a:bodyPr vert="eaVert"/.test(s) };
+    });
+    const prods = nw.vc.products.map(n => sps.find(s => s.kind === 'sp' && s.name === n && s.vert));
+    const margin = sps.find(s => s.name === 'Margin／利潤');
+    const cx = sps.filter(s => s.kind === 'cxnSp');
+    const nLinks = new Set(cx.map(c => (c.name.match(/^價值鏈連線 (\d+)/) || [])[1]).filter(Boolean)).size;
+    ok(prods.length > 0 && prods.every(Boolean), `[c ${id}] slide1 產品直排方塊 ${prods.filter(Boolean).length}/${prods.length}`);
+    ok(!nw.vc.arrow || (margin && prods.every(p => p && p.x > margin.x + margin.w)), `[c ${id}] slide1 產品在 Margin 右側（Margin x ${margin && margin.x}、產品 x ${prods[0] && prods[0].x}）`);
+    ok(cx.length >= nw.vc.links && nLinks === nw.vc.links, `[c ${id}] slide1 連接器 ${cx.length} 段、涵蓋 ${nLinks}/${nw.vc.links} 條連線`);
+    ok(cx.every(c => c.w === 0 || c.h === 0), `[c ${id}] slide1 連接器全部正交（斜線 ${cx.filter(c => c.w && c.h).length}）`);
+    ok(nw.vc.info.skippedLinks === 0, `[c ${id}] slide1 lastInfo.skippedLinks ${nw.vc.info.skippedLinks}`);
+  }
 }
 console.log('\n完成度表\n' + rows.join('\n') + '\n');
 

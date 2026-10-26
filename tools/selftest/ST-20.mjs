@@ -2,8 +2,9 @@
 // 跑法（Node 24+、/usr/bin/google-chrome）：  node tools/selftest/ST-20.mjs [基準版 index.html 路徑，預設 ../dev/index.html]
 // 測：攔截 JSZip.generateAsync 取 ppt/slides/slide1.xml，新版與基準版各跑一次
 //   A) 價值鏈範本「連鎖醫美診所」(bio-aesthetic)：有「中醫門診」「中醫調理」方塊、「中醫醫療服務」「中醫術後照顧」框；
-//      連線條數（依「價值鏈連線 N」名稱）新版比基準版多 1；所有 shape 不超出 slide；狀態列沒有「略過」字樣
-//   B) 範例專案「網路書店 A 公司」(bookstore-a)：價值鏈頁所有 shape（含連接器）名稱＋座標與基準版完全一致（兩層以內不變）
+//      連線條數（依「價值鏈連線 N」名稱）新版比基準版多 1（※ 此項需以 ST-20 之前的版本當基準；用 v1.0.0／之後的版本當基準必 FAIL，屬預期）；所有 shape 不超出 slide；狀態列沒有「略過」字樣
+//   B) 範例專案「網路書店 A 公司」(bookstore-a)：兩層以內不走第三層精算版面——支援／主要活動方塊的 y、h 與基準版一致、連線條數一致
+//      （ST-23c 起產品改在 Margin 右側直欄，x／寬度與產品方塊必然不同，不再要求全文一致；基準版用 ST-23c 之後的版本時全文也會一致）
 //   C) 醫美範本再加一個第四層節點「深層測試」(中醫門診→改成群組) 並加一條指向不存在 id 的連線：
 //      「深層測試」方塊存在、狀態列含「略過 1 條連線」與「攤平」
 //   D 「中醫醫療服務」多塞 3／20 個孫項：+3 字級可降但不溢字、不壓縮；+20 降到 6pt 並壓縮、狀態列「已縮小字級」
@@ -114,10 +115,11 @@ console.log(`A 中醫門診 h = ${g0.h} EMU（${(g0.h / 914400).toFixed(3)} in�
 // B) 書店範例：完全一致
 writeFileSync(tmp + '/ae-slide1.xml', N.ae.xml); writeFileSync(tmp + '/deep-slide1.xml', N.deep.xml);
 const nb = parse(N.book.xml), bb = parse(B.book.xml);
-const key = s => `${s.kind}|${s.name}|${s.x}|${s.y}|${s.w}|${s.h}`;
-const diffs = nb.map(key).filter((k, i) => k !== key(bb[i] || {}));
-chk(nb.length === bb.length && diffs.length === 0, `B 書店價值鏈頁 ${nb.length} 個 shape 與基準完全一致（差異 ${diffs.length}；基準 ${bb.length}）`);
-chk(N.book.xml.replace(/id="\d+"/g, '') === B.book.xml.replace(/id="\d+"/g, ''), 'B 書店 slide1.xml 全文（去 shape id）一致');
+const bookProds = new Set(['中文書籍', '專業書籍', '影音商品', '產品', 'Margin／利潤']);
+const vMiss = bb.filter(b => b.kind === 'sp' && !bookProds.has(b.name) && b.y > 914400)
+  .filter(b => !nb.some(n => n.kind === 'sp' && n.name === b.name && n.y === b.y && n.h === b.h)).map(b => b.name);
+chk(vMiss.length === 0, `B 書店支援／主要活動方塊 y、h 與基準一致（不符：${vMiss.join(',') || '無'}）`);
+chk(linkCount(nb) === linkCount(bb), `B 書店連線條數 新 ${linkCount(nb)} = 基準 ${linkCount(bb)}`);
 
 // C) 第四層與壞連線
 const nd = parse(N.deep.xml);
