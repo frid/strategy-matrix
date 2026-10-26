@@ -63,3 +63,5 @@
 | 2026-10-26 | ST-29 | 折列跨列連線另寫 vcNestedRoute 作為 vcCrossRoute 的後備，不改既有通道規則 | 已找得到路的連線走法與通道佔用完全不變，regression 可逐張相同 | 易 |
 | 2026-10-26 | ST-35b | segment 版型同時掛 vc-layout-band 沿用 band 幾何，只覆寫外觀；四色改較深版以達白字 4.5:1 | 不複製 band 規則；範例色票對比不足 | 易 |
 | 2026-10-26 | ST-35i | 範例資料不加 icon，icon 只在自測動態設；icon 超過 4 字取前 4 個 code point；矩陣欄頭以欄名對應單元名取 icon | 保住 PPTX regression 逐張相同；保留輸入優於丟棄；欄位沒有 id，與 COLUMN_ROLES 作法一致 | 易 |
+| 2026-10-27 | ST-35e | 六角鏈不畫白描邊（clip-path 會裁掉 border／outline）；群組內深淺用往黑混而非透明度 | drop-shadow 描不到接縫；變淡會讓白字對比跌破 4.5 | 易 |
+| 2026-10-27 | ST-35h | 分色配色做成 COLOR_PALETTES 新三套（perUnit 欄位），不是獨立開關；支援活動／角落／Margin 改中性灰直接寫在 vars；分色配色優先於 hex 自己的色相 | 沿用既有配色下拉與 colorPaletteIdx 存檔；彩虹色與原橘綠會打架；兩套色序疊加對比失控 | 易 |

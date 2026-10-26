@@ -20,10 +20,10 @@
   - [x] ST-35b 同色分段式（C）：同群組同色相、子單元間細縫、群組間完整缺口；群組名小字寫在該段底部；4 色循環並在 `COLOR_PALETTES` 各配色下可讀；依賴 ST-35a（完成 2026-10-26：layout=segment 沿用 band 幾何、四色 #3b6fb6/#2a7f73/#b5532f/#6b7a2c 白字對比 ≥4.5、chevron 頂線對齊、群組名小字在底；自測 tools/selftest/ST-35b.mjs）
   - [ ] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a
   - [ ] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i
-  - [ ] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a
+  - [x] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a（完成 2026-10-27：layout=hex 沿用 band 橫帶結構，六角 clip-path Q=18px、相鄰 −16px 咬合、七色相依頂層序、群組內往黑混深淺；clip-path 下無法白描邊；自測 tools/selftest/ST-35e.mjs）
   - [ ] ST-35f 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／F／G／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–e
   - [ ] ST-35g PPTX 價值鏈頁：`buildValueChainShapesXml` 依 `vcLayout` 畫 B（矩形橫帶＋chevron）、C（同色長箭頭＋白縫）、F（ellipse＋文字）、G（hexagon）；E 走 B、Porter 走原邏輯；更新 regression slide1 基準並記 decisions；依賴 ST-35f
-  - [ ] ST-35h 彩虹分色配色：`COLOR_PALETTES` 新增「分色模式」欄位（`perUnit: [...]` 色序），主要活動依序取色、矩陣欄頭同色、支援活動低彩度、群組底色取第一個子單元色的淡版；至少加候選 1 鮮彩六色、3 沉穩土色、4 藍綠紫三套（色票見範例頁，實作時以白字對比度 ≥ 4.5 微調）；PPTX 跟著走；依賴 ST-35a
+  - [x] ST-35h 彩虹分色配色：`COLOR_PALETTES` 新增「分色模式」欄位（`perUnit: [...]` 色序），主要活動依序取色、矩陣欄頭同色、支援活動低彩度、群組底色取第一個子單元色的淡版；至少加候選 1 鮮彩六色、3 沉穩土色、4 藍綠紫三套（色票見範例頁，實作時以白字對比度 ≥ 4.5 微調）；PPTX 跟著走；依賴 ST-35a（完成 2026-10-27：COLOR_PALETTES 末尾加「分色・鮮彩／沉穩土色／藍綠紫」三套含 perUnit；applyPerUnitColors 在 applyPalette／renderValueChainEditor／buildTable 結尾套 --vc-unit-color；矩陣欄頭 data-vc-top 對應頂層序；pptxPalette().perUnit；單色六套 XML 不變；自測 tools/selftest/ST-35h.mjs）
   - [x] ST-35i 價值單元 icon：unit 新欄位 `icon`（emoji 字串），價值鏈編輯器名稱旁加「選 icon」小按鈕（常用 24 個＋自由輸入）；B／C／E／G 畫在方塊左側、F 畫在圓內；矩陣欄頭可選顯示；舊檔無此欄位不畫；PPTX 輸出 emoji 文字；`normaliseValueChain` 只留字串（完成 2026-10-26：unit.icon ≤4 字、24 個常用 emoji 選單＋自訂＋清除、操作列「欄頭 icon」勾選存 showUnitIcons、PPTX 文字前置 icon；範例資料不加 icon 以保 regression；band 下 icon 在名稱上方待統一；自測 tools/selftest/ST-35i.mjs）
   - [ ] ST-35j 手冊／README 補五種版型與分色配色截圖、icon 選法；自測 tools/selftest/ST-35.mjs（五版型各截圖、切換後 drawLines 連線端點仍對齊、三套分色配色下白字可讀）；依賴 ST-35g–i
 
