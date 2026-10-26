@@ -8,6 +8,8 @@
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
+    /* ST-25 字級五階（1rem=24px）：xs 說明/標籤、sm 一般內文/控制項、base 主要內文/輸入、md 小標/表頭、lg 區塊標題；h1 2rem 例外 */
+    --fs-xs: 0.68rem; --fs-sm: 0.74rem; --fs-base: 0.80rem; --fs-md: 0.92rem; --fs-lg: 1.1rem;
     --bg: #f5f3ef;
     --ink: #1a1a2e;
     --ink-light: #6b6b8a;
@@ -26,10 +28,10 @@
     padding: 24px 16px 40px;
   }
   .wrap { max-width: 920px; margin: 0 auto; }
-  .back { display: inline-block; font-size: 0.80rem; color: var(--col-header); text-decoration: none; font-weight: 500; margin-bottom: 12px; }
+  .back { display: inline-block; font-size: var(--fs-base); color: var(--col-header); text-decoration: none; font-weight: 500; margin-bottom: 12px; }
   .back:hover { text-decoration: underline; }
   h1 { font-size: 2rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .lead { color: var(--ink-light); font-size: 0.82rem; margin-bottom: 20px; }
+  .lead { color: var(--ink-light); font-size: var(--fs-base); margin-bottom: 20px; }
 
   .panel {
     background: white;
@@ -38,39 +40,39 @@
     padding: 16px 20px;
     margin-bottom: 18px;
   }
-  .toc h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--col-header); margin-bottom: 6px; }
-  .toc ol { columns: 2; column-gap: 28px; padding-left: 1.6em; font-size: 0.80rem; }
+  .toc h2 { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--col-header); margin-bottom: 6px; }
+  .toc ol { columns: 2; column-gap: 28px; padding-left: 1.6em; font-size: var(--fs-base); }
   .toc a { color: var(--ink); text-decoration: none; }
   .toc a:hover { color: var(--col-header); text-decoration: underline; }
   .toc ol > li { break-inside: avoid; }
-  .toc ol ul { list-style: none; margin: 0 0 4px 0.2em; font-size: 0.72rem; }
+  .toc ol ul { list-style: none; margin: 0 0 4px 0.2em; font-size: var(--fs-sm); }
   .toc ol ul li { margin: 0; }
 
   section.panel { scroll-margin-top: 12px; }
-  h2.sec { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--grid-line); }
-  h3 { font-size: 0.92rem; font-weight: 700; color: var(--col-header); margin: 14px 0 4px; }
+  h2.sec { font-size: var(--fs-lg); font-weight: 700; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--grid-line); }
+  h3 { font-size: var(--fs-md); font-weight: 700; color: var(--col-header); margin: 14px 0 4px; }
   h3[id] { scroll-margin-top: 12px; margin-top: 20px; padding-top: 10px; border-top: 1px dashed var(--grid-line); }
-  h4 { font-size: 0.82rem; font-weight: 700; margin: 10px 0 2px; }
-  p, li { font-size: 0.80rem; }
+  h4 { font-size: var(--fs-base); font-weight: 700; margin: 10px 0 2px; }
+  p, li { font-size: var(--fs-base); }
   p { margin: 6px 0; }
   ul, ol.steps { margin: 6px 0 6px 1.4em; }
   li { margin: 3px 0; }
   .btn {
     display: inline-block; background: var(--row-desc-bg); border: 1px solid var(--grid-line);
-    border-radius: 6px; padding: 0 7px; font-size: 0.74rem; font-weight: 500; white-space: nowrap; line-height: 1.6;
+    border-radius: 6px; padding: 0 7px; font-size: var(--fs-sm); font-weight: 500; white-space: nowrap; line-height: 1.6;
   }
-  code { font-family: 'DM Mono', monospace; background: var(--row-desc-bg); border-radius: 4px; padding: 0 5px; font-size: 0.74rem; }
+  code { font-family: 'DM Mono', monospace; background: var(--row-desc-bg); border-radius: 4px; padding: 0 5px; font-size: var(--fs-sm); }
   figure { margin: 12px 0; }
   figure img { max-width: 100%; height: auto; display: block; border: 1px solid var(--grid-line); border-radius: 8px; background: white; }
   figure.narrow img { max-width: min(420px, 100%); }
-  figcaption { font-size: 0.72rem; color: var(--ink-light); margin-top: 4px; }
-  .note { background: #fff8e6; border-left: 4px solid #e0a82e; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: 0.80rem; }
+  figcaption { font-size: var(--fs-sm); color: var(--ink-light); margin-top: 4px; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a82e; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: var(--fs-base); }
   .video { position: relative; width: 100%; padding-top: 56.25%; }
   .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 8px; }
   table.faq { border-collapse: collapse; width: 100%; }
-  dl dt { font-weight: 700; margin-top: 12px; font-size: 0.80rem; }
-  dl dd { margin-left: 0; font-size: 0.80rem; }
-  .foot { text-align: center; font-size: 0.72rem; color: #aaa; margin-top: 24px; }
+  dl dt { font-weight: 700; margin-top: 12px; font-size: var(--fs-base); }
+  dl dd { margin-left: 0; font-size: var(--fs-base); }
+  .foot { text-align: center; font-size: var(--fs-sm); color: #aaa; margin-top: 24px; }
 
   @media (max-width: 640px) {
     body { padding: 16px 10px 32px; }
@@ -392,7 +394,7 @@
   </ul>
 
   <h3 id="shortview">5.2 短版矩陣</h3>
-  <p>策略矩陣欄位很多時，可以只留跟產品特色有關的欄位。操作列的 <label style="font-size:0.74rem"><input type="checkbox" disabled> ✂ 短版矩陣</label> 核取方塊打勾後，進入短版模式：</p>
+  <p>策略矩陣欄位很多時，可以只留跟產品特色有關的欄位。操作列的 <label style="font-size:var(--fs-sm)"><input type="checkbox" disabled> ✂ 短版矩陣</label> 核取方塊打勾後，進入短版模式：</p>
   <ul>
     <li><span class="btn">自動隱藏無箭頭欄</span>：把所有策略構想都沒有箭頭起訖的投入欄一次隱藏，並自動開啟短版。</li>
     <li>短版開啟時，投入欄表頭右上角會出現 <span class="btn">✕</span>，可個別隱藏該欄（產品欄不能隱藏）。</li>

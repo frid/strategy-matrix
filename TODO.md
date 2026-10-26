@@ -30,10 +30,10 @@
   - [x] ST-23c PPTX 價值鏈頁（`buildValueChainShapesXml`）產品改在 Margin 右側直條：重算 `contentW`、`totalRows`、ST-20 `deepTotal`；更新 `tests/st-21-regression.mjs` 價值鏈頁 XML 比對基準（其他頁仍須一致）；依賴 ST-23b（完成 2026-10-26：產品 0.5" 直欄在 Margin 右側、連線走 vcProductRoute、非產品線排除產品障礙；順手修 Margin 箭頭 rot=90° 的 OOXML 尺寸錯誤改 downArrow；regression c 區段 slide1 另驗、--strict-slide1 可全比；自測 tools/selftest/ST-23c.mjs）
 
 第 4 階段：字級（在 23／24／26 之後，因為會掃過全部 CSS）
-- [ ] ST-25 ![](assets/20261026_145342.png) 字的大小不一致，檢查全部的網頁，調整成適合的大小。
+- [x] ST-25 ![](assets/20261026_145342.png) 字的大小不一致，檢查全部的網頁，調整成適合的大小。（完成 2026-10-26：全站字級收斂到五階變數（--fs-xs/sm/base/md/lg），句型／SWOT／對陣點／行動表不再只有一半大；manual.html 同步）
   - 原因：`html{font-size:150%}`（1rem=24px），多數用 rem，但 `.sentence-box summary`／`.sentence-list` 13px、SWOT／對陣點／行動表 11–12px 寫死 px，只有旁邊一半大；rem 另有 26 種相近值，無字級變數
-  - [ ] ST-25a 在 `:root` 定 `--fs-xs .68rem`／`--fs-sm .74rem`／`--fs-base .80rem`／`--fs-md .92rem`／`--fs-lg 1.1rem`；所有 px 字級（`.sentence-box summary`、`.sentence-list`、`.premise-swot-*`、`.premise-quad`、`.clash-item`、`.action-toolbar`、`.action-table`）改用變數，表內 input 同一級
-  - [ ] ST-25b 其餘 rem 值依角色收斂到 5 階（h1 2rem 例外）；六 tab 前後截圖對照；manual.html 同步檢查；依賴 ST-25a
+  - [x] ST-25a 在 `:root` 定 `--fs-xs .68rem`／`--fs-sm .74rem`／`--fs-base .80rem`／`--fs-md .92rem`／`--fs-lg 1.1rem`；所有 px 字級（`.sentence-box summary`、`.sentence-list`、`.premise-swot-*`、`.premise-quad`、`.clash-item`、`.action-toolbar`、`.action-table`）改用變數，表內 input 同一級（完成 2026-10-26：:root 五階 --fs-xs/sm/base/md/lg，8 處 px 改變數，表內控制項與表同級）
+  - [x] ST-25b 其餘 rem 值依角色收斂到 5 階（h1 2rem 例外）；六 tab 前後截圖對照；manual.html 同步檢查；依賴 ST-25a（完成 2026-10-26：28 種 rem 依區間收斂到五階，補 button/input/select/textarea 預設 sm 與 .guide-step；manual.html 同步；六 tab 字級由 24 種降到 6 種；自測 tools/selftest/ST-25.mjs）
 
 第 5 階段：策略要素說明
 - [ ] ST-27 新增課本上策略要素的範例說明，Ex: 產品與市場之配合 (用簡圖、簡易說明、與範例)
