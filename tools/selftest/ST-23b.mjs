@@ -9,7 +9,7 @@
 //   [d] 反向（產品→活動）與產品→產品：無斜線、不穿方塊
 //   [e] bio-pharma-tw：群組子項→產品 無斜線、不穿方塊
 //   [f] 700px：產品在下方橫列 → 走舊路線（無 kind=product）、無 NaN
-//   [g] 另加 2 條非產品連線，其 path d 與「不帶 opts.product」算出的完全相同（舊路線不受影響）；console error 0
+//   [g] 另加 2 條非產品連線，其 path d 與「不帶 opts.product、rects 排除產品方塊」算出的完全相同（ST-23c：非產品線不把產品直欄當障礙）；console error 0
 // 預期：全部 PASS、exit 0。
 import { launch } from '../cdp-harness.mjs';
 import { mkdirSync } from 'node:fs';
@@ -86,12 +86,14 @@ try {
     const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(Boolean);
     const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
     const prod = new Set(valueChain.products.map(n => n.id)); const rowUse = {}; const res = [];
+    const pr = new Set(Array.from(editor.querySelectorAll('.vc-products-body [data-vc-id]')).map(el => same(vcOffsetRect(el))));
+    const act = rects.filter(o => !pr.has(o));
     valueChain.links.forEach(l => { const r1 = getVcNodeRect(l.from), r2 = getVcNodeRect(l.to); if (!r1 || !r2) return;
-      const d = vcRoundedPath(_st23bOrig(same(r1), same(r2), rects, { near: 40, lift: 18, step: 10 }, rowUse).pts, 8);
+      const d = vcRoundedPath(_st23bOrig(same(r1), same(r2), act, { near: 40, lift: 18, step: 10 }, rowUse).pts, 8);
       if (!prod.has(l.from) && !prod.has(l.to)) res.push(d); });
     return res; })()`);
   const nowNonProd = A.links.filter(l => l.kind !== 'product').map(l => l.d);
-  ok(legacy.length === nowNonProd.length && legacy.every((d, i) => d === nowNonProd[i]), `[g] 非產品連線 ${legacy.length} 條的 path 與舊路線逐字相同`);
+  ok(legacy.length === nowNonProd.length && legacy.every((d, i) => d === nowNonProd[i]), `[g] 非產品連線 ${legacy.length} 條的 path 與「不帶 product、rects 排除產品」逐字相同`);
 
   // [b] 再加兩條
   await h.ev(`_addLink('物流運輸','專業書籍'); _addLink('品牌','影音商品'); 0`); await sleep(400);

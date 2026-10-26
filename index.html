@@ -3838,7 +3838,7 @@ function vcRectEdgePoint(rect, towardX, towardY) {
 // rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距 }；rowUse：各列已用的繞行層數
 // 回傳 { kind: 'straight'|'detour'|'cross', pts: [點...] }（最後一點是箭頭端）
 function vcLinkRoute(r1, r2, rects, opts, rowUse) {
-  // ST-23b：寬螢幕產品直欄 → 產品專用路線（只有畫面 drawVcLinks 會帶 opts.product；PPTX 與 ≤800px 橫列照舊）
+  // ST-23b：寬螢幕產品直欄 → 產品專用路線（畫面 drawVcLinks 與 ST-23c PPTX 價值鏈頁會帶 opts.product；≤800px 橫列照舊）
   const P = opts.product;
   if (P && !P.horizontal && (P.rects.has(r1) || P.rects.has(r2))) return vcProductRoute(r1, r2, rects, opts, rowUse);
   const ovX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
@@ -3946,7 +3946,8 @@ function vcCrossRoute(r1, r2, others, opts, rowUse) {
   return { kind: 'cross', pts: [{ x: x1, y: y1 }, { x: x1, y: sy1 }, { x: sx, y: sy1 }, { x: sx, y: sy2 }, { x: x2, y: sy2 }, { x: x2, y: y2 }] };
 }
 
-// ST-23b：產品直欄的接入規則。opts.product = { rects: 產品欄內方塊（Set，與 rects 同一批物件）, margin: Margin 箭頭矩形|null, zone: 產品欄矩形 }
+// ST-23b：產品直欄的接入規則。opts.product = { rects: 產品欄內方塊（Set，與 rects 同一批物件）, margin: Margin 箭頭矩形|null, zone: 產品欄矩形,
+//   body: Margin 箭身在 x 方向佔寬的 [起, 迄] 比例（選填，預設 [0, 0.72]＝畫面 CSS 右尖箭頭；PPTX downArrow 傳 [0.25, 0.75]） }
 // 活動→產品：來源右緣出 → 產品欄左側的直通道 → 產品垂直中點 → 進產品左緣；右邊被同列方塊擋住時，先鑽方塊間縫隙到列間通道再過去
 // 產品→活動：同路線反向；產品→產品：欄內直線（中間隔著別的產品就繞欄右側）。每段都是水平或垂直，回傳 { kind: 'product', pts }
 // 通道 x 依序取「主要活動右緣～Margin 左緣」→「Margin 右緣～產品方塊」→「Margin 箭身內」（沒有 Margin 就是活動右緣～產品方塊），多條線依序錯開
@@ -3989,7 +3990,8 @@ function vcProductRoute(r1, r2, rects, opts, rowUse) {
   if (M) {
     band(lo, M.x - u * 2);
     band(Math.max(lo, M.x + M.w + u * 2), hi);
-    band(Math.max(lo, M.x + u * 4), Math.min(hi, M.x + M.w * 0.72 - u * 4));  // 箭身（不含箭頭尖）
+    const body = P.body || [0, 0.72];
+    band(Math.max(lo, M.x + M.w * body[0] + u * 4), Math.min(hi, M.x + M.w * body[1] - u * 4));  // 箭身（不含箭頭尖；畫面 CSS 左 72%，PPTX downArrow 中間 50%）
   } else band(lo, hi);
   if (!slots.length) slots.push(Math.max(lo, Math.min(hi, (P.zone.x + lo) / 2)));
   const k = rowUse['prod:corr'] || 0;
@@ -4089,11 +4091,15 @@ function drawVcLinks() {
     horizontal: isVcHorizontal(prodBody)
   } : null;
   const routeOpts = { near: 40, lift: 18, step: 10, product };
+  // ST-23c：活動之間的線不把產品直欄當障礙（產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線）；與 PPTX 一致
+  const actRects = product && !product.horizontal ? rects.filter(o => !product.rects.has(o)) : rects;
   valueChain.links.forEach(link => {
     const r1 = getVcNodeRect(link.from);
     const r2 = getVcNodeRect(link.to);
     if (!r1 || !r2) return;
-    const route = vcLinkRoute(same(r1), same(r2), rects, routeOpts, rowUse);
+    const a = same(r1), b = same(r2);
+    const toProd = product && (product.rects.has(a) || product.rects.has(b));
+    const route = vcLinkRoute(a, b, toProd ? rects : actRects, routeOpts, rowUse);
     const d = vcRoundedPath(route.pts, 8);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'vc-link');
@@ -6865,7 +6871,8 @@ function buildArrowShapesXml(L, allSteps, activeStep, startId) {
 // ── 價值鏈頁（原生圖形）──────────────────────────────────────────────────
 // 不量 DOM（編輯區可能被隱藏），改用與編輯器相同結構的自有版面計算：
 // 支援活動＝上方橫條（由上往下堆）、主要活動＝下方並排的欄（群組內子項垂直排列）、
-// 產品不畫（ST-01i）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）並加右側 Margin 箭頭。
+// 產品＝最右側直排一欄（ST-23c，對應編輯器 .vc-zones 第 4 欄）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）
+// 並在產品欄左邊加 Margin 箭頭。
 function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtraH = 0) {
   let id = startId;
   let xml = '';
@@ -6874,6 +6881,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const zoneTitleH= in2emu(0.2);
   const labelW    = in2emu(0.26);             // 左側「支援活動」括號
   const marginW   = in2emu(0.34);             // 右側 Margin／利潤 箭頭
+  const prodColW  = in2emu(0.5);              // ST-23c：最右側產品直欄寬（直排文字）
   const arrowBg   = !!valueChain.showArrowBg;
   const boxPrst   = arrowBg ? 'homePlate' : 'roundRect';
   const P         = pptxPalette();             // ST-12：價值鏈色跟著目前配色
@@ -6881,8 +6889,10 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const support = valueChain.support.filter(n => n.type === 'unit' || n.type === 'group');
   const primary = valueChain.primary;
 
+  const products = valueChain.products.filter(n => n.type === 'unit');  // ST-18／ST-23c：產品直欄（Margin 右側，由上往下）
+  const prodW    = products.length ? prodColW + gap : 0;
   const contentX = areaX + labelW + gap;
-  const contentW = areaW - labelW - gap - (arrowBg ? marginW + gap : 0);
+  const contentW = areaW - labelW - gap - prodW - (arrowBg ? marginW + gap : 0);
 
   // ST-20：主要活動畫到第三層；第三層以下的節點全部攤平成第三層（深度優先），連線才找得到方塊
   const vcKids = n => (n.children || []).filter(c => c.type === 'unit' || c.type === 'group');
@@ -6895,10 +6905,8 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const kidRows = k => (k.type === 'group' && vcKids(k).length ? 1 + vcDesc(k).length : 1);
   // 每一欄需要幾個「單元高」：群組＝標題 + 各子項列數（子群組＝標題 + 攤平後的孫項數）；單元＝1
   const colRows = primary.map(n => (n.type === 'group' ? 1 + vcKids(n).reduce((s, k) => s + kidRows(k), 0) : 1));
-  const products = valueChain.products.filter(n => n.type === 'unit');  // ST-18：產品列（一列，等寬橫排）
-  const prodGapH = in2emu(0.14);               // 主要活動與產品列之間留較寬的通道，連線橫走用
-  const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1])) + (products.length ? 1 : 0);
-  const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1) - (products.length ? prodGapH : 0);
+  const totalRows = Math.max(support.length, 1) + Math.max(...colRows.concat([1]));
+  const availH = areaH - zoneTitleH * 2 - gap * (totalRows + 1);
   let unitH    = Math.max(in2emu(0.2), Math.min(in2emu(0.42), Math.floor(availH / Math.max(totalRows, 1))));
   const pad    = in2emu(0.04);
   // ST-20：有第三層時改用精算版面（兩層以內不走這段，座標與 ST-18 相同）
@@ -6915,11 +6923,11 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
                  grand: Math.round(Math.max(Math.round(cH * 0.85), deepMin) * deepScale) };
   };
   const deepKidH = (k, d) => (k.type === 'group' && vcKids(k).length ? d.subT + vcDesc(k).length * (d.grand + pad) : d.cH);
-  const deepTotal = u => {                                                 // 價值鏈區總高（支援＋最高一欄＋產品列）
+  const deepTotal = u => {                                                 // 價值鏈區總高（支援＋最高一欄；產品在右側直欄，不佔高）
     const d = deepDims(u);
     const colH = Math.max(...primary.map(n => (n.type === 'group'
       ? pad * 2 + u + vcKids(n).reduce((s, k) => s + deepKidH(k, d) + pad, 0) : u)));
-    return zoneTitleH * 2 + support.length * (u + gap) + colH + (products.length ? prodGapH + u : 0);
+    return zoneTitleH * 2 + support.length * (u + gap) + colH;
   };
   if (hasDeep) {
     areaH += deepExtraH;                       // 價值鏈頁沒有說明文字區 → 有第三層時把那段高度也拿來用（右側 Margin 箭頭跟著拉長）
@@ -6941,7 +6949,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   }
 
   // 一個方塊
-  const box = (name, x, y, w, h, prst, fill, textColor, bold, sz, ins = 18000) => {
+  const box = (name, x, y, w, h, prst, fill, textColor, bold, sz, ins = 18000, vert = '') => {
     rectById[name.id] = { x, y, w, h };
     return `
       <p:sp>
@@ -6952,7 +6960,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
           <a:solidFill><a:srgbClr val="${fill}"/></a:solidFill>
           <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
         </p:spPr>
-        <p:txBody><a:bodyPr anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="${ins}" bIns="${ins}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
+        <p:txBody><a:bodyPr${vert ? ` vert="${vert}"` : ''} anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="${ins}" bIns="${ins}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
           <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(name.name || '（未命名）')}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
@@ -7050,41 +7058,60 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
     }
   });
 
-  // ── 產品列（ST-18）：主要活動區底部；左側「產品」標籤，右側產品等寬橫排，讓「→ 產品」的連線有終點 ──
-  if (products.length) {
-    const prodTop = primaryBottom + prodGapH;
-    const pN = products.length;
-    const pW = Math.floor((contentW - gap * (pN - 1)) / pN);
-    xml += textLabel('產品', areaX, prodTop, labelW, unitH, 800, '8A8AA0', true, 'ctr', 'eaVert');
-    products.forEach((n, i) => {
-      const isAsset = n.unitKind === 'asset';
-      xml += box(n, contentX + (pW + gap) * i, prodTop, pW, unitH, 'roundRect',
-        isAsset ? P.vcAssetBg : P.prodCellBg, isAsset ? P.vcAssetText : P.vcProductText, true, 1000);
-    });
-  }
+  // ── 右側直欄（ST-23c）：Margin 箭頭在產品欄左邊，兩者同高（支援活動頂 → 價值鏈區底）──
+  const prodX = areaX + areaW - prodColW;
+  const mx = areaX + areaW - prodW - marginW;
+  const my = supportTop;
+  const mh = Math.max(unitH, areaY + areaH - supportTop);
 
   // ── 右側 Margin／利潤 綠色大箭頭（隨「大箭頭背景」開關顯示，純裝飾）──
+  // ST-23c：原本 rightArrow＋rot=90° 在 OOXML 是「旋轉前尺寸繞中心轉」，會畫成 mh 寬的橫向箭頭；改不旋轉的 downArrow
+  //   downArrow 預設 adj：箭身佔寬中間 50%（x 0.25～0.75）、箭頭尖高＝寬×50%（在底端）
   if (arrowBg) {
-    const mx = areaX + areaW - marginW;
-    const my = supportTop;
-    const mh = Math.max(unitH, areaY + areaH - supportTop);
     xml += `
       <p:sp>
         <p:nvSpPr><p:cNvPr id="${id++}" name="Margin／利潤"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm rot="5400000"><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="rightArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+        <p:spPr><a:xfrm><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="downArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
         <p:txBody><a:bodyPr vert="eaVert" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="900" b="1" dirty="0"><a:solidFill><a:srgbClr val="${P.vcMarginText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>Margin／利潤</a:t></a:r></a:p></p:txBody>
       </p:sp>`;
+  }
+
+  // ── 產品直欄（ST-18 → ST-23c）：欄頂「產品」小標與區塊標題同列；方塊直排文字、等分欄高（每塊最高 1.6"，太少就從上排起）──
+  if (products.length) {
+    const pN = products.length;
+    const pH = Math.min(in2emu(1.6), Math.floor((mh - gap * (pN - 1)) / pN));
+    // 有「產品→產品」且中間隔著別的產品時，線要沿欄右側上下（vcProductRoute）：方塊右邊讓出一條窄通道
+    const pIds = new Set(products.map(n => n.id));
+    const pLane = valueChain.links.some(l => pIds.has(l.from) && pIds.has(l.to)) ? in2emu(0.06) : 0;
+    xml += textLabel('產品', prodX, areaY, prodColW, zoneTitleH, 900, '6B6B80', true, 'ctr');
+    products.forEach((n, i) => {
+      const isAsset = n.unitKind === 'asset';
+      xml += box(n, prodX, supportTop + (pH + gap) * i, prodColW - pLane, pH, 'roundRect',
+        isAsset ? P.vcAssetBg : P.prodCellBg, isAsset ? P.vcAssetText : P.vcProductText, true, 1000, 45720, 'eaVert');
+    });
   }
 
   // ── 連線（valueChain.links）：原生直線連接器；規則同 drawVcLinks（vcLinkRoute）──
   // 相鄰→一條直線；跨越→上去、橫走、下來三條（前兩條無箭頭，最後一條帶箭頭）
   const allRects = Object.values(rectById);
   const rowUse = {};
+  // ST-23c：到產品的線走 vcProductRoute（與編輯器同規則）；Margin 是 downArrow，箭身在 x 0.25～0.75
+  const product = products.length ? {
+    rects: new Set(products.map(n => rectById[n.id]).filter(Boolean)),
+    margin: arrowBg ? { x: mx, y: my, w: marginW, h: mh } : null,
+    zone: { x: prodX, y: supportTop, w: prodColW, h: mh },
+    horizontal: false,
+    body: [0.25, 0.75]
+  } : null;
+  const routeOpts = { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06), product };
+  // 活動之間的線不把產品直欄當障礙：產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線
+  const actRects = product ? allRects.filter(o => !product.rects.has(o)) : allRects;
   let skippedLinks = 0;                        // ST-20：兩端找不到方塊的連線不再靜默跳過，匯出後在狀態列提示
   valueChain.links.forEach((link, i) => {
     const r1 = rectById[link.from], r2 = rectById[link.to];
     if (!r1 || !r2) { skippedLinks++; return; }
-    const route = vcLinkRoute(r1, r2, allRects, { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06) }, rowUse);
+    const toProd = product && (product.rects.has(r1) || product.rects.has(r2));
+    const route = vcLinkRoute(r1, r2, toProd ? allRects : actRects, routeOpts, rowUse);
     const pts = route.pts.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
     for (let k = 0; k < pts.length - 1; k++) {
       const last = k === pts.length - 2;

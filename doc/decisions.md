@@ -43,3 +43,6 @@
 | 2026-10-26 | ST-23a | grid 列高改 auto 1fr auto，多出高度只給主要活動列；大箭頭關閉改三欄版型而非 Margin 欄 0 寬 | 產品欄比圖高時括號被拉長；避免多出 gap | 易 |
 | 2026-10-26 | ST-23 | 子項 a／b／c 各自 commit，整個 ST-23 驗完才併 dev | 23a 之後連線會斜穿 Margin，不讓 dev 出現半成品 | — |
 | 2026-10-26 | ST-23b | 到產品的線允許水平穿過 Margin 箭身（白描邊）；通道槽位依序「活動右緣～Margin 左」「Margin 右～產品」「Margin 箭身」 | 主要活動右緣到 Margin 只有約 12px，放不下第二條 | 中：改 vcProductRoute 槽位順序 |
+| 2026-10-26 | ST-23c | PPTX Margin 箭頭改 downArrow 不旋轉（原 rightArrow rot=90° 的 off/ext 是旋轉前尺寸，PowerPoint 會畫成橫向 3.5" 箭頭） | ST-01g 起的 bug，slide1 本次重排順手修 | 易 |
+| 2026-10-26 | ST-23c | 非產品連線的障礙物排除產品方塊（PPTX 與編輯器一致）；有產品→產品線時 PPTX 產品方塊右側讓 0.06" 通道 | 產品直條跨多列，當障礙會讓活動間的線退回斜線 | 易 |
+| 2026-10-26 | ST-23c | regression c 區段預設只比 slide2 以後，slide1 改驗結構（產品數／位置／連接器正交／skippedLinks 0），`--strict-slide1` 可全比 | slide1 版面已變，v1.0.0 基準不再適用 | 易 |
