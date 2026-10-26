@@ -48,7 +48,7 @@ const hexInfo = `(()=>{${colorFn}
     return {id:u.dataset.vcId,asset:u.classList.contains('vc-asset'),bg,hue:u.style.getPropertyValue('--vc-hex'),idx:u.style.getPropertyValue('--vc-hex-idx'),
       clip:getComputedStyle(u).clipPath,cr:rgb?cr(rgb,[255,255,255]):0,parent:u.parentElement.parentElement.dataset.vcId||'',
       color:getComputedStyle(u.querySelector('textarea,input')).color}});
-  const heads=[...P.querySelectorAll('.vc-group > .vc-node-head')].map(h=>{const rgb=parse(getComputedStyle(h).backgroundColor);return {cr:rgb?cr(rgb,[255,255,255]):0,bg:getComputedStyle(h).backgroundColor}});
+  const heads=[...P.querySelectorAll('.vc-group > .vc-node-head')].map(h=>{const rgb=parse(getComputedStyle(h).backgroundColor);const el=h.querySelector('input,textarea');const fg=el?parse(getComputedStyle(el).color):[255,255,255];return {cr:rgb&&fg?cr(rgb,fg):0,bg:getComputedStyle(h).backgroundColor}});
   const top=[...P.querySelector('.vc-zone-body').children].filter(e=>e.matches('.vc-unit,.vc-group')).map(e=>({id:e.dataset.vcId,idx:e.style.getPropertyValue('--vc-hex-idx'),
     bg:getComputedStyle(e.matches('.vc-group')?e.querySelector(':scope>.vc-node-head'):e).backgroundColor}));
   return {zones:document.querySelector('.vc-zones').className,leaves,heads,top};
@@ -90,7 +90,7 @@ async function checkHex(h, tag) {
   ok(sameHue, `[${tag}] 同群組葉節點同色相`);
   const low = g.leaves.filter(l => !l.asset && l.cr < 4.5);
   ok(!low.length, `[${tag}] 非資產葉節點白字對比 ≥ 4.5（最低 ${Math.min(...g.leaves.filter(l => !l.asset).map(l => l.cr)).toFixed(2)}）${JSON.stringify(low.map(l => [l.id, l.bg]))}`);
-  ok(g.heads.every(x => x.cr >= 4.5), `[${tag}] 群組橫帶白字對比 ≥ 4.5（最低 ${Math.min(...g.heads.map(x => x.cr)).toFixed(2)}）`);
+  ok(g.heads.every(x => x.cr >= 4.5), `[${tag}] 群組橫帶字色對比（分色配色下為淡底深字） ≥ 4.5（最低 ${Math.min(...g.heads.map(x => x.cr)).toFixed(2)}）`);
   ok(g.leaves.filter(l => !l.asset).every(l => /255, 255, 255/.test(l.color)), `[${tag}] 葉節點文字色為白`);
 }
 
@@ -133,7 +133,7 @@ for (const id of ['bookstore-a', 'bio-aesthetic']) {
       await h.ev(`applyPalette(${i}); 0`); await sleep(400);
       await h.shot('#valueChainEditor', `${out}/d-palette-${i}.png`);
     }
-    ok(n === 6 && h.errors().length === 0, `[d] ${n} 套配色截圖完成、無 error`);
+    ok(n >= 6 && h.errors().length === 0, `[d] ${n} 套配色截圖完成、無 error`);
     await checkHex(h, 'd 配色末套');
   } finally { await h.close(); }
 }
