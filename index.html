@@ -838,6 +838,15 @@
   td.matrix-cell .cell-vi { margin-left: 4px; font-size: 0.9rem; font-weight: bold; color: var(--ink); }
   td.matrix-cell .cell-bases { position: absolute; left: 6px; bottom: 4px; font-size: 0.66rem; color: var(--ink-light); }
   .cell-panel { margin-top: 10px; }
+  /* ST-24a：矩陣右側 sticky 側欄（top 讓出 .project-panel） */
+  .matrix-row { display: flex; align-items: flex-start; gap: 14px; }
+  .matrix-row > .matrix-wrapper { flex: 1 1 auto; min-width: 0; }
+  .matrix-row > .cell-panel { flex: 0 0 360px; width: 360px; margin-top: 0; position: sticky; top: 82px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  .matrix-row > .cell-panel .cell-panel-title { min-width: 0; flex-basis: 100%; }
+  @media (max-width: 800px) {
+    .matrix-row { flex-direction: column; align-items: stretch; }
+    .matrix-row > .cell-panel { position: static; width: auto; flex: none; max-height: none; margin-top: 10px; }
+  }
   .cell-panel-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
   .cell-panel-title { font-size: 0.86rem; font-weight: 600; color: var(--ink); flex: 1; min-width: 200px; }
   .cell-panel-code { font-family: 'DM Mono', monospace; color: var(--mx-code-text); margin-right: 2px; }
@@ -1229,7 +1238,7 @@
   <div class="mode-toggle">
     <button class="mode-btn active" id="modeDrawBtn" onclick="setMode('draw')">✏️ 繪製箭頭</button>
     <button class="mode-btn" id="modeViewBtn" onclick="setMode('view')">👁 檢視模式</button>
-    <button class="mode-btn" id="modeDescBtn" onclick="setMode('describe')" title="點格子在矩陣下方面板看策略點定義並填寫描述（ST-14a）">📝 描述策略點</button>
+    <button class="mode-btn" id="modeDescBtn" onclick="setMode('describe')" title="點格子在右側面板（窄螢幕在下方）看策略點定義並填寫描述（ST-14a）">📝 描述策略點</button>
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
@@ -1241,16 +1250,18 @@
   <span class="status" id="statusText"></span>
 </div>
 
-<!-- Matrix -->
+<!-- Matrix（ST-24a：矩陣＋策略點面板同列，面板為右側 sticky 側欄） -->
+<div class="matrix-row" id="matrixRow">
 <div class="matrix-wrapper">
   <div class="matrix-container" id="matrixContainer">
     <svg id="lineCanvas"></svg>
     <table id="matrixTable"></table>
   </div>
 </div>
-<div class="hidden-cols-bar" id="hiddenColsBar"></div>
 <!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自製／外包、F 列優勢基礎；填寫進度） -->
 <div class="panel cell-panel step-pane" data-steps="cells premise" id="cellPanel"></div>
+</div>
+<div class="hidden-cols-bar" id="hiddenColsBar"></div>
 
 </div>
 
@@ -4401,13 +4412,21 @@ function renderCellNoteMarks() {
     else td.removeAttribute('title');
   });
 }
+// ST-24a：寬螢幕面板是 sticky 側欄通常已可見；只在窄螢幕（上下排）或面板不在視窗內時才捲
+function cellPanelReveal() {
+  const panel = document.getElementById('cellPanel');
+  if (!panel) return;
+  if (window.matchMedia('(max-width:800px)').matches) { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return; }
+  const r = panel.getBoundingClientRect();
+  if (r.height && (r.bottom < 0 || r.top > window.innerHeight)) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 function selectCell(rowId, colIdx, focus) {
   currentCell = { row: rowId, col: colIdx, name: COLUMNS[colIdx] };
   renderCellNoteMarks();
   renderCellPanel();
   if (focus) {
     const panel = document.getElementById('cellPanel');
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    cellPanelReveal();
     const ta = panel.querySelector('.cell-note-text');
     if (ta) ta.focus({ preventScroll: true });
   }
@@ -4748,11 +4767,10 @@ function renderClashBox() {
     const head = document.createElement('div');
     head.className = 'clash-head';
     head.textContent = '⚔ ' + clashPointTitle(p);
-    head.title = '點擊選取這個策略點（矩陣下方面板顯示定義與描述）';
+    head.title = '點擊選取這個策略點（右側面板（窄螢幕在下方）顯示定義與描述）';
     head.addEventListener('click', () => {
       selectCell(p.row, p.col, false);
-      const panel = document.getElementById('cellPanel');
-      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      cellPanelReveal();
     });
     const who = document.createElement('div');
     who.className = 'clash-who';
@@ -8030,6 +8048,10 @@ normaliseCompetitorKinds();  // ST-14h：預設構想（沒有存檔時）也補
 syncMatrixViewControls();
 syncCompKindSelect();
 window.addEventListener('resize', drawLines);
+if (typeof ResizeObserver !== 'undefined') {  // ST-24a：側欄顯隱改變矩陣區寬度時重畫箭頭
+  const mw = document.querySelector('.matrix-wrapper');
+  if (mw) new ResizeObserver(() => requestAnimationFrame(drawLines)).observe(mw);
+}
 window.addEventListener('resize', drawVcLinks);
 renderColEditor();
 renderValueChainEditor();

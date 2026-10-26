@@ -38,3 +38,4 @@
 | 2026-10-26 | ST-22b | 主「📂 載入」判定價值鏈檔以 kind 標記為主，另備援「有 valueChain 但無 arrows 陣列與 COLUMN_GROUPS」；匯入走原 confirm 再 alert 提示，不寫 localStorage 不 reload | 使用者誤選價值鏈檔不應整份蓋掉專案；舊版匯出的價值鏈檔可能沒 kind | 易：改 isValueChainFile |
 | 2026-10-26 | ST-22 | 整波 ST-22～28 在同一條分支 worktree-st22-28 逐項 commit，未聽到「merge」不併 dev | pre-push 只放行 dev／main，且使用者未授權 merge；ST-22 單獨 commit 可先 merge release v1.1.1 | 易 |
 | 2026-10-26 | ST-26a | 目前構想本身是〔競〕時，「目前＋競爭者」視圖只畫競爭者們（含目前），不補本公司線；⚔ 仍標出 | 視圖定義一致、簡單；要看雙方切「全部構想」即可 | 易：改 visibleIdeaIdxs |
+| 2026-10-26 | ST-24a | ④ 點對陣點標題仍會捲到頁面下方的矩陣＋側欄（scrollY 約 2200） | 對陣點清單在矩陣上方是 ST-21d 既定版面；改前也要捲；側欄改 fixed 會蓋內容 | 中：可把 ④ 矩陣區搬到清單上方 |
