@@ -10,9 +10,9 @@
   - 第 1 階段：文案
   - [x] ST-21a 教材說明卡文案常數 `GUIDE_CONTENT`：六步各含「目的／課本怎麼說（短引文）／在這裡做什麼／完成檢查點／延伸頁碼／手冊錨點」；由 subagent 讀掃描 PDF 指定頁，定稿同步補進摘要檔第三節 [S 270–281、285–286、343–346、369–379]（完成 2026-10-26：index.html 純新增常數 129 行，key 同 GUIDE_STEPS（chain／cells／ideas／premise／action／control）、每步 purpose／quote[{text,page}]／todo／checks／pages／manual；11 則引文各 ≤40 字；定稿見 doc/reference/策略管理新論-分步引導版面.md 第三節）
   - 第 2 階段：版面
-  - [~] ST-21b tab 骨架：`#guideBar` 改為六格 tab 列（各步完成度條＋整體 %）；各區塊標 `data-step` 歸入 tab 容器；矩陣於 ②–⑥ 常駐、① 隱藏；切 tab 自動切換描述／繪製／檢視模式並重畫 SVG；`guideGoto()` 改為切 tab；支援 URL hash `#step-N`；窄螢幕 3×2
+  - [x] ST-21b tab 骨架：`#guideBar` 改為六格 tab 列（各步完成度條＋整體 %）；各區塊標 `data-step` 歸入 tab 容器；矩陣於 ②–⑥ 常駐、① 隱藏；切 tab 自動切換描述／繪製／檢視模式並重畫 SVG；`guideGoto()` 改為切 tab；支援 URL hash `#step-N`；窄螢幕 3×2（完成 2026-10-26，與 21d 合併實作：#guideBar 六格 tab（各步完成度條＋整體 %、role=tab）、section.step-pane#pane-<k> 六個 pane 各留空 #guideCard-<k> 給 21c；共用矩陣區 #stepMatrix ②–⑥ 顯示、策略構想列 ③–⑥、#cellPanel 只在 ②④；guideGoto 切 pane→模式（② describe／③ draw／④–⑥ view）→replaceState #step-N→saveState→rAF 重畫；drawLines／drawVcLinks 隱藏時 return；init 順序 hash→存檔→首個未完成；hashchange；≤800px 3×2；自測 tools/selftest/ST-21b.mjs）
   - [ ] ST-21c 教材說明卡元件：每 tab 第一塊用 `GUIDE_CONTENT` 渲染（左：目的＋引文＋延伸頁碼；右：做什麼＋檢查點），可收合並記住（沿用 `guideOpen`）；底部「📖 手冊」錨點連結與上一步／下一步按鈕；依賴 ST-21a、ST-21b
-  - [~] ST-21d 區塊歸位：策略名稱與說明 → ①；填寫進度與 `#cellPanel` 緊貼矩陣下方 → ②；構想分型、`#moduleBox`、`#arrowList`、`#sentenceBox` → ③；`#premiseBox`、`#clashBox` → ④；`#actionBox` → ⑤；`#controlBox` → ⑥；各區在自己的 tab 內預設展開；刪除 `p.instructions`（併入說明卡）；依賴 ST-21b
+  - [x] ST-21d 區塊歸位：策略名稱與說明 → ①；填寫進度與 `#cellPanel` 緊貼矩陣下方 → ②；構想分型、`#moduleBox`、`#arrowList`、`#sentenceBox` → ③；`#premiseBox`、`#clashBox` → ④；`#actionBox` → ⑤；`#controlBox` → ⑥；各區在自己的 tab 內預設展開；刪除 `p.instructions`（併入說明卡）；依賴 ST-21b（完成 2026-10-26：① 策略名稱＋價值鏈、③ #arrowListPanel（模組／箭頭／句型）、④ 前提＋對陣點、⑤ 行動、⑥ 控制表，details 預設 open；刪 p.instructions；flashArrowItem 先切到 ③；PPTX 34 張 XML 與舊版相同）
   - 第 3 階段：驗證與文件
   - [ ] ST-21e 回歸驗證：兩個 fixtures 舊存檔載入後六 tab 截圖與連線重畫、載範例後各 tab 完成度、PPTX 匯出 XML 與 v1.0.0 一致（用 tools/cdp-harness.mjs，腳本放 tests/）；依賴 ST-21d
   - [ ] ST-21f manual.html 與 README 改為依六步分章、重拍截圖（tools/capture-manual.mjs 配合 tab 切換）；index.html 說明卡連到對應錨點；依賴 ST-21e
