@@ -1,10 +1,11 @@
-// ST-23a 自測：價值鏈編輯器的產品改放 .vc-zones 最右邊（Margin 箭頭右側）的直欄，產品方塊直排、上下排序；≤800px 回到橫列。
+// ST-23a 自測：價值鏈編輯器的產品改放 .vc-zones 最右邊（Margin 箭頭右側）的直欄，產品方塊上下排序；≤800px 回到橫列。
+// ST-31 更新：產品方塊文字改橫排（horizontal-tb）、欄寬固定 200px、名稱改 textarea（長名稱換行不裁字）。
 // 跑法：CLAUDE_JOB_DIR=... node tools/selftest/ST-23a.mjs   （需 Chrome；截圖寫 $CLAUDE_JOB_DIR/tmp/st23a/）
 // 測了什麼：
 //   [a] bookstore-a：產品欄在 Margin 箭頭右側、三列全高（top/bottom 對齊 .vc-zones）；3 個產品同一直欄 top 遞增；
-//       產品方塊 writing-mode=vertical-rl、名稱 input 是直的（高 > 寬）且未裁字；isVcHorizontal(產品 body)=false；
+//       產品方塊 writing-mode=horizontal-tb、產品欄寬 200±2、名稱 textarea 未裁字；isVcHorizontal(產品 body)=false；
 //       連線 SVG 圖形數 ≥ 連線數、座標無 NaN；上下排序（moveVcNode，與 drop handler 同一路徑）資料與 DOM 一致；「＋ 產品」在欄底
-//       3 個產品撐高 Porter 圖 ≤20px（直排時「＋同層」「✕」「＋角色」平時隱藏、hover 才出現）；加到 8 個產品時多出的高度只給主要活動列（下方括號高度不變）
+//       3 個產品撐高 Porter 圖 ≤20px；加到 8 個產品時多出的高度只給主要活動列（下方括號高度不變）
 //   [b] 關掉大箭頭（showArrowBg=false，走 checkbox change）：沒有 Margin 箭頭，產品欄仍貼齊 .vc-zones 右緣
 //   [c] bio-pharma-tw 範本（長名稱）：名稱未裁字；產品欄不把 Porter 圖撐高超過 40px（對照把產品欄 display:none 時的 zones 高）
 //   [d] 700px 寬：產品欄在 zones 最下方、isVcHorizontal=true、方塊 horizontal-tb
@@ -29,7 +30,7 @@ const geo = `(()=>{
   const paths=[...svg.querySelectorAll('path,line,polyline')];
   const nan=paths.some(e=>/NaN/.test(e.getAttribute('d')||'')||/NaN/.test(e.getAttribute('points')||'')||['x1','y1','x2','y2'].some(a=>/NaN/.test(e.getAttribute(a)||'')));
   return { zones:R(z), prod:R(p), margin:R(document.querySelector('.vc-margin-arrow')), support:R(document.querySelector('.vc-zone-support')), act:R(document.querySelector('.vc-activities-row')),
-    units:units.map(u=>{const i=u.querySelector('input');return {...R(u), wm:getComputedStyle(u).writingMode, inp:R(i), sw:i.scrollWidth, cw:i.clientWidth, sh:i.scrollHeight, ch:i.clientHeight}}),
+    units:units.map(u=>{const i=u.querySelector('.vc-node-head > :is(input,textarea)');return {...R(u), wm:getComputedStyle(u).writingMode, inp:R(i), sw:i.scrollWidth, cw:i.clientWidth, sh:i.scrollHeight, ch:i.clientHeight}}),
     horiz:isVcHorizontal(body), links:valueChain.links.length, paths:paths.length, nan, inZones:!!z.querySelector('.vc-zone-products') };
 })()`;
 // 產品欄高度貢獻歸零（height:0＋overflow:hidden，欄寬不變），量 Porter 圖本身的自然高
@@ -47,8 +48,9 @@ try {
   ok(Math.abs(g.prod.t - g.zones.t) <= 1 && Math.abs(g.prod.b - g.zones.b) <= 1 && Math.abs(g.prod.r - g.zones.r) <= 1, `[a] 產品欄三列全高且貼右緣 prod ${JSON.stringify(g.prod)} zones ${JSON.stringify(g.zones)}`);
   const cx = g.units.map(u => u.l + u.w / 2);
   ok(g.units.length === 3 && g.units.every((u, i) => i === 0 || u.t > g.units[i - 1].t) && Math.max(...cx) - Math.min(...cx) <= 2, `[a] 3 個產品同一直欄、top 遞增 ${g.units.map(u => u.t).join(',')}`);
-  ok(g.units.every(u => u.wm === 'vertical-rl' && u.inp.h > u.inp.w && u.h > u.w), `[a] 產品方塊直排、名稱 input 直的 ${g.units.map(u => u.inp.w + 'x' + u.inp.h).join(' ')}`);
-  ok(g.units.every(notClipped), `[a] 名稱 input 沒有內容溢出（未被裁字）`);
+  ok(g.units.every(u => u.wm === 'horizontal-tb' && u.w > u.h), `[a] 產品方塊橫排（ST-31）${g.units.map(u => u.w + 'x' + u.h).join(' ')}`);
+  ok(Math.abs(g.prod.w - 200) <= 2, `[a] 產品欄寬 200±2（ST-31）：${g.prod.w}`);
+  ok(g.units.every(notClipped), `[a] 名稱 textarea 沒有內容溢出（未被裁字）`);
   ok(g.horiz === false, `[a] isVcHorizontal(產品 body) = false（拖曳改看 clientY、placeholder 用 vc-drop-v）`);
   ok(g.paths >= g.links && g.links >= 1 && !g.nan, `[a] 連線 ${g.links} 條、SVG 圖形 ${g.paths} 個、無 NaN`);
   const zA = await h.ev(zNoProd);
