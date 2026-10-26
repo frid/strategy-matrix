@@ -1168,7 +1168,7 @@
 </div>
 
 <!-- Value chain editor（ST-01b）：支援活動｜主要活動｜產品 -->
-<h2 class="section-title" id="secValueChain">價值鏈</h2>
+<h2 class="section-title" id="secValueChain">經營流程（價值鏈）</h2>
 <div class="panel">
   <div class="vc-editor" id="valueChainEditor"></div>
 </div>
@@ -1235,7 +1235,7 @@
     <div class="action-toolbar">
       <button type="button" class="btn-ghost" onclick="generateActionsFromArrows()" title="為目前策略構想每條還沒有行動項目的箭頭各建一筆">✨ 從箭頭產生行動項目</button>
       <button type="button" class="btn-ghost" onclick="addActionItem()">＋ 行動項目</button>
-      <label><input type="checkbox" id="actionGroupChk" onchange="toggleActionGroup(this.checked)"> 依負責單元分組</label>
+      <label><input type="checkbox" id="actionGroupChk" onchange="toggleActionGroup(this.checked)"> 依負責價值單元分組</label>
     </div>
     <div id="actionBody"></div>
     <div class="sentence-actions">
@@ -1277,10 +1277,10 @@
 <!-- Competitors：③–⑥ 都看得到，切目前策略構想（ST-21d）-->
 <h2 class="section-title">策略構想</h2>
 <div class="panel">
-  <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／未來方向／競爭者）</div>
+  <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／未來方向／競爭者）｜一個策略構想＝一套策略方案（策略組合）[S 343、365]</div>
   <div class="competitor-row" id="competitorBar">
     <div class="add-competitor">
-      <input type="text" id="compNameInput" placeholder="新增策略名稱" maxlength="14" />
+      <input type="text" id="compNameInput" placeholder="新增策略構想名稱" maxlength="14" />
       <select id="compKindSelect" title="新策略構想的類型（ST-14h）"></select>
       <button class="btn-primary" onclick="addCompetitor()">＋ 新增</button>
     </div>
@@ -1289,7 +1289,7 @@
 
 </div>
 <!-- Legend（ST-21b 起在共用矩陣區）-->
-<h2 class="section-title" id="secMatrix">策略矩陣展開</h2>
+<h2 class="section-title" id="secMatrix">策略矩陣</h2>
 <!-- Legend -->
 <div class="panel" style="padding:10px 16px; margin-bottom:12px;">
   <div class="legend" id="legendContainer"></div>
@@ -1302,12 +1302,12 @@
     <button class="mode-btn" id="modeViewBtn" onclick="setMode('view')">👁 檢視模式</button>
     <button class="mode-btn" id="modeDescBtn" onclick="setMode('describe')" title="點格子在右側面板（窄螢幕在下方）看策略點定義並填寫描述（ST-14a）">📝 描述策略點</button>
   </div>
-  <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()">策略矩陣</button>
-  <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
+  <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()" title="切換左側標籤：策略矩陣／加上產業矩陣簡稱（產業矩陣出自司徒講義，非新論 Ch8／9）">策略矩陣</button>
+  <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣；出自彭朱如講義 [P3 57]）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
   <label class="short-view-toggle step-pane" data-steps="ideas premise action control" title="矩陣上要畫哪些策略構想的箭頭：只看目前構想／目前＋競爭者／全部構想（非目前構想變淡、競爭者虛線）；含雙方時以 ⚔ 標出對陣點（ST-26a）">👁 檢視 <select id="matrixViewSel" onchange="setMatrixView(this.value)"><option value="current">只看目前構想</option><option value="rivals">目前＋競爭者</option><option value="all">全部構想</option></select></label>
   <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
-  <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="clearCompetitor()">清除目前策略</button>
+  <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="clearCompetitor()">清除目前構想</button>
   <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="clearAll()">🗑 清除全部</button>
   <span class="status" id="statusText"></span>
 </div>
@@ -2058,7 +2058,7 @@ const STRATEGY_ELEMENTS = [
     caseExample: '書上沒有具名公司，以顧客滿意度調查說明需求一變產品就要跟著調整；Ch9 另舉低價產品滿足價格敏感客戶 [S 346]',
     pages: '287–288',
     shape: { type: 'col', col: 'out', from: 'A', to: 'B' } },
-  { id: '1-2',  cat: 1, name: '產品特色之形成', def: '投入面的價值活動轉化為顧客感受到的產品特色', example: '採購成本低，使產品售價得以壓低',
+  { id: '1-2',  cat: 1, name: '產品特色之形成', def: '投入欄的價值活動轉化為顧客感受到的產品特色', example: '採購成本低，使產品售價得以壓低',
     explain: '找出哪些價值活動造就哪些產品特色，再看這些特色如何滿足市場',
     caseExample: '筆電：創新來自研發、成本來自製造、準時交貨來自倉儲與資訊系統',
     pages: '289–290',
@@ -2467,7 +2467,7 @@ const PREMISE_TYPES = [
   { k: 'cond',   label: '條件前提',     short: '條', swot: { ok: 'S', no: 'W' },
     desc: '企業本身必須具備的能力或資源（資訊系統能力、製程研發能力…）；成立＝優勢、不成立＝劣勢 [S 370, 375]' },
   { k: 'causal', label: '因果認知前提', short: '因', swot: null,
-    desc: '對「這個作為會帶來那個結果」的因果判斷，例如顧客是否覺得低價抵得過沒有門市的不便 [S 369, 371]；不歸入 SWOT，另列' },
+    desc: '對「這個作為會帶來那個結果」的因果判斷，例如顧客是否覺得低價抵得過沒有門市的不便 [S 369, 371]；不歸入 SWOT，另列 [S 378]' },
 ];
 
 // ── ST-21a 教材說明卡文案 ─────────────────────────────────────────────────
@@ -2482,14 +2482,14 @@ const GUIDE_CONTENT = {
       { text: '「必須將整體產業完整的經營流程詳細列舉並深入分析」', page: 272 },
     ],
     todo: [
-      '在價值鏈編輯器列出價值單元：投入面放左邊（原料、研發、製造…），產品放右邊 [S 272, 275]。',
+      '在價值鏈編輯器列出價值單元：投入欄放左邊（原料、研發、製造…），產品放右邊 [S 272, 275]。',
       '不只列自己做的部分；上下游由供應商、經銷商負責的單元也要列進來 [S 271–272]。',
       '產品或通路若各有不同策略意義，就拆成「產品一／產品二」「通路一／通路二」分開列 [S 276]。',
       '沒把握從何下手可先套用產業範本，再依自己的產業改名、增刪或細分。',
       '列好後按「📐 展開到策略矩陣」；之後想到新的單元，隨時可以再加一欄 [S 276]。',
     ],
     checks: [
-      '至少列出 3 個價值單元，並分清投入面與產出面（產品）。',
+      '至少列出 3 個價值單元，並分清投入欄與產出欄（產品）。',
       '上下游合作對象負責的單元也已列入，不只本公司做的部分。',
       '已按「展開到策略矩陣」，矩陣欄位與價值單元一致。',
     ],
@@ -3425,6 +3425,8 @@ function renderColEditor() {
 // ── Value Chain Editor（ST-01b）──────────────────────────────────────────
 // 三區：支援活動（單元）｜主要活動（群組可任意巢狀）｜產品（單元）；拖曳只能在同一區內移動
 // porter = 是否畫進 Porter 價值鏈圖；ST-01i 起產品改在圖外的「產品管理面板」維護（矩陣產品欄不變）
+// ST-34a：Porter 用語的出處說明（只做 tooltip）
+const VC_PORTER_TIP = 'Porter 價值鏈用語；課本統稱價值單元 [S 271]';
 const VC_ZONES = [
   { key: 'support',  title: '支援活動', allowGroup: false, porter: true  },
   { key: 'primary',  title: '主要活動', allowGroup: true,  porter: true  },
@@ -3657,7 +3659,7 @@ function buildVcNode(node, zone) {
   if (wrapName) { inp.rows = 1; inp.className = 'vc-name-wrap'; } else inp.type = 'text';
   inp.value = node.name;
   inp.maxLength = 20;
-  inp.placeholder = isGroup ? '群組名稱' : '單元名稱';
+  inp.placeholder = isGroup ? '群組名稱' : '價值單元名稱';
   inp.title = node.name;
   sizeVcInput(inp);
   inp.addEventListener('mousedown', e => e.stopPropagation());
@@ -3887,6 +3889,7 @@ function renderValueChainEditor() {
   const supportLabel = document.createElement('div');
   supportLabel.className = 'vc-support-label';
   supportLabel.textContent = '支援活動';
+  supportLabel.title = VC_PORTER_TIP;
   zones.appendChild(supportLabel);
 
   // 主要活動＋產品共同容器：同一列橫向並排，各自依內容自然寬度（方塊多的自然較寬）
@@ -3902,6 +3905,7 @@ function renderValueChainEditor() {
     const title = document.createElement('div');
     title.className = 'vc-zone-title';
     title.textContent = z.title;
+    if (z.porter) title.title = VC_PORTER_TIP;
     zoneEl.appendChild(title);
 
     const body = document.createElement('div');
@@ -3922,6 +3926,7 @@ function renderValueChainEditor() {
     const addUnitBtn = document.createElement('span');
     addUnitBtn.className = 'col-item-add';
     addUnitBtn.textContent = '＋ 單元';
+    addUnitBtn.title = '新增價值單元';
     addUnitBtn.addEventListener('click', () => {
       const u = makeUnit('新單元');
       list.push(u);
@@ -3951,6 +3956,7 @@ function renderValueChainEditor() {
   const primaryLabel = document.createElement('div');
   primaryLabel.className = 'vc-primary-label';
   primaryLabel.textContent = '主要活動';
+  primaryLabel.title = VC_PORTER_TIP;
   zones.appendChild(primaryLabel);
 
   // 右側 Margin／利潤 箭頭（純裝飾、固定文字，不可編輯／不參與連線／不可拖放），隨「大箭頭背景」開關顯示
@@ -3958,6 +3964,7 @@ function renderValueChainEditor() {
     const marginArrow = document.createElement('div');
     marginArrow.className = 'vc-margin-arrow';
     marginArrow.textContent = 'Margin／利潤';
+    marginArrow.title = VC_PORTER_TIP;
     zones.appendChild(marginArrow);
   }
 
@@ -4507,7 +4514,7 @@ function openExpandDialog() {
       <h3>📐 展開到策略矩陣</h3>
       <div class="sm-modal-radio">支援活動放：
         <label><input type="radio" name="expandSupportPos" value="first" ${expandSupportFirst ? 'checked' : ''}>最前面（預設）</label>
-        <label><input type="radio" name="expandSupportPos" value="after" ${expandSupportFirst ? '' : 'checked'}>主活動後面</label>
+        <label><input type="radio" name="expandSupportPos" value="after" ${expandSupportFirst ? '' : 'checked'}>主要活動後面</label>
       </div>
       ${expandPlanListsHtml(plan)}
       <div class="sm-modal-actions">
@@ -4648,6 +4655,7 @@ function buildTable() {
     const tdL = document.createElement('td');
     tdL.className = 'row-label-left';
     tdL.textContent = showIndustryLabels ? row.leftLabel : row.rightLabel;
+    tdL.title = `${row.id} 列：${row.label} [S 279–281]`;  // ST-34a：簡稱的全名與出處（title 不進 PPTX）
     tr.appendChild(tdL);
 
     // 16 個資料儲存格（座標碼格式：A01、B12、F16）；短版只建可見欄，代號仍用原始欄索引
@@ -4678,6 +4686,7 @@ function buildTable() {
     const tdR = document.createElement('td');
     tdR.className = 'row-label-right';
     tdR.textContent = row.rightLabel;
+    tdR.title = `${row.id} 列：${row.label} [S 279–281]`;
     tr.appendChild(tdR);
 
     tbody.appendChild(tr);
@@ -4890,7 +4899,7 @@ function renderCellPanel() {
   title.appendChild(document.createTextNode(` ${COLUMNS[ci]} × ${rowDef.label}`));
   const kind = document.createElement('span');
   kind.className = 'cell-kind' + (out ? ' out' : '');
-  kind.textContent = out ? '產出欄' : '投入欄';
+  kind.textContent = out ? '產出欄（產品）' : '投入欄（價值單元）';
   title.appendChild(kind);
 
   const def = out ? rowDef.output : rowDef.input;
@@ -5334,7 +5343,7 @@ function buildActionRow(ci, act, num) {
     + '<option value="__other">其他…</option>';
   sel.value = isOther ? '__other' : act.owner;
   const other = document.createElement('input');
-  other.type = 'text'; other.className = 'action-owner-other'; other.placeholder = '自訂單元';
+  other.type = 'text'; other.className = 'action-owner-other'; other.placeholder = '自訂價值單元';
   other.style.display = isOther ? '' : 'none';
   bindActionText(other, act, 'owner');
   if (!isOther) other.value = '';
@@ -5469,7 +5478,7 @@ function renderActionBox() {
       gr.className = 'action-group-row';
       const gc = document.createElement('td');
       gc.colSpan = heads.length;
-      gc.textContent = `${g.owner || '（未指定負責單元）'}（${g.items.length}）`;
+      gc.textContent = `${g.owner || '（未指定負責價值單元）'}（${g.items.length}）`;
       gr.appendChild(gc);
       tbody.appendChild(gr);
       g.items.forEach(a => tbody.appendChild(buildActionRow(ci, a, numOf(a))));
@@ -6835,7 +6844,7 @@ function addCompetitor() {
   const inp = document.getElementById('compNameInput');
   const name = inp.value.trim();
   if (!name) return;
-  if (competitors.length >= 8) { alert('最多支援 8 個策略'); return; }
+  if (competitors.length >= 8) { alert('最多支援 8 個策略構想'); return; }
   const kSel = document.getElementById('compKindSelect');
   const kind = kSel && STRATEGY_KIND_MAP[kSel.value] ? kSel.value : 'current';  // ST-14h
   competitors.push({ name, color: COLORS[competitors.length % COLORS.length], kind });
@@ -6868,7 +6877,7 @@ function syncCompKindSelect() {
 }
 
 function removeCompetitor(ci) {
-  if (competitors.length <= 1) { alert('至少保留一個策略'); return; }
+  if (competitors.length <= 1) { alert('至少保留一個策略構想'); return; }
   pushHistory();
   competitors.splice(ci, 1);
   arrows.splice(ci, 1);
@@ -8097,7 +8106,7 @@ const GUIDE_STEPS = [
              '幾十甚至上百個策略點都逐一了解後，策略現狀就掌握了大半 [S 281]。'],
     tip: '切到「描述策略點」模式，點格子逐格填寫。' },
   { k: 'ideas', num: '③', title: '策略構想', anchor: '#pane-ideas',
-    points: ['用箭頭表達策略要素之間的因果，多條相關箭頭可組成「模組」，再由模組組成整套策略組合 [S 343–346]。'],
+    points: ['用箭頭表達策略點之間的因果，並標上策略要素；多條相關箭頭可組成「模組」，再由模組組成整套策略組合 [S 343–346]。'],
     tip: '先畫出主要箭頭並寫備註、勾策略要素，再把相關箭頭圈成模組。' },
   { k: 'premise', num: '④', title: '前提驗證', anchor: '#pane-premise',
     points: ['有了具體方案才談 SWOT：每個策略動作或因果關係都有前提，分環境前提（機會／威脅）與條件前提（優勢／劣勢）[S 369]。',
@@ -8129,7 +8138,7 @@ function guideProgress() {
   const units = guideVcUnitNames();
   const expanded = COLUMNS.length > 0 && units.length > 0 && units.every(n => COLUMNS.includes(n));
   res.chain = { pct: (units.length >= 3 ? 50 : 0) + (expanded ? 50 : 0),
-    label: `${units.length} 個單元、${expanded ? `已展開 ${COLUMNS.length} 欄` : '未展開'}` };
+    label: `${units.length} 個價值單元、${expanded ? `已展開 ${COLUMNS.length} 欄` : '未展開'}` };
   // ② 策略點描述
   const cp = cellNoteProgress();
   res.cells = { pct: cp.total ? Math.round(cp.done / cp.total * 100) : 0, label: `已描述 ${cp.done}／${cp.total} 格` };

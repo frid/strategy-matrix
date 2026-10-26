@@ -56,3 +56,10 @@
 | 主視覺 | `策略矩陣分析主視覺.png` |
 
 - `專有名詞對照.md`：網頁用語 vs 教科書用語差異表（35 處，分文字層／PPTX 文字／舊檔遷移），ST-34 規劃依據（2026-10-26）。
+
+## 網路版型參考（2026-10-26，ST-35）
+
+| 來源 | 內容 | 本機摘要 |
+|---|---|---|
+| SlideEgg「Value Chain」範本頁 https://www.slideegg.com/value-chain | 主範本：支援活動白底膠囊列、主要活動彩色圓形 icon、右側黑色大 chevron 當 Margin；相關範本 Linear Value Chain（彩虹六角鏈）、Industry Value Chain（Porter 彩色橫條、環狀分段、花瓣式） | `價值鏈-版型與群組畫法範例.html`（F／G／H 與「配色與 icon 參考」一節；色票為縮圖目視近似值） |
+| 其他網搜（Edraw、Visual Paradigm、Creately、Infodiagram、Miro） | Chevron 箭頭、直式、環狀、清單、金字塔、泳道、桑基七種排版 | 同上（A～E 為 Chevron 群組畫法）；結論：主版型以 B 橫帶式為優先 |
