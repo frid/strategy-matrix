@@ -7813,6 +7813,8 @@ function pptxPalette() {
     supportLeafText:pptxHex(vars['--mx-support-leaf-text'], '843C0C'),
     vcAssetBg:    pptxHex(vars['--vc-asset-bg'], 'FFF8E8'),
     vcAssetText:  pptxHex(vars['--vc-asset-text'], '7A5A12'),
+    vcAssetBorder:pptxHex(vars['--vc-asset-border'], 'E8C87A'),  // ST-35g：circle 版型資產圓框、支援膠囊框
+    gridLine:     pptxHex(vars['--grid-line'], 'DDD8F0'),        // ST-35g：circle 版型支援活動膠囊框
     vcMarginBg:   pptxHex(vars['--vc-margin-bg'], '2E8B3D'),
     vcMarginText: pptxHex(vars['--vc-margin-text'], 'FFFFFF'),
     vcLink:       pptxHex(vars['--vc-link'], '5A4FCF'),
@@ -8050,6 +8052,217 @@ function buildArrowShapesXml(L, allSteps, activeStep, startId) {
   return xml;
 }
 
+// ── ST-35g：價值鏈頁的橫向葉節點版（band／segment／hex／circle；fold 走 band；porter 不經過這裡）────────
+// 主要活動依深度優先攤成一列等寬葉節點；群組畫在葉節點上方的橫帶（band／hex）、下方小字（segment）或虛線底板（circle），
+// 巢狀群組依「子樹群組層數」疊帶、緊貼自己的葉節點（同畫面 flex-end 對齊）。葉節點寬不到 0.5" 時依頂層項目折成多列
+// （各列的頂層項目連續，DP 取「最寬一列最窄」的切法）。取色同畫面：segment 四色、hex 七色相往黑混、circle 八色；
+// 分色配色（perUnit）在 band／segment／hex 優先，circle 不吃分色（同 ST-35d 決定）
+const VC_PPTX_SEG    = ['3B6FB6', '2A7F73', 'B5532F', '6B7A2C'];                                // 同 --vc-seg-0..3
+const VC_PPTX_HEX    = ['2AA7B8', '3B6FB6', '7B5CC4', 'E3832C', 'D64A4A', 'E0B531', '4A9D5C'];   // 同 --vc-hex-0..6
+const VC_PPTX_CIRCLE = [...VC_PPTX_HEX, '8A7BB5'];                                          // 同 --vc-circle-0..7
+// HEX 混色：a 佔 pct（0–1）、其餘 b，同 CSS color-mix(in srgb, a pct, b)
+const pptxMix = (a, b, pct) => [0, 2, 4].map(k => Math.round(parseInt(a.slice(k, k + 2), 16) * pct + parseInt(b.slice(k, k + 2), 16) * (1 - pct))
+  .toString(16).padStart(2, '0')).join('').toUpperCase();
+// 估算 text 以字級 sz（百分之一 pt）放進 innerW × innerH（EMU）是否放得下：逐字折行（全形字寬＝字級、半形 0.55 倍）、行高 1.2 倍
+function pptxTextFits(text, sz, innerW, innerH, maxLines = 99) {
+  const pt = sz / 100 * 12700;
+  let lines = 1, cur = 0;
+  for (const ch of String(text)) {
+    const cw = (/[\x20-\x7e]/.test(ch) ? 0.55 : 1) * pt;
+    if (cur > 0 && cur + cw > innerW) { lines++; cur = 0; }
+    cur += cw;
+  }
+  return cur <= innerW && lines <= maxLines && lines * pt * 1.2 <= innerH;
+}
+// 一組文字共用的字級：sizes 由大到小第一個全部放得下的；都放不下回 null
+const pptxFitSz = (texts, sizes, innerW, innerH, maxLines) => sizes.find(sz => texts.every(t => pptxTextFits(t, sz, innerW, innerH, maxLines))) || null;
+
+// 版面規劃（只算幾何、不出 XML）。fixedH(u)＝主要活動以外佔的高（區塊標題＋支援活動列），availH＝價值鏈區總高
+function planVcLeafLine(lk, primary, contentW, fixedH, availH) {
+  const kids = n => (n.children || []).filter(c => c.type === 'unit' || c.type === 'group');
+  const sOf  = n => (n.type === 'group' ? 1 + Math.max(0, ...kids(n).map(sOf)) : 0);   // 子樹群組層數（單元 0）
+  // 每個頂層項目攤成葉節點槽：{ node（空群組＝null）, top, anc: [外→內 群組] }
+  const items = primary.map((n, top) => {
+    const slots = [];
+    const walk = (m, anc) => {
+      if (m.type !== 'group') { slots.push({ node: m, top, anc }); return; }
+      const ks = kids(m);
+      if (!ks.length) { slots.push({ node: null, top, anc: [...anc, m] }); return; }
+      ks.forEach(k => walk(k, [...anc, m]));
+    };
+    walk(n, []);
+    return { node: n, top, slots, s: sOf(n) };
+  });
+  const M = items.length;
+  const u2 = in2emu;
+  const hg = u2(0.02);                                   // hex 咬合後斜邊間的縫
+  const gaps = { band: [u2(0.025), u2(0.07)], segment: [u2(0.02), u2(0.1)], circle: [u2(0.04), u2(0.08)] }[lk];
+  // 一列的葉節點寬：n 槽、m 項；hex 的槽距＝寬 − 斜角（0.25 × min(寬, 高)）＋縫
+  const solveW = (row, leafH) => {
+    const n = row.reduce((s, it) => s + it.slots.length, 0), m = row.length;
+    if (lk !== 'hex') return Math.floor((contentW - (n - m) * gaps[0] - (m - 1) * gaps[1]) / n);
+    const wA = (contentW - (n - 1) * (hg - 0.25 * leafH)) / n;
+    return Math.floor(wA >= leafH ? wA : (contentW - (n - 1) * hg) / (n - 0.25 * (n - 1)));
+  };
+  // 切 R 列：頂層項目連續分段，最小化「最寬一列」（槽數＋項目間距折算 0.3 槽）
+  const cost = (a, b) => items.slice(a, b).reduce((s, it) => s + it.slots.length, 0) + 0.3 * (b - a - 1);
+  const partition = R => {
+    const best = Array.from({ length: R + 1 }, () => new Array(M + 1).fill(Infinity)), cut = best.map(r => r.map(() => 0));
+    best[0][0] = 0;
+    for (let r = 1; r <= R; r++) for (let b = r; b <= M; b++) for (let a = r - 1; a < b; a++) {
+      const v = Math.max(best[r - 1][a], cost(a, b));
+      if (v < best[r][b]) { best[r][b] = v; cut[r][b] = a; }
+    }
+    const rows = []; let b = M;
+    for (let r = R; r >= 1; r--) { const a = cut[r][b]; rows.unshift(items.slice(a, b)); b = a; }
+    return rows;
+  };
+  const dims = u => ({ leafH: Math.round(u * 1.45), bandH: Math.round(u * 0.72), bandGap: u2(0.025), labH: Math.round(u * 0.6),
+    titleH: Math.round(u * 0.6), nameH: Math.round(u * 0.8), padB: u2(0.04), rowGap: u2(0.16) });
+  const circleD = (u, w) => Math.max(u2(0.2), Math.min(u2(0.5), w - u2(0.08), Math.max(u2(0.28), Math.round(u * 1.3))));
+  const rowsH = (rows, u, w) => {
+    const d = dims(u);
+    return rows.reduce((sum, row) => {
+      const D = Math.max(0, ...row.map(it => it.s));
+      const h = lk === 'segment' ? d.leafH + D * d.labH
+        : lk === 'circle' ? D * d.titleH + circleD(u, w) + d.nameH + D * d.padB
+        : D * (d.bandH + d.bandGap) + d.leafH;
+      return sum + h;
+    }, 0) + (rows.length - 1) * d.rowGap;
+  };
+  const uMin = u2(0.14), uMax = u2(0.42), MINW = u2(0.5);
+  const wOf = (rows, u) => Math.min(...rows.map(r => solveW(r, dims(u).leafH)));
+  const fits = (rows, u) => fixedH(u) + rowsH(rows, u, wOf(rows, u)) <= availH;
+  // 列數：寬度夠的最少列；若那樣連最小單位高都塞不下，退回較少列（葉節點較窄、字級再縮）
+  let R = 1;
+  while (R < M && wOf(partition(R), u2(0.3)) < MINW) R++;
+  while (R > 1 && !fits(partition(R), uMin)) R--;
+  const rows = partition(Math.max(1, Math.min(R, M)));
+  let u = uMin, shrunk = false;
+  if (fits(rows, uMax)) u = uMax;
+  else if (fits(rows, uMin)) { let lo = uMin, hi = uMax; while (hi - lo > 100) { const mid = Math.floor((lo + hi) / 2); fits(rows, mid) ? lo = mid : hi = mid; } u = lo; }
+  else shrunk = true;
+  const d = dims(u), w = wOf(rows, u);
+  const notch = lk === 'hex' ? Math.round(0.25 * Math.min(w, d.leafH)) : 0;
+  const [gi, go] = lk === 'hex' ? [hg - notch, hg - notch] : gaps;
+  return { u, w, gi, go, notch, hg, c: circleD(u, w), shrunk, ...d,
+    rows: rows.map(row => ({ items: row, D: Math.max(0, ...row.map(it => it.s)) })), sOf };
+}
+
+// 依規劃畫主要活動。ctx：{ lk, P, x0, y0, sp, textLabel, rectById }；回傳 { xml, bottom, leafSz }
+function buildVcLeafLineXml(L, ctx) {
+  const { lk, P, x0, y0, sp, textLabel, rectById } = ctx;
+  const { w, gi, go, leafH, bandH, bandGap, labH, titleH, nameH, padB, rowGap, c, notch, hg } = L;
+  const INK = P.vcProductText;
+  const label = n => (n.icon ? n.icon + ' ' : '') + (n.name || '（未命名）');
+  // 葉節點形狀與文字內距
+  const tip = Math.round(0.3 * Math.min(w, leafH));
+  const leafPrst = { band: 'homePlate', segment: 'chevron', hex: 'hexagon' }[lk];
+  const leafIns = lk === 'band' ? [27432, Math.round(tip * 0.7), 9000, 9000]
+    : lk === 'segment' ? [tip, Math.round(tip * 0.6), 9000, 9000]
+    : [Math.round(notch * 0.6), Math.round(notch * 0.6), 9000, 9000];
+  const allSlots = L.rows.flatMap(r => r.items.flatMap(it => it.slots));
+  const leaves = allSlots.filter(s => s.node);
+  let shrunk = L.shrunk;
+  const fitOr = (sz, fallback) => { if (!sz) shrunk = true; return sz || fallback; };
+  const leafSz = lk === 'circle'
+    ? fitOr(pptxFitSz(leaves.map(s => s.node.name || '（未命名）'), [800, 700, 600], w, nameH, 2), 600)
+    : fitOr(pptxFitSz(leaves.map(s => label(s.node)), [900, 800, 700, 600], w - leafIns[0] - leafIns[1], leafH - 18000), 600);
+  // circle 色序：主要活動葉節點深度優先序號；群組取進入時的序號（＝第一個葉節點的色，同畫面 --vc-circle-idx）
+  const cIdx = new Map();
+  { let seq = 0; const walk = n => { if (n.type === 'group') { cIdx.set(n, seq); (n.children || []).forEach(walk); } else if (n.type === 'unit') cIdx.set(n, seq++); };
+    valueChain.primary.forEach(walk); }
+  // hex 深淺：群組內葉節點序（上限 4，同畫面 --vc-hex-j）
+  const hexJ = new Map();
+  L.rows.forEach(r => r.items.forEach(it => it.slots.filter(s => s.node).forEach((s, k) => hexJ.set(s.node, it.node.type === 'group' ? Math.min(k, 4) : 0))));
+
+  let xml = '';
+  let y = y0;
+  L.rows.forEach(row => {
+    const D = row.D;
+    // 葉節點槽 x：同一頂層項目內槽距 gi、項目之間 go
+    let x = null;
+    row.items.forEach(it => it.slots.forEach((s, si) => { x = x === null ? x0 : x + w + (si === 0 ? go : gi); s.x = x; }));
+    // 群組範圍（外→內）
+    const groups = [];
+    const seen = new Map();
+    row.items.forEach(it => it.slots.forEach(s => s.anc.forEach(g => {
+      let e = seen.get(g);
+      if (!e) { e = { node: g, top: it.top, s: L.sOf(g), x0: s.x, x1: s.x + w }; seen.set(g, e); groups.push(e); }
+      e.x1 = s.x + w;
+    })));
+    const rowLeaves = row.items.flatMap(it => it.slots.filter(s => s.node));
+
+    if (lk === 'band' || lk === 'hex') {
+      const step = bandH + bandGap, leafY = y + D * step;
+      const inset = lk === 'hex' ? Math.round((notch - hg) / 2) + in2emu(0.01) : 0;
+      groups.forEach(g => {
+        const U = pptxPerUnit(P, g.top);
+        const hue = VC_PPTX_HEX[g.top % 7], base = g.top % 7 === 5 ? 0.54 : 0.66;
+        const fill = U ? U.tint : lk === 'hex' ? pptxMix(hue, '000000', base - 0.12) : P.vcPrimaryBg;
+        const ln   = U ? U.c    : lk === 'hex' ? pptxMix(hue, '000000', base - 0.22) : 'FFFFFF';
+        const col  = U ? U.ink  : lk === 'hex' ? 'FFFFFF' : P.vcPrimaryText;
+        const gy = y + (D - g.s) * step, bx = g.x0 + inset, bw = g.x1 - g.x0 - inset * 2;
+        const name = g.node.name || '（未命名）';
+        const sz = fitOr(pptxFitSz([name], [900, 800, 700, 600], bw - 36000, bandH - 9000), 600);
+        xml += sp({ name, x: bx, y: gy, w: bw, h: bandH, prst: 'rect', fill, ln, lnW: 9525, text: name, color: col, sz, bold: true, ins: [18000, 18000, 4500, 4500] });
+        // 連線端點＝整個群組（橫帶＋葉節點，寬取葉節點全幅），同畫面群組元素；hex 若用內縮後的寬，會包不住單顆子項而變成擋路的障礙
+        rectById[g.node.id] = { x: g.x0, y: gy, w: g.x1 - g.x0, h: leafY + leafH - gy };
+      });
+      rowLeaves.forEach(s => {
+        const n = s.node, U = pptxPerUnit(P, s.top), asset = n.unitKind === 'asset';
+        let fill, col;
+        if (asset) { fill = P.vcAssetBg; col = P.vcAssetText; }
+        else if (lk === 'band') { fill = U ? U.c : s.anc.length ? P.vcChildBg : P.vcPrimaryBg; col = U || !s.anc.length ? P.vcPrimaryText : P.vcChildText; }
+        else {
+          const j = hexJ.get(n) || 0, base = s.top % 7 === 5 ? 0.54 : 0.66;
+          fill = U ? pptxMix(U.c, '000000', 1 - j * 0.06) : pptxMix(VC_PPTX_HEX[s.top % 7], '000000', base - j * 0.05); col = 'FFFFFF';
+        }
+        xml += sp({ name: n.name, reg: n.id, x: s.x, y: leafY, w, h: leafH, prst: leafPrst, adj: lk === 'band' ? 30000 : null,
+          fill, ln: lk === 'band' ? 'FFFFFF' : null, text: label(n), color: col, sz: leafSz, bold: !s.anc.length, ins: leafIns });
+      });
+      y = leafY + leafH;
+    } else if (lk === 'segment') {
+      const leafBottom = y + leafH;
+      rowLeaves.forEach(s => {
+        const n = s.node, U = pptxPerUnit(P, s.top), asset = n.unitKind === 'asset';
+        xml += sp({ name: n.name, reg: n.id, x: s.x, y, w, h: leafH, prst: 'chevron', adj: 30000,
+          fill: asset ? P.vcAssetBg : U ? U.c : VC_PPTX_SEG[s.top % 4], text: label(n), color: asset ? P.vcAssetText : 'FFFFFF',
+          sz: leafSz, bold: !s.anc.length, ins: leafIns });
+      });
+      groups.forEach(g => {
+        const U = pptxPerUnit(P, g.top), name = g.node.name || '（未命名）', gw = g.x1 - g.x0;
+        const sz = fitOr(pptxFitSz([name], [800, 700, 600], gw, labH, 1), 600);
+        xml += textLabel(name, g.x0, leafBottom + (g.s - 1) * labH, gw, labH, sz, U ? U.ink : VC_PPTX_SEG[g.top % 4], true, 'ctr');
+        rectById[g.node.id] = { x: g.x0, y, w: gw, h: leafH + g.s * labH };
+      });
+      y = leafBottom + D * labH;
+    } else {   // circle
+      const cy = y + D * titleH, padH = in2emu(0.03);
+      groups.forEach(g => {   // 外層先畫（groups 依出現順序＝外→內）
+        const col = VC_PPTX_CIRCLE[(cIdx.get(g.node) || 0) % 8];
+        const inset = padH * (D - g.s), bx = g.x0 + inset, bw = g.x1 - g.x0 - inset * 2, by = y + (D - g.s) * titleH;
+        const name = g.node.name || '（未命名）';
+        const sz = fitOr(pptxFitSz([name], [800, 700, 600], bw - 18000, titleH, 1), 600);
+        xml += sp({ name, reg: g.node.id, x: bx, y: by, w: bw, h: cy + c + nameH + padB * g.s - by, prst: 'roundRect', adj: 8000,
+          fill: pptxMix(col, 'FFFFFF', 0.12), ln: col, lnW: 9525, dash: true, text: name, color: col, sz, bold: true,
+          anchor: 't', ins: [9000, 9000, Math.max(0, Math.round((titleH - sz / 100 * 12700 * 1.2) / 2)), 0] });
+      });
+      rowLeaves.forEach(s => {
+        const n = s.node, asset = n.unitKind === 'asset', col = VC_PPTX_CIRCLE[(cIdx.get(n) || 0) % 8];
+        const glyph = n.icon || [...(n.name || '?')][0];
+        xml += sp({ name: n.name, reg: n.id, x: s.x + Math.round((w - c) / 2), y: cy, w: c, h: c, prst: 'ellipse',
+          fill: asset ? P.vcAssetBg : col, ln: asset ? P.vcAssetBorder : null, lnW: 19050, text: glyph, color: asset ? P.vcAssetText : 'FFFFFF',
+          sz: Math.max(800, Math.round(c / 12700 * 0.42) * 100), bold: true, ins: [0, 0, 0, 0] });
+        xml += textLabel(n.name || '（未命名）', s.x, cy + c, w, nameH, leafSz, INK, false, 'ctr');
+      });
+      y = cy + c + nameH + D * padB;
+    }
+    y += rowGap;
+  });
+  return { xml, bottom: y - rowGap, leafSz, shrunk };
+}
+
 // ── 價值鏈頁（原生圖形）──────────────────────────────────────────────────
 // 不量 DOM（編輯區可能被隱藏），改用與編輯器相同結構的自有版面計算：
 // 支援活動＝上方橫條（由上往下堆）、主要活動＝下方並排的欄（群組內子項垂直排列）、
@@ -8066,6 +8279,9 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const arrowBg   = !!valueChain.showArrowBg;
   const boxPrst   = arrowBg ? 'homePlate' : 'roundRect';
   const P         = pptxPalette();             // ST-12：價值鏈色跟著目前配色
+  // ST-35g：版型分派。porter＝下方原邏輯（XML 不變）；其餘（fold 尚未併入時也當 band）走 planVcLeafLine／buildVcLeafLineXml
+  const lk        = valueChain.layout === 'fold' ? 'band' : vcLayoutKey(valueChain.layout);
+  const leafLine  = lk !== 'porter';
 
   const support = valueChain.support.filter(n => n.type === 'unit' || n.type === 'group');
   const primary = valueChain.primary;
@@ -8113,7 +8329,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
       ? pad * 2 + u + vcKids(n).reduce((s, k) => s + deepKidH(k, d) + pad, 0) : u)));
     return zoneTitleH * 2 + support.length * (u + gap) + colH;
   };
-  if (hasDeep) {
+  if (hasDeep && !leafLine) {
     areaH += deepExtraH;                       // 價值鏈頁沒有說明文字區 → 有第三層時把那段高度也拿來用（右側 Margin 箭頭跟著拉長）
     const uMin = in2emu(0.12), uMax = in2emu(0.42);
     const maxU = () => {                                                   // 二分搜尋放得下的最大 unitH
@@ -8130,6 +8346,13 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
       while (hi - lo > 0.005) { deepScale = (lo + hi) / 2; (deepTotal(unitH) <= areaH ? lo = deepScale : hi = deepScale); }
       deepScale = lo;
     }
+  }
+  // ST-35g：橫向葉節點版另算單位高與分列（價值鏈頁沒有說明文字區，一律把那段高度拿來用）
+  let LL = null;
+  if (leafLine) {
+    areaH += deepExtraH;
+    LL = planVcLeafLine(lk, primary, contentW, u => zoneTitleH * 2 + support.length * (u + gap), areaH);
+    unitH = LL.u;
   }
 
   // 一個方塊
@@ -8176,6 +8399,26 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
         <p:txBody><a:bodyPr${vert ? ` vert="${vert}"` : ''} anchor="ctr" lIns="0" rIns="0" tIns="0" bIns="0"/><a:lstStyle/><a:p><a:pPr algn="${algn}"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${colorHex}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(text)}</a:t></a:r></a:p></p:txBody>
       </p:sp>`;
 
+  // ST-35g：橫向葉節點版的通用形狀（可給 adj、框線／虛線、內距、文字錨點）；reg＝登記連線端點矩形的節點 id。porter 不用
+  const sp = o => {
+    if (o.reg) rectById[o.reg] = { x: o.x, y: o.y, w: o.w, h: o.h };
+    const ln = o.ln ? `<a:ln w="${o.lnW || 12700}"><a:solidFill><a:srgbClr val="${o.ln}"/></a:solidFill>${o.dash ? '<a:prstDash val="dash"/>' : ''}</a:ln>` : '<a:ln><a:noFill/></a:ln>';
+    const ins = o.ins || [45720, 45720, 18000, 18000];
+    return `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="${id++}" name="${escXml(o.name || '（未命名）')}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="${Math.round(o.x)}" y="${Math.round(o.y)}"/><a:ext cx="${Math.round(o.w)}" cy="${Math.round(o.h)}"/></a:xfrm>
+          <a:prstGeom prst="${o.prst}"><a:avLst>${o.adj != null ? `<a:gd name="adj" fmla="val ${o.adj}"/>` : ''}</a:avLst></a:prstGeom>
+          <a:solidFill><a:srgbClr val="${o.fill}"/></a:solidFill>
+          ${ln}
+        </p:spPr>
+        <p:txBody><a:bodyPr anchor="${o.anchor || 'ctr'}" wrap="square" lIns="${ins[0]}" rIns="${ins[1]}" tIns="${ins[2]}" bIns="${ins[3]}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
+          <a:p><a:pPr algn="ctr"/>${o.text ? `<a:r><a:rPr lang="zh-TW" sz="${o.sz}" b="${o.bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${o.color}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(o.text)}</a:t></a:r>` : `<a:endParaRPr lang="zh-TW" sz="${o.sz || 900}"/>`}</a:p>
+        </p:txBody>
+      </p:sp>`;
+  };
+
   // ── 支援活動區（橘色橫條，整列寬）──
   let y = areaY;
   xml += textLabel('支援活動', contentX, y, contentW, zoneTitleH, 900, '6B6B80', true, 'l');
@@ -8184,6 +8427,11 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   support.forEach(n => {
     const fill = n.unitKind === 'asset' ? P.vcAssetBg : P.vcSupportBg;
     const txt  = n.unitKind === 'asset' ? P.vcAssetText : P.vcSupportText;
+    if (lk === 'circle') {   // ST-35g：圓形 icon 式支援活動＝白底膠囊、細框、深色字（同畫面 ST-35d）
+      xml += sp({ name: n.name, reg: n.id, x: contentX, y, w: contentW, h: unitH, prst: 'roundRect', adj: 50000, fill: 'FFFFFF',
+        ln: n.unitKind === 'asset' ? P.vcAssetBorder : P.gridLine, lnW: 9525, text: (n.icon ? n.icon + ' ' : '') + (n.name || '（未命名）'),
+        color: P.vcProductText, sz: 1000, bold: false });
+    } else
     xml += box(n, contentX, y, contentW, unitH, boxPrst, fill, txt, true, 1000);
     y += unitH + gap;
   });
@@ -8202,6 +8450,12 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const childH = Math.round(unitH * 0.78);
 
   let primaryBottom = primaryTop;
+  if (leafLine) {   // ST-35g：橫向葉節點版
+    const r = buildVcLeafLineXml(LL, { lk, P, x0: contentX, y0: primaryTop, sp, textLabel, rectById });
+    xml += r.xml;
+    primaryBottom = r.bottom;
+    LL.leafShrunk = r.shrunk;
+  } else
   primary.forEach((n, i) => {
     const x = contentX + (colW + gap) * i;
     const U = pptxPerUnit(P, i);  // ST-35h：分色模式（群組＝淡版底深字、子項／頂層單元＝原色白字）；單色 null
@@ -8256,8 +8510,8 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
     xml += `
       <p:sp>
         <p:nvSpPr><p:cNvPr id="${id++}" name="Margin／利潤"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="downArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
-        <p:txBody><a:bodyPr vert="eaVert" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="900" b="1" dirty="0"><a:solidFill><a:srgbClr val="${P.vcMarginText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>Margin／利潤</a:t></a:r></a:p></p:txBody>
+        <p:spPr><a:xfrm><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="downArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${lk === 'circle' ? '2B2D31' : P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+        <p:txBody><a:bodyPr vert="eaVert" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="900" b="1" dirty="0"><a:solidFill><a:srgbClr val="${lk === 'circle' ? 'FFFFFF' : P.vcMarginText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>Margin／利潤</a:t></a:r></a:p></p:txBody>
       </p:sp>`;
   }
 
@@ -8304,7 +8558,8 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
     }
   });
 
-  buildValueChainShapesXml.lastInfo = { skippedLinks, flattened, deepShrunk, deepSz };   // ST-20：給 exportPptx 狀態列提示
+  buildValueChainShapesXml.lastInfo = { skippedLinks, flattened, deepShrunk, deepSz,
+    layout: lk, leafShrunk: !!(LL && LL.leafShrunk), primaryBottom };   // ST-20：給 exportPptx 狀態列提示；ST-35g：版型、橫向葉節點版縮字
   return xml;
 }
 
@@ -8851,7 +9106,8 @@ async function exportPptx() {
   const exportMsg = `📤 已匯出 ${totalSlides} 張` + (analysis.skipped.length ? `；未匯出：${analysis.skipped.join('、')}` : '')
     + (vcInfo.skippedLinks ? `；價值鏈頁略過 ${vcInfo.skippedLinks} 條連線` : '')
     + (vcInfo.flattened ? '；價值鏈第四層以下已攤平成第三層' : '')
-    + (vcInfo.deepShrunk ? '；價值鏈頁第三層過多，已縮小字級' : '');
+    + (vcInfo.deepShrunk ? '；價值鏈頁第三層過多，已縮小字級' : '')
+    + (vcInfo.leafShrunk ? '；價值鏈頁主要活動過多，已縮小字級' : '');
   console.info(exportMsg);
   const statusEl = document.getElementById('statusText');
   if (statusEl) {
