@@ -30,6 +30,13 @@ if (!base) {
 const strictSlide1 = argv.includes('--strict-slide1');
 const KEYS = ['chain', 'cells', 'ideas', 'premise', 'action', 'control'];
 const EXAMPLES = ['bookstore-a', 'foundry-t'];
+// ST-34b：專有名詞對齊課本後，基準版（v1.0.0）XML 的舊字改成新字再逐張比對（順序有意義：先長後短）
+const KNOWN_RENAMES = [
+  ["的KSF's", '的優勢'], ["的KSF&apos;s", '的優勢'], ['的關聯', '的貢獻'],
+  ["KSF's", 'KSF'], ['KSF&apos;s', 'KSF'], ['〔主導〕', '〔主導權責〕'], ['須轉移', '轉移陣地'],
+  ['○ 自製', '○ 自行負責'], ['策略前提控制（監測）', '策略前提控制表'], ['產品品質之確保', '產品品質之保證'],
+];
+const applyRenames = x => KNOWN_RENAMES.reduce((t, [a, b]) => t.split(a).join(b), x);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fail = 0;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++; };
@@ -97,6 +104,7 @@ for (const id of EXAMPLES) {
 const rows = [];
 for (const id of EXAMPLES) {
   const [nw, old] = [await exampleInfo(html, id), await exampleInfo(base, id)];
+  for (const k of Object.keys(old.slides)) old.slides[k] = applyRenames(old.slides[k]);
   for (const k of KEYS) { rows.push(`${id.padEnd(12)} ${k.padEnd(8)} 新 ${String(nw.pct[k]).padStart(3)}%  舊 ${String(old.pct[k]).padStart(3)}%`);
     ok(nw.pct[k] === old.pct[k] && typeof nw.pct[k] === 'number', `[b ${id}] ${k} pct 新=${nw.pct[k]} 舊=${old.pct[k]}`); }
   const nn = Object.keys(nw.slides), on = Object.keys(old.slides);
