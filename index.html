@@ -333,18 +333,26 @@
   #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
   /* ST-01h：版型依循經典 Porter 價值鏈圖——支援活動在上（橫跨全寬的橫條，由上而下堆疊）、
      主要活動＋產品在下（並排方塊），右側 Margin 箭頭，左／下括號標示支援／主要活動 */
+  /* ST-23a：產品改放最右邊（Margin 箭頭右側）一整條直欄（三列全高）；關閉大箭頭時不留 Margin 空欄 */
   .vc-zones {
     position: relative; display: grid; gap: 10px;
-    grid-template-columns: 22px minmax(0, 1fr) 76px;
-    grid-template-rows: auto auto auto;
+    grid-template-columns: 22px minmax(0, 1fr) 76px auto;
+    grid-template-rows: auto 1fr auto;  /* 產品直欄比圖高時，多出的高度只給主要活動列（不撐大上方支援活動與下方括號） */
     grid-template-areas:
-      "supportlabel support    margin"
-      ".            activities margin"
-      ".            pbracket   .";
+      "supportlabel support    margin products"
+      ".            activities margin products"
+      ".            pbracket   .      products";
     align-items: stretch;
   }
+  .vc-zones:not(.vc-arrow-bg) {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "supportlabel support    products"
+      ".            activities products"
+      ".            pbracket   products";
+  }
   @media (max-width: 800px) {
-    .vc-zones { grid-template-columns: minmax(0, 1fr); grid-template-areas: "support" "activities"; }
+    .vc-zones, .vc-zones:not(.vc-arrow-bg) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "support" "activities" "products"; }
     .vc-support-label, .vc-primary-label, .vc-margin-arrow { display: none; }
     .vc-activities-row { flex-direction: column; }
   }
@@ -377,7 +385,7 @@
   /* 主要活動：同一列並排方塊；每個方塊依文字內容自然寬度（flex: 0 0 auto），
      不互相擠壓裁字，一列放不下時方塊換到下一列（ST-08，列距 row-gap） */
   .vc-zone-primary .vc-zone-body {
-    flex-direction: row; flex-wrap: wrap; align-items: stretch; row-gap: 10px;
+    flex-direction: row; flex-wrap: wrap; align-items: stretch; align-content: flex-start; row-gap: 10px;
     padding: 0; border: none; background: transparent;
   }
   .vc-zone-primary .vc-zone-body.drag-over { outline: 2px dashed var(--col-header); outline-offset: 2px; }
@@ -447,16 +455,41 @@
   /* 主要活動群組內的子項（ST-12a：底色／文字＝該組配色的矩陣細項欄色 --vc-child-*，與 --mx-leaf-* 同值） */
   .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) { background: var(--vc-child-bg); }
   .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea) { color: var(--vc-child-text); }
-  /* 產品管理面板（ST-01i）：產品不畫在 Porter 價值鏈圖內，改在這裡管理，展開到策略矩陣後成為產品欄 */
-  .vc-products-panel { margin-top: 10px; }
-  .vc-products-body {
-    display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start;
-    min-height: 34px; padding: 6px; border-radius: 8px;
+  /* 產品欄（ST-01i 起不畫進 Porter 圖；ST-23a 改放 .vc-zones 最右邊的直欄）：展開到策略矩陣後成為產品欄。
+     寬螢幕產品方塊直排（vertical-rl）、由上而下排序；≤800px 回到圖下方的橫列 */
+  .vc-zone-products {
+    grid-area: products; display: flex; flex-direction: column; gap: 6px; align-self: stretch;
+    min-width: 64px; padding: 6px; border-radius: 8px;
     border: 1px dashed var(--grid-line); background: #faf9fd;
+  }
+  .vc-zone-products > .vc-zone-title { text-align: center; cursor: help; }
+  .vc-products-body {
+    flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;
+    min-height: 34px; padding: 4px; border-radius: 6px; border: 1px dashed transparent;
   }
   .vc-products-body.drag-over { border-color: var(--col-header); background: var(--cell-hover); }
   .vc-products-body > .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: var(--vc-product-border); }
-  .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  /* 直排產品方塊：名稱與「活動／資產」「＋角色」「＋同層」「✕」順著直排由上往下；名稱寬度由 sizeVcInput 寫 inline-size */
+  .vc-products-body > .vc-unit { writing-mode: vertical-rl; padding: 6px 3px; }
+  .vc-products-body > .vc-unit .vc-node-head :is(input, textarea) { padding: 2px 1px; min-width: 0; min-inline-size: 2em; }
+  /* 直排時「＋同層」「✕」與未設定的「＋角色」平時隱藏、滑鼠移到方塊才顯示（同主要活動區作法），縮短方塊高度、少撐高 Porter 圖 */
+  .vc-products-body > .vc-unit > .vc-node-head > :is(.vc-act, .vc-role-none) { display: none; }
+  .vc-products-body > .vc-unit:hover > .vc-node-head > :is(.vc-act, .vc-role-none) { display: inline; }
+  .vc-products-body > .vc-drop-placeholder { writing-mode: vertical-rl; padding: 10px 0; }
+  .vc-products-body > .vc-zone-empty { writing-mode: vertical-rl; }
+  .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+  .vc-products-footer > .col-item-add { white-space: nowrap; }
+  @media (max-width: 800px) {
+    /* 裝飾括號與 Margin 箭頭的 display:flex 寫在上方 media query 之後，會蓋掉那裡的 display:none；在此再隱藏一次（ST-23a） */
+    .vc-support-label, .vc-primary-label, .vc-margin-arrow { display: none; }
+    .vc-products-body { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+    .vc-products-body > .vc-unit, .vc-products-body > .vc-drop-placeholder, .vc-products-body > .vc-zone-empty { writing-mode: horizontal-tb; }
+    .vc-products-body > .vc-unit { padding: 3px 6px; }
+    .vc-products-body > .vc-unit > .vc-node-head > :is(.vc-act, .vc-role-none) { display: inline; }
+    .vc-products-body > .vc-drop-placeholder { padding: 0 10px; }
+    .vc-zone-products > .vc-zone-title { text-align: left; }
+    .vc-products-footer { justify-content: flex-start; }
+  }
   .vc-unit.vc-asset { background: var(--vc-asset-bg); border-color: var(--vc-asset-border); }
   .vc-zone-support .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea), .vc-zone-support .vc-unit:not(.vc-asset) .vc-act,
   .vc-zone-support .vc-unit:not(.vc-asset) .vc-role-none {
@@ -3336,7 +3369,8 @@ function sizeVcInput(inp) {
     inp.style.height = inp.scrollHeight + 'px';
     return;
   }
-  inp.style.width = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
+  // 用 inline-size（邏輯寬）：橫排＝寬、產品欄直排（ST-23a）＝高，同一公式兩種方向都對
+  inp.style.inlineSize = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
 }
 
 function makeVcAction(text, title, onClick, extraClass = '') {
@@ -3597,7 +3631,7 @@ function renderValueChainEditor() {
   svg.id = 'vcLineCanvas';
   editor.appendChild(svg);
 
-  // ── 三區（支援活動橫條在上、主要活動＋產品並排在下；版型依 ST-01h 的 Porter 價值鏈圖）──
+  // ── 三區（支援活動橫條在上、主要活動在下、產品直欄在最右；版型依 ST-01h 的 Porter 價值鏈圖，ST-23a 產品移入）──
   const zones = document.createElement('div');
   zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
 
@@ -3679,16 +3713,16 @@ function renderValueChainEditor() {
     zones.appendChild(marginArrow);
   }
 
-  editor.appendChild(zones);
-
-  // ── 產品管理面板（ST-01i）：產品不在 Porter 價值鏈圖內，改在這裡新增／改名／刪除／拖曳排序；
-  //    資料仍寫回 valueChain.products，按「📐 展開到策略矩陣」後成為矩陣右側的產品欄 ──
+  // ── 產品欄（ST-01i 起不畫進 Porter 圖；ST-23a 改放 .vc-zones 最右邊、Margin 箭頭右側的直欄）：
+  //    新增／改名／刪除／上下拖曳排序；資料仍寫回 valueChain.products，按「📐 展開到策略矩陣」後成為矩陣右側的產品欄。
+  //    保留 vc-products-panel class 讓既有自測／手冊截圖腳本找得到 ──
   const prodPanel = document.createElement('div');
-  prodPanel.className = 'vc-products-panel';
+  prodPanel.className = 'vc-zone-products vc-products-panel';
 
   const prodTitle = document.createElement('div');
-  prodTitle.className = 'panel-title';
-  prodTitle.textContent = '產品（展開到策略矩陣後成為右側產品欄；可改名／拖曳排序，連線模式下也可點選建立連線）';
+  prodTitle.className = 'vc-zone-title';
+  prodTitle.textContent = '產品';
+  prodTitle.title = '展開到策略矩陣後成為右側產品欄；可改名／拖曳排序，連線模式下也可點選建立連線';
   prodPanel.appendChild(prodTitle);
 
   const prodBody = document.createElement('div');
@@ -3697,7 +3731,7 @@ function renderValueChainEditor() {
   if (!valueChain.products.length) {
     const empty = document.createElement('span');
     empty.className = 'vc-zone-empty';
-    empty.textContent = '（尚無產品，按下方按鈕新增）';
+    empty.textContent = '（尚無產品）';
     prodBody.appendChild(empty);
   }
   bindVcDropArea(prodBody, 'products', () => valueChain.products, null);
@@ -3716,8 +3750,9 @@ function renderValueChainEditor() {
   });
   prodFooter.appendChild(addProdBtn);
   prodPanel.appendChild(prodFooter);
+  zones.appendChild(prodPanel);
 
-  editor.appendChild(prodPanel);
+  editor.appendChild(zones);
 
   // ── 連線清單（點 ✕ 刪除）──
   const linkPanelTitle = document.createElement('div');
