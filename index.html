@@ -114,6 +114,23 @@
   @media (max-width: 800px) {
     .guide-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }  /* 窄螢幕 3×2 */
   }
+  /* ST-21c 說明卡 */
+  .guide-card-box { background: #faf7fc; border: 1px solid var(--col-header-light); border-radius: 8px; margin-bottom: 14px; }
+  .guide-card-box > summary { cursor: pointer; padding: 8px 12px; font-size: 0.9rem; font-weight: 700; color: var(--col-header); }
+  .guide-card-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 20px; padding: 2px 14px 10px; font-size: 0.82rem; line-height: 1.6; }
+  .guide-card-body h4 { margin: 0 0 4px; font-size: 0.78rem; color: var(--col-header); }
+  .guide-card-body p { margin: 0 0 8px; }
+  .guide-card-body ul { margin: 0 0 8px; padding-left: 1.2em; }
+  .guide-card-body li { margin-bottom: 3px; }
+  .guide-card-body blockquote { margin: 0 0 6px; padding: 2px 10px; border-left: 3px solid var(--col-header-light); font-style: italic; color: var(--ink); }
+  .guide-card-page { font-size: 0.72rem; font-style: normal; color: var(--ink-light); margin-left: 4px; }
+  .guide-card-more { font-size: 0.75rem; color: var(--ink-light); }
+  .guide-card-tip { font-size: 0.75rem; color: var(--ink-light); }
+  .guide-card-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--grid-line); padding-top: 8px; }
+  .guide-card-foot a { font-size: 0.82rem; color: var(--col-header); margin-right: auto; }
+  .guide-card-foot button { font: inherit; font-size: 0.82rem; padding: 3px 12px; border: 1px solid var(--grid-line); border-radius: 6px; background: white; cursor: pointer; color: var(--ink); }
+  .guide-card-foot button:hover { background: var(--cell-hover); }
+  @media (max-width: 800px) { .guide-card-body { grid-template-columns: minmax(0, 1fr); } }
   /* tab 內容：.step-pane 用 data-step（單一步）或 data-steps（空白分隔多步），只有 .active 顯示 */
   .step-pane:not(.active) { display: none; }
 
@@ -7580,6 +7597,63 @@ function guideInitTab() {
   }
   guideGoto(k, { init: true });
 }
+// ST-21c：六張說明卡（內容來自 GUIDE_CONTENT，只在 init 建一次；open 狀態由 renderGuideBar 同步 guideOpen）
+function renderGuideCards() {
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const listOf = (title, arr) => {
+    const box = document.createElement('div');
+    box.appendChild(mk('h4', '', title));
+    const ul = mk('ul');
+    arr.forEach(t => ul.appendChild(mk('li', '', t)));
+    box.appendChild(ul);
+    return box;
+  };
+  GUIDE_STEPS.forEach((g, i) => {
+    const host = document.getElementById('guideCard-' + g.k);
+    const c = GUIDE_CONTENT[g.k];
+    if (!host || !c) return;
+    host.innerHTML = '';
+    const det = mk('details', 'guide-card-box');
+    det.open = guideOpen;
+    det.appendChild(mk('summary', '', `📘 教材說明：${g.title}`));
+    const body = mk('div', 'guide-card-body');
+    const left = document.createElement('div');
+    left.appendChild(mk('h4', '', '這一步的目的'));
+    left.appendChild(mk('p', '', c.purpose));
+    c.quote.forEach(q => {
+      const bq = mk('blockquote', '', q.text);
+      bq.appendChild(mk('span', 'guide-card-page', `[S ${q.page}]`));
+      left.appendChild(bq);
+    });
+    left.appendChild(mk('div', 'guide-card-more', `延伸閱讀：${c.pages}`));
+    const right = document.createElement('div');
+    right.appendChild(listOf('在這裡做什麼', c.todo));
+    right.appendChild(listOf('完成檢查點', c.checks));
+    right.appendChild(mk('div', 'guide-card-tip', `下一步建議：${g.tip}`));
+    const foot = mk('div', 'guide-card-foot');
+    const a = mk('a', '', '📖 手冊');
+    a.href = `manual.html#${c.manual}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    foot.appendChild(a);
+    const nav = (label, step, cls) => {
+      const b = mk('button', cls, label);
+      b.type = 'button';
+      b.onclick = () => guideGoto(step.k);
+      foot.appendChild(b);
+    };
+    if (i > 0) nav('‹ 上一步', GUIDE_STEPS[i - 1], 'guide-prev');
+    if (i < GUIDE_STEPS.length - 1) nav('下一步 ›', GUIDE_STEPS[i + 1], 'guide-next');
+    body.append(left, right, foot);
+    det.appendChild(body);
+    det.addEventListener('toggle', () => {
+      if (det.open === guideOpen) return;
+      guideOpen = det.open;
+      saveState();  // saveState 會順便 renderGuideBar → 同步其他張卡
+    });
+    host.appendChild(det);
+  });
+}
 function renderGuideBar() {
   const bar = document.getElementById('guideBar');
   if (!bar) return;
@@ -7613,6 +7687,7 @@ function renderGuideBar() {
   tot.id = 'guideTotal';
   tot.textContent = `整體 ${total}%`;
   bar.appendChild(tot);
+  document.querySelectorAll('.guide-card-box').forEach(d => { if (d.open !== guideOpen) d.open = guideOpen; });  // ST-21c：六張說明卡共用 guideOpen
   if (guideApplyPane(cur)) guideRedrawLines();  // 內容區跟著 tab 列（不切模式、不存檔）
 }
 
@@ -7928,6 +8003,7 @@ renderCompetitorBar();
 renderArrowList();
 updateStatus();
 drawLines();
+renderGuideCards();  // ST-21c：說明卡（guideOpen 已由 loadState 讀回）
 guideInitTab();  // ST-21b：定下目前 tab（會切模式並重畫連線）
 window.addEventListener('hashchange', () => { const k = guideKeyFromHash(); if (k && k !== guideStep) guideGoto(k); });
 document.getElementById('compNameInput').addEventListener('keydown', e => {
