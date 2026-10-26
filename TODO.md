@@ -49,7 +49,7 @@
   - [x] ST-27c 要素說明卡：要素 chip、「＋要素」面板每項旁 ⓘ 點開卡片——迷你矩陣 SVG 簡圖（依 `shape` 畫 3–4 欄 × 6 列與箭頭）＋簡易說明＋書上範例＋頁碼；取代原生 title tooltip；依賴 ST-27b（完成 2026-10-26：renderElementShapeSvg 4 欄×6 列弧形箭頭、#elemCardModal 說明卡（explain／caseExample／原 def・example／頁碼／※ 推論）、chip／面板／建議旁 ⓘ、Esc／遮罩關閉還焦點、textContent 防注入；自測 tools/selftest/ST-27c.mjs）
 
 第 6 階段：文件
-- [ ] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27
+- [x] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27（完成 2026-10-26：38 張全部重拍（ST-25 字級）＋新增 37-elem-card；capture-manual 改 07 目標、13／15b／16／24 切「全部構想」、32 拍 #matrixRow；手冊與 README 過時字句改完；自測 tools/selftest/ST-28.mjs）
 
 - [ ] ST-29 價值鏈編輯器：主要活動欄太多折成第二列時，跨列連線（如醫美範本「中醫門診→中醫調理」，1400px 寬）`vcCrossRoute` 找不到通道退回斜直線（v1.0.0 即如此；ST-23c 驗證時確認）；需在折列情況補「列間水平通道」規則
 - [ ] ST-30 tools/selftest/ST-20.mjs 的 [A]「連線條數 新＝基準＋1」需要 ST-20 之前的基準版，用 v1.0.0 之後當基準必 FAIL；改為固定比對數字或移除（ST-23c 驗證時確認）
