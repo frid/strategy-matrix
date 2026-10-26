@@ -14,7 +14,7 @@
   - [x] ST-21c 教材說明卡元件：每 tab 第一塊用 `GUIDE_CONTENT` 渲染（左：目的＋引文＋延伸頁碼；右：做什麼＋檢查點），可收合並記住（沿用 `guideOpen`）；底部「📖 手冊」錨點連結與上一步／下一步按鈕；依賴 ST-21a、ST-21b（完成 2026-10-26：renderGuideCards() 用 textContent 渲染六張 details 卡（左目的／引文[S 頁]／延伸閱讀，右做什麼／檢查點／tip 建議），底部 📖 手冊錨點與上一步／下一步；收合共用 guideOpen 並存檔；≤800px 單欄；自測 tools/selftest/ST-21c.mjs）
   - [x] ST-21d 區塊歸位：策略名稱與說明 → ①；填寫進度與 `#cellPanel` 緊貼矩陣下方 → ②；構想分型、`#moduleBox`、`#arrowList`、`#sentenceBox` → ③；`#premiseBox`、`#clashBox` → ④；`#actionBox` → ⑤；`#controlBox` → ⑥；各區在自己的 tab 內預設展開；刪除 `p.instructions`（併入說明卡）；依賴 ST-21b（完成 2026-10-26：① 策略名稱＋價值鏈、③ #arrowListPanel（模組／箭頭／句型）、④ 前提＋對陣點、⑤ 行動、⑥ 控制表，details 預設 open；刪 p.instructions；flashArrowItem 先切到 ③；PPTX 34 張 XML 與舊版相同）
   - 第 3 階段：驗證與文件
-  - [ ] ST-21e 回歸驗證：兩個 fixtures 舊存檔載入後六 tab 截圖與連線重畫、載範例後各 tab 完成度、PPTX 匯出 XML 與 v1.0.0 一致（用 tools/cdp-harness.mjs，腳本放 tests/）；依賴 ST-21d
+  - [x] ST-21e 回歸驗證：兩個 fixtures 舊存檔載入後六 tab 截圖與連線重畫、載範例後各 tab 完成度、PPTX 匯出 XML 與 v1.0.0 一致（用 tools/cdp-harness.mjs，腳本放 tests/）；依賴 ST-21d（完成 2026-10-26：tests/st-21-regression.mjs 42 項全 PASS——兩份 fixtures 六 tab 截圖與連線重畫（③ 24／18 條、座標無 0、往返不變）、兩範例六步 pct 與 v1.0.0 相同、PPTX 34／25 張 slide XML 逐張相同、說明卡與 #step-3 直連；跑法見 tests/README.md）
   - [ ] ST-21f manual.html 與 README 改為依六步分章、重拍截圖（tools/capture-manual.mjs 配合 tab 切換）；index.html 說明卡連到對應錨點；依賴 ST-21e
 
 ## Complete
