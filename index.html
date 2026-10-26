@@ -982,6 +982,33 @@
   .elem-panel-group { display: flex; flex-wrap: wrap; gap: 0 12px; }
   .elem-opt { color: var(--ink); cursor: pointer; white-space: nowrap; }
   .elem-opt input { vertical-align: middle; margin: 0 2px 0 0; }
+  /* ST-27c：要素說明卡（ⓘ 入口＋迷你矩陣簡圖） */
+  .elem-info { border: none; background: none; padding: 0 2px; margin: 0; cursor: pointer; color: var(--col-header); font-family: inherit; font-size: var(--fs-xs); line-height: 1; }
+  .elem-info:hover { color: var(--ink); }
+  .elem-opt-wrap { white-space: nowrap; }
+  #elemCardBox { width: min(720px, 100%); }
+  #elemCardBox h3 { margin-bottom: 4px; }
+  .elem-card-sub { font-size: var(--fs-sm); color: var(--ink-light); margin-bottom: 4px; }
+  .elem-card-cat { font-size: var(--fs-sm); color: var(--col-header); margin-bottom: 12px; }
+  .elem-card-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .elem-card-fig { margin: 0; min-width: 0; }
+  .elem-card-text h4 { font-size: var(--fs-sm); color: var(--col-header); margin: 0 0 2px; }
+  .elem-card-text p { margin: 0 0 10px; line-height: 1.55; }
+  .elem-card-mini { font-size: var(--fs-xs); color: var(--ink-light); border-top: 1px dashed var(--grid-line); padding-top: 6px; line-height: 1.5; }
+  .elem-card-note { font-size: var(--fs-xs); color: var(--ink-light); margin-top: 4px; line-height: 1.4; }
+  .elem-card-inferred { font-size: var(--fs-xs); color: #b06000; margin-top: 4px; }
+  .elem-card-page { font-size: var(--fs-sm); color: var(--ink-light); margin-right: auto; align-self: center; }
+  .elem-svg { width: 100%; max-width: 290px; height: auto; display: block; }
+  .elem-svg .es-cell { fill: white; stroke: var(--grid-line); }
+  .elem-svg .es-cell.gray { fill: var(--ink-light); fill-opacity: 0.4; }
+  .elem-svg .es-head-bg { fill: var(--row-label-bg); }
+  .elem-svg .es-txt { fill: var(--ink); }
+  .elem-svg .es-sep { stroke: var(--col-header); stroke-width: 1.5; }
+  .elem-svg .es-arrow { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+  .elem-svg .es-arrow.extra { stroke-opacity: 0.5; stroke-dasharray: 3 2; }
+  .elem-svg .es-tip { fill: var(--ink); }
+  .elem-svg .es-tip.extra { fill-opacity: 0.5; }
+  @media (max-width: 640px) { .elem-card-grid { grid-template-columns: minmax(0, 1fr); } }
   /* ST-14g：箭頭前提（chip／inline 編輯）與 SWOT 視圖 */
   .arrow-premises { flex-basis: 100%; padding-left: 36px; font-size: var(--fs-xs); color: var(--ink-light); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
   .premise-chip { border: 1px solid var(--grid-line); border-radius: 10px; padding: 0 6px; color: var(--ink); background: white; white-space: nowrap; cursor: pointer; }
@@ -1308,6 +1335,10 @@
 <!-- ST-14f：套用書上模組（角色 → 欄位對應）-->
 <div id="moduleModal" class="sm-modal">
   <div class="sm-modal-box" id="moduleModalBox"></div>
+</div>
+<!-- ST-27c：要素說明卡（簡圖＋簡易說明＋書上範例）-->
+<div id="elemCardModal" class="sm-modal">
+  <div class="sm-modal-box" id="elemCardBox" role="dialog" aria-modal="true" aria-labelledby="elemCardTitle"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -6211,6 +6242,148 @@ function fillStrategySentencesToDesc() {
 // ── ST-14b：箭頭清單每筆的「要素」區（chip＋建議提示＋選擇面板）────────────────
 let openElemPanelKey = null; // 目前展開選擇面板的箭頭 `${ci}-${ai}`（重繪後維持展開）
 
+// ── ST-27c：要素說明卡（迷你矩陣簡圖＋簡易說明＋書上範例）──────────────────────
+const ELEM_SVG_COLS = ['in', 'in2', 'out', 'out2'];
+const ELEM_SVG_COL_LABELS = ['投入1', '投入2', '產品1', '產品2'];
+let elemSvgSeq = 0;  // marker id 流水號，避免多張 svg 撞 id
+
+// 依 STRATEGY_ELEMENTS[].shape 畫 4 欄 × 6 列迷你矩陣（SVG 字串；只用數字座標與固定標籤）；shape 缺或不合法 → 空矩陣
+function renderElementShapeSvg(shape) {
+  const LX = 36, TOP = 28, CW = 46, RH = 25, GAP = 6;  // TOP 留出 A 列上方弧線的空間
+  const ci = c => ELEM_SVG_COLS.indexOf(c);
+  const ri = r => ROWS.findIndex(x => x.id === r);
+  const ok = (r, c) => ri(r) >= 0 && ci(c) >= 0;
+  const colX = c => LX + ci(c) * CW + (ci(c) >= 2 ? GAP : 0);
+  const cx = c => colX(c) + CW / 2, cy = r => TOP + ri(r) * RH + RH / 2;
+  const W = LX + 4 * CW + GAP + 4, H = TOP + 6 * RH + 4;
+  const mid = 'esm' + (++elemSvgSeq);
+  const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const s = shape && typeof shape === 'object' && ELEMENT_SHAPE_TYPES.includes(shape.type) ? shape : {};
+  const arr = v => Array.isArray(v) ? v : [];
+
+  const gray = new Set(arr(s.cells).filter(p => Array.isArray(p) && ok(p[0], p[1])).map(p => p[0] + '|' + p[1]));
+  const segs = [];  // { a:{row,col}, b:{row,col}, both, extra }
+  const seg = (a, b, both, extra) => {
+    if (a && b && ok(a.row, a.col) && ok(b.row, b.col) && !(a.row === b.row && a.col === b.col)) segs.push({ a, b, both: !!both, extra: !!extra });
+  };
+  if (s.type === 'col') {
+    (Array.isArray(s.arrows) ? s.arrows : [s]).forEach(x => x && seg({ row: x.from, col: x.col }, { row: x.to, col: x.col }, x.both));
+  } else if (s.type === 'row') {
+    arr(s.arrows).forEach(x => x && seg({ row: s.row, col: x.from }, { row: s.row, col: x.to }, x.both));
+  } else if (s.type === 'inout') {
+    arr(s.from).forEach(f => seg({ row: s.row, col: f }, { row: s.row, col: s.to }));
+  } else if (s.type === 'path') {
+    const chain = (pts, extra) => { pts = arr(pts); for (let i = 1; i < pts.length; i++) seg(pts[i - 1], pts[i], false, extra); };
+    chain(s.path, false);
+    arr(s.extra).forEach(p => chain(p, true));
+  }
+
+  const curve = ({ a, b }) => {
+    const x1 = cx(a.col), y1 = cy(a.row), x2 = cx(b.col), y2 = cy(b.row);
+    if (a.col === b.col) {   // 同欄跨列：走格子側邊的弧（最右欄改走左側）
+      const side = a.col === 'out2' ? -1 : 1, k = side * (12 + 3 * Math.abs(ri(a.row) - ri(b.row))), sx = x1 + side * 8;
+      return `M${sx},${y1} C${sx + k},${y1} ${sx + k},${y2} ${sx},${y2}`;
+    }
+    if (a.row === b.row) {   // 同列跨欄：走格子上方的弧
+      const h = 5 + 6 * Math.abs(ci(a.col) - ci(b.col));
+      return `M${x1},${y1 - 4} C${x1},${y1 - 4 - h} ${x2},${y2 - 4 - h} ${x2},${y2 - 4}`;
+    }
+    // 跨欄又跨列：微彎的二次曲線，兩端各內縮 7 讓箭頭不壓在格心
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+    const sx = x1 + ux * 7, sy = y1 + uy * 7, ex = x2 - ux * 7, ey = y2 - uy * 7;
+    return `M${sx},${sy} Q${(sx + ex) / 2 - uy * 10},${(sy + ey) / 2 + ux * 10} ${ex},${ey}`;
+  };
+
+  let o = `<svg class="elem-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="要素簡圖">`;
+  o += '<defs>' + ['', 'x'].map(v => `<marker id="${mid}${v}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">`
+    + `<path class="es-tip${v ? ' extra' : ''}" d="M0,0 L8,4 L0,8 z"/></marker>`).join('') + '</defs>';
+  ELEM_SVG_COLS.forEach((c, i) => {
+    o += `<rect class="es-head-bg" x="${colX(c)}" y="2" width="${CW}" height="14" rx="2"/>`;
+    o += `<text class="es-txt" x="${cx(c)}" y="12.5" font-size="9" text-anchor="middle">${esc(ELEM_SVG_COL_LABELS[i])}</text>`;
+  });
+  ROWS.forEach(r => {
+    o += `<text class="es-txt" x="2" y="${cy(r.id) + 3}" font-size="8.5">${esc(r.id + ' ' + r.rightLabel)}</text>`;
+    ELEM_SVG_COLS.forEach(c => {
+      o += `<rect class="es-cell${gray.has(r.id + '|' + c) ? ' gray' : ''}" x="${colX(c)}" y="${TOP + ri(r.id) * RH}" width="${CW}" height="${RH}"/>`;
+    });
+  });
+  const sepX = colX('out') - GAP / 2;
+  o += `<line class="es-sep" x1="${sepX}" y1="${TOP}" x2="${sepX}" y2="${TOP + 6 * RH}"/>`;
+  segs.forEach(g => {
+    const m = `url(#${mid}${g.extra ? 'x' : ''})`;
+    o += `<path class="es-arrow${g.extra ? ' extra' : ''}" d="${curve(g)}" marker-end="${m}"${g.both ? ` marker-start="${m}"` : ''}/>`;
+  });
+  return o + '</svg>';
+}
+
+let elemCardOpener = null;  // 關卡片後把焦點還給開卡的 ⓘ
+function openElementCard(id) {
+  const e = STRATEGY_ELEMENT_MAP[id];
+  if (!e) return;
+  const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const box = document.getElementById('elemCardBox');
+  box.innerHTML = '';
+  const h = mk('h3', '', `${e.id} ${e.fullName || e.name}`);
+  h.id = 'elemCardTitle';
+  box.appendChild(h);
+  if (e.fullName && e.fullName !== e.name) box.appendChild(mk('div', 'elem-card-sub', '簡稱：' + e.name));
+  const cat = STRATEGY_ELEMENT_CATS.find(c => c.id === e.cat);
+  if (cat) box.appendChild(mk('div', 'elem-card-cat', `${cat.id} ${cat.name}`));
+
+  const grid = mk('div', 'elem-card-grid');
+  const fig = mk('figure', 'elem-card-fig');
+  fig.innerHTML = renderElementShapeSvg(e.shape);
+  if (e.shape && e.shape.inferred) fig.appendChild(mk('div', 'elem-card-inferred', '※ 簡圖由文字推論（書上無圖或判讀不確定）'));
+  if (e.shape && e.shape.note) fig.appendChild(mk('div', 'elem-card-note', e.shape.note));
+  grid.appendChild(fig);
+  const txt = mk('div', 'elem-card-text');
+  txt.appendChild(mk('h4', '', '簡易說明'));
+  txt.appendChild(mk('p', '', e.explain || e.def));
+  txt.appendChild(mk('h4', '', '書上範例'));
+  txt.appendChild(mk('p', '', e.caseExample || '（書上未舉例）'));
+  const mini = mk('div', 'elem-card-mini');
+  mini.appendChild(mk('div', '', '一句話：' + e.def));
+  mini.appendChild(mk('div', '', '工具例：' + e.example));
+  txt.appendChild(mini);
+  grid.appendChild(txt);
+  box.appendChild(grid);
+
+  const act = mk('div', 'sm-modal-actions');
+  act.appendChild(mk('span', 'elem-card-page', `［${e.page}］`));
+  const close = mk('button', 'btn-primary', '關閉');
+  close.type = 'button';
+  close.addEventListener('click', closeElementCard);
+  act.appendChild(close);
+  box.appendChild(act);
+
+  elemCardOpener = document.activeElement;
+  document.getElementById('elemCardModal').classList.add('open');
+  box.scrollTop = 0;
+  close.focus();
+}
+function closeElementCard() {
+  document.getElementById('elemCardModal').classList.remove('open');
+  if (elemCardOpener && document.contains(elemCardOpener)) elemCardOpener.focus();
+  elemCardOpener = null;
+}
+document.getElementById('elemCardModal').addEventListener('click', e => {
+  if (e.target.id === 'elemCardModal') closeElementCard();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('elemCardModal').classList.contains('open')) closeElementCard();
+});
+// ⓘ 按鈕（chip／面板／建議共用）：不冒泡、不觸發 label 的勾選
+function makeElemInfoBtn(id) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'elem-info';
+  b.textContent = 'ⓘ';
+  b.title = '看要素說明（簡圖、範例、頁碼）';
+  b.setAttribute('aria-label', `${id} 要素說明`);
+  b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openElementCard(id); });
+  return b;
+}
+
 function buildArrowElementsRow(ci, ai) {
   const arrow = arrows[ci][ai];
   if (!Array.isArray(arrow.elements)) arrow.elements = [];
@@ -6234,9 +6407,10 @@ function buildArrowElementsRow(ci, ai) {
     arrow.elements.sort((a, b) => order.indexOf(a) - order.indexOf(b));
     saveState();
   };
+  // ST-27c：原生 tooltip 改短版，完整說明改點 ⓘ 開說明卡
   const tipOf = id => {
     const e = STRATEGY_ELEMENT_MAP[id];
-    return e ? `${id} ${e.name}\n${e.def}\n例：${e.example}\n［${e.page}］` : id;
+    return e ? `${id} ${e.name}（點 ⓘ 看說明）` : id;
   };
 
   const renderLine = () => {
@@ -6256,6 +6430,7 @@ function buildArrowElementsRow(ci, ai) {
       x.textContent = '×';
       x.title = '移除此要素';
       x.addEventListener('click', () => { setElem(id, false); renderArrowList(); });
+      if (STRATEGY_ELEMENT_MAP[id]) chip.appendChild(makeElemInfoBtn(id));
       chip.appendChild(x);
       line.appendChild(chip);
     });
@@ -6274,6 +6449,7 @@ function buildArrowElementsRow(ci, ai) {
         a.title = tipOf(id) + '\n（點擊加入）';
         a.addEventListener('click', () => { setElem(id, true); renderArrowList(); });
         hint.appendChild(a);
+        hint.appendChild(makeElemInfoBtn(id));
       });
       line.appendChild(hint);
     }
@@ -6311,7 +6487,12 @@ function buildArrowElementsRow(ci, ai) {
       });
       lab.appendChild(cb);
       lab.appendChild(document.createTextNode(` ${id} ${e ? e.name : ''}`));
-      return lab;
+      // ⓘ 放在 label 外（同一個 nowrap 包裝內），點它不會切換勾選
+      const w = document.createElement('span');
+      w.className = 'elem-opt-wrap';
+      w.appendChild(lab);
+      if (e) w.appendChild(makeElemInfoBtn(id));
+      return w;
     };
 
     const sugg = suggestElements(arrow);

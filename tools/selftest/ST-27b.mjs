@@ -97,8 +97,8 @@ const FULL = ['1-4', '6-2', '6-3', '6-4', '6-5', '6-6', '6-7', '6-8'];
 const withFull = els.filter(e => 'fullName' in e).map(e => e.id);
 chk(withFull.join() === FULL.join() && FULL.every(id => nonEmpty(els.find(e => e.id === id).fullName)), 'fullName 只在 ' + FULL.join(',') + '（實際 ' + withFull.join(',') + '）');
 
-// 5) tipOf（與 renderArrowElems 內 tipOf 同格式）
-const tips = els.map(e => `${e.id} ${e.name}\n${e.def}\n例：${e.example}\n［${e.page}］`);
+// 5) tipOf（與 buildArrowElementsRow 內 tipOf 同格式；ST-27c 起改短版，完整說明在說明卡）
+const tips = els.map(e => `${e.id} ${e.name}（點 ⓘ 看說明）`);
 chk(tips.every(t => !t.includes('undefined')), 'tipOf 輸出無 undefined（例：' + JSON.stringify(tips[0]) + '）');
 
 // 分佈
