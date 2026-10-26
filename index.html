@@ -4247,7 +4247,9 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
     }
   }
   // ST-15：不同列 → 正交繞行（出來源底／頂邊中點，走列間通道，進目標頂／底邊中點）
-  const cross = vcCrossRoute(r1, r2, others, opts, rowUse);
+  // ST-29：主要活動折成第二列、或端點藏在群組裡被兄弟子項擋住時，改走 vcNestedRoute（只在 vcCrossRoute 找不到路時才試，既有路線不變）
+  const prevUse = Object.assign({}, rowUse);  // vcCrossRoute 失敗時也會佔用通道層數；vcNestedRoute 以呼叫前的層數排位
+  const cross = vcCrossRoute(r1, r2, others, opts, rowUse) || vcNestedRoute(r1, r2, rects, others, opts, rowUse, prevUse);
   if (cross) return cross;
   // 繞不開 → 邊緣交點直線
   const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
@@ -4310,6 +4312,96 @@ function vcCrossRoute(r1, r2, others, opts, rowUse) {
   if (hit(x1, y1, x1, sy1) || hit(x1, sy1, sx, sy1) || hit(sx, sy1, sx, sy2) || hit(sx, sy2, x2, sy2) || hit(x2, sy2, x2, y2)) return null;
   rowUse[sKey] = sn + 1;
   return { kind: 'cross', pts: [{ x: x1, y: y1 }, { x: x1, y: sy1 }, { x: sx, y: sy1 }, { x: sx, y: sy2 }, { x: x2, y: sy2 }, { x: x2, y: y2 }] };
+}
+
+// ST-29：巢狀／折列的正交繞行（vcCrossRoute 失敗後才試；畫面與 PPTX 共用）。回傳 { kind: 'cross', pts } 或 null
+// 「列」以頂層方塊（不被任何方塊包住的；主要活動 flex 折列時就是同一 flex 列的單元／群組）判定，群組被 stretch 拉高也不影響
+// 規則一 列間通道＋群組內側通道：兩端的頂層方塊不在同一列 → 橫段走兩列之間的 row-gap；
+//   進／出端若被同群組的兄弟子項擋住（直下會穿過上方子群組），改沿祖先群組的內側 padding（或頂層方塊旁的欄間縫）垂直走，
+//   再水平進出端點的左／右緣（停在端點側邊，靠近來線那一端）
+// 規則二 同列側向 Z 形：兩端頂層方塊在同一列但上下錯開（如醫美「中醫門診→中醫調理」）→ 從來源朝目標那側的側緣水平出、
+//   在兩者之間的欄間縫／padding 垂直走、再水平進目標側緣
+// 候選通道依序試，每段都用 others（不含兩端及其祖先）檢查不穿方塊；全部失敗回 null（呼叫端退回直線）
+function vcNestedRoute(r1, r2, rects, others, opts, rowUse, prevUse) {
+  const u = opts.step / 10;
+  const hit = (ax, ay, bx, by) => others.some(o =>
+    Math.max(ax, bx) > o.x + u && Math.min(ax, bx) < o.x + o.w - u &&
+    Math.max(ay, by) > o.y + u && Math.min(ay, by) < o.y + o.h - u);
+  const clear = pts => pts.every((p, i) => !i || !hit(pts[i - 1].x, pts[i - 1].y, p.x, p.y));
+  // 去掉重複點與共線中間點（PPTX 不產生零長度連接器）
+  const tidy = pts => pts.filter((p, i) => !i || p.x !== pts[i - 1].x || p.y !== pts[i - 1].y)
+    .filter((p, i, a) => i === 0 || i === a.length - 1 || !((a[i - 1].x === p.x && p.x === a[i + 1].x) || (a[i - 1].y === p.y && p.y === a[i + 1].y)));
+  const inside = (o, r) => o !== r && o.x <= r.x && o.y <= r.y && o.x + o.w >= r.x + r.w && o.y + o.h >= r.y + r.h;
+  const tops = rects.filter(o => !rects.some(c => inside(c, o)));
+  const topOf = r => rects.filter(c => inside(c, r)).reduce((a, c) => (c.w * c.h > a.w * a.h ? c : a), r);
+  const T1 = topOf(r1), T2 = topOf(r2);
+  const ovY = (a, b) => a.y < b.y + b.h && a.y + a.h > b.y;
+  // 端點 r 的垂直通道候選 x：各層祖先群組的左／右內側 padding，再加頂層方塊與同列鄰居之間的縫（沒有鄰居就貼外側）
+  const lanes = (r, T) => {
+    const xs = [];
+    rects.filter(c => inside(c, r)).sort((a, b) => a.w * a.h - b.w * b.h).forEach(c => {
+      const kids = rects.filter(o => inside(c, o));
+      if (!kids.length) return;
+      const lo = Math.min.apply(null, kids.map(o => o.x)), hi = Math.max.apply(null, kids.map(o => o.x + o.w));
+      if (lo - c.x >= u * 4) xs.push({ x: (c.x + lo) / 2, side: -1 });
+      if (c.x + c.w - hi >= u * 4) xs.push({ x: (hi + c.x + c.w) / 2, side: 1 });
+    });
+    const row = tops.filter(o => o !== T && ovY(o, T));
+    const lft = row.filter(o => o.x + o.w <= T.x + u), rgt = row.filter(o => o.x >= T.x + T.w - u);
+    xs.push({ x: lft.length ? (Math.max.apply(null, lft.map(o => o.x + o.w)) + T.x) / 2 : T.x - u * 6, side: -1 });
+    xs.push({ x: rgt.length ? (Math.min.apply(null, rgt.map(o => o.x)) + T.x + T.w) / 2 : T.x + T.w + u * 6, side: 1 });
+    return xs;
+  };
+  // 側緣的接點 y：靠近來線方向，離端點上／下緣最多 24 單位（群組很高時不必走到正中）
+  const sideY = (r, fromAbove) => fromAbove ? r.y + Math.min(r.h / 2, u * 24) : r.y + r.h - Math.min(r.h / 2, u * 24);
+  // 朝另一端那一側的通道先試；同側內由內層 padding 往外（陣列原本的順序）
+  const byNear = (xs, x, r) => { const s = x >= r.x + r.w / 2 ? 1 : -1; return xs.filter(l => l.side === s).concat(xs.filter(l => l.side !== s)); };
+
+  // 規則一：列間通道（頂層方塊定義的列）＋群組內側通道
+  if (!ovY(T1, T2)) {
+    const down = T2.y > T1.y, dir = down ? 1 : -1;
+    const band = T => tops.filter(o => ovY(o, T));
+    const from = down ? Math.max.apply(null, band(T1).map(o => o.y + o.h)) : Math.min.apply(null, band(T1).map(o => o.y));
+    const to = down ? Math.min.apply(null, band(T2).map(o => o.y)) : Math.max.apply(null, band(T2).map(o => o.y + o.h));
+    if ((to - from) * dir > u * 2) {
+      const mid = (from + to) / 2, half = Math.abs(to - from) / 2;
+      const key = 'gap:' + Math.round(mid);
+      const n = (prevUse || rowUse)[key] || 0;
+      const off = Math.max(-(half - u), Math.min(half - u, (n % 2 ? 1 : -1) * Math.ceil(n / 2) * opts.step * (n ? 1 : 0)));
+      const ty = mid + off;
+      const x1 = r1.x + r1.w / 2, x2 = r2.x + r2.w / 2;
+      const y1 = down ? r1.y + r1.h : r1.y, y2 = down ? r2.y : r2.y + r2.h;
+      // 出端：直接從頂／底邊出，或側緣出→內側通道；進端同理
+      const exits = [[{ x: x1, y: y1 }, { x: x1, y: ty }]].concat(byNear(lanes(r1, T1), x2, r1).map(l => {
+        const sy = sideY(r1, !down);
+        return [{ x: l.side < 0 ? r1.x : r1.x + r1.w, y: sy }, { x: l.x, y: sy }, { x: l.x, y: ty }];
+      }));
+      const entries = [[{ x: x2, y: ty }, { x: x2, y: y2 }]].concat(byNear(lanes(r2, T2), x1, r2).map(l => {
+        const ey = sideY(r2, down);
+        return [{ x: l.x, y: ty }, { x: l.x, y: ey }, { x: l.side < 0 ? r2.x : r2.x + r2.w, y: ey }];
+      }));
+      for (const a of exits) for (const b of entries) {
+        const pts = tidy(a.concat(b));
+        if (clear(pts)) { rowUse[key] = Math.max(rowUse[key] || 0, n + 1); return { kind: 'cross', pts }; }
+      }
+    }
+  }
+  // 規則二：同列側向 Z 形（水平出→垂直走→水平進）
+  const right = r2.x >= r1.x + r1.w, left = r2.x + r2.w <= r1.x;
+  if (right || left) {
+    const s = right ? 1 : -1;
+    const ex = right ? r1.x + r1.w : r1.x, en = right ? r2.x : r2.x + r2.w;
+    const ya = r1.y + r1.h / 2, yb = r2.y + r2.h / 2;
+    const cand = lanes(r1, T1).filter(l => l.side === s).concat(lanes(r2, T2).filter(l => l.side === -s))
+      .filter(l => (l.x - ex) * s > 0 && (en - l.x) * s > 0);
+    cand.unshift({ x: (ex + en) / 2 });
+    if (T1 !== T2 && (right ? T2.x >= T1.x + T1.w : T2.x + T2.w <= T1.x)) cand.unshift({ x: ((right ? T1.x + T1.w : T1.x) + (right ? T2.x : T2.x + T2.w)) / 2 });
+    for (const l of cand) {
+      const pts = tidy([{ x: ex, y: ya }, { x: l.x, y: ya }, { x: l.x, y: yb }, { x: en, y: yb }]);
+      if (clear(pts)) return { kind: 'cross', pts };
+    }
+  }
+  return null;
 }
 
 // ST-23b：產品直欄的接入規則。opts.product = { rects: 產品欄內方塊（Set，與 rects 同一批物件）, margin: Margin 箭頭矩形|null, zone: 產品欄矩形,
