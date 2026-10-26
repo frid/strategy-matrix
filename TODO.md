@@ -41,11 +41,11 @@
   - [x] ST-25b 其餘 rem 值依角色收斂到 5 階（h1 2rem 例外）；六 tab 前後截圖對照；manual.html 同步檢查；依賴 ST-25a（完成 2026-10-26：28 種 rem 依區間收斂到五階，補 button/input/select/textarea 預設 sm 與 .guide-step；manual.html 同步；六 tab 字級由 24 種降到 6 種；自測 tools/selftest/ST-25.mjs）
 
 第 5 階段：策略要素說明
-- [ ] ST-27 新增課本上策略要素的範例說明，Ex: 產品與市場之配合 (用簡圖、簡易說明、與範例)
+- [~] ST-27 新增課本上策略要素的範例說明，Ex: 產品與市場之配合 (用簡圖、簡易說明、與範例)
   - 規劃依據與頁碼見 doc/reference/策略管理新論-Ch8-51項策略要素.md
   - 已定：既有 `STRATEGY_ELEMENTS` 的 id／name／def／example 不改（箭頭已存要素 id），只加欄位；文字用自己的話並標 [S 頁碼]
   - [x] ST-27a 讀課本 S 285–339 摘要 51 項要素：簡易說明、書上範例、實際頁碼、簡圖形狀 → doc/reference/策略管理新論-Ch8-51項策略要素.md [S 285–339]（完成 2026-10-26：四段 subagent 讀掃描頁，51 項全；含簡圖表示法建議、與程式名稱／頁碼差異、可補的形狀規則；5-7 後文與部分密集圖未確定，見摘要第五節）
-  - [ ] ST-27b `STRATEGY_ELEMENTS` 加 `explain`／`caseExample`／`pages`／`shape`（簡圖規格：from/to 列、同欄／跨欄、投入／產出、匯流）資料，51 項依摘要檔填；依賴 ST-27a
+  - [x] ST-27b `STRATEGY_ELEMENTS` 加 `explain`／`caseExample`／`pages`／`shape`（簡圖規格：from/to 列、同欄／跨欄、投入／產出、匯流）資料，51 項依摘要檔填；依賴 ST-27a（完成 2026-10-26：51 項要素加 explain／caseExample／pages／shape（＋8 項 fullName）、page 改實際頁碼、ELEMENT_SHAPE_TYPES；自測 tools/selftest/ST-27b.mjs）
   - [ ] ST-27c 要素說明卡：要素 chip、「＋要素」面板每項旁 ⓘ 點開卡片——迷你矩陣 SVG 簡圖（依 `shape` 畫 3–4 欄 × 6 列與箭頭）＋簡易說明＋書上範例＋頁碼；取代原生 title tooltip；依賴 ST-27b
 
 第 6 階段：文件
