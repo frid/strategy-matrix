@@ -3807,7 +3807,11 @@ function renderValueChainEditor() {
 function getVcNodeRect(id) {
   const editor = document.getElementById('valueChainEditor');
   const el = editor.querySelector(`[data-vc-id="${id}"]`);
-  if (!el) return null;
+  return el ? vcOffsetRect(el) : null;
+}
+// 任一元素相對於 #valueChainEditor 的矩形（ST-23b：也拿來量 Margin 箭頭與產品欄）
+function vcOffsetRect(el) {
+  const editor = document.getElementById('valueChainEditor');
   let x = 0, y = 0, node = el;
   while (node && node !== editor) {
     x += node.offsetLeft;
@@ -3834,6 +3838,9 @@ function vcRectEdgePoint(rect, towardX, towardY) {
 // rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距 }；rowUse：各列已用的繞行層數
 // 回傳 { kind: 'straight'|'detour'|'cross', pts: [點...] }（最後一點是箭頭端）
 function vcLinkRoute(r1, r2, rects, opts, rowUse) {
+  // ST-23b：寬螢幕產品直欄 → 產品專用路線（只有畫面 drawVcLinks 會帶 opts.product；PPTX 與 ≤800px 橫列照舊）
+  const P = opts.product;
+  if (P && !P.horizontal && (P.rects.has(r1) || P.rects.has(r2))) return vcProductRoute(r1, r2, rects, opts, rowUse);
   const ovX = Math.min(r1.x + r1.w, r2.x + r2.w) - Math.max(r1.x, r2.x);
   const ovY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
   const contains = (o, r) => o.x <= r.x && o.y <= r.y && o.x + o.w >= r.x + r.w && o.y + o.h >= r.y + r.h;
@@ -3939,6 +3946,92 @@ function vcCrossRoute(r1, r2, others, opts, rowUse) {
   return { kind: 'cross', pts: [{ x: x1, y: y1 }, { x: x1, y: sy1 }, { x: sx, y: sy1 }, { x: sx, y: sy2 }, { x: x2, y: sy2 }, { x: x2, y: y2 }] };
 }
 
+// ST-23b：產品直欄的接入規則。opts.product = { rects: 產品欄內方塊（Set，與 rects 同一批物件）, margin: Margin 箭頭矩形|null, zone: 產品欄矩形 }
+// 活動→產品：來源右緣出 → 產品欄左側的直通道 → 產品垂直中點 → 進產品左緣；右邊被同列方塊擋住時，先鑽方塊間縫隙到列間通道再過去
+// 產品→活動：同路線反向；產品→產品：欄內直線（中間隔著別的產品就繞欄右側）。每段都是水平或垂直，回傳 { kind: 'product', pts }
+// 通道 x 依序取「主要活動右緣～Margin 左緣」→「Margin 右緣～產品方塊」→「Margin 箭身內」（沒有 Margin 就是活動右緣～產品方塊），多條線依序錯開
+function vcProductRoute(r1, r2, rects, opts, rowUse) {
+  const P = opts.product, u = opts.step / 10;
+  const isP = r => P.rects.has(r);
+  if (isP(r1) && !isP(r2)) {
+    const back = vcProductRoute(r2, r1, rects, opts, rowUse);
+    return { kind: 'product', pts: back.pts.slice().reverse() };
+  }
+  const contains = (o, r) => o !== r && o.x <= r.x && o.y <= r.y && o.x + o.w >= r.x + r.w && o.y + o.h >= r.y + r.h;
+  const others = rects.filter(o => o !== r1 && o !== r2 && !contains(o, r1) && !contains(o, r2));
+  const hit = (ax, ay, bx, by) => others.some(o =>
+    Math.max(ax, bx) > o.x + u && Math.min(ax, bx) < o.x + o.w - u &&
+    Math.max(ay, by) > o.y + u && Math.min(ay, by) < o.y + o.h - u);
+  const pRects = rects.filter(isP);
+  if (isP(r1)) {
+    // 產品→產品：同一直欄。相鄰就直線；中間隔著別的產品，就從右緣出、沿欄右側上下、再進目標右緣
+    const down = r2.y >= r1.y;
+    const mx = r1.x + r1.w / 2;
+    const y1 = down ? r1.y + r1.h : r1.y, y2 = down ? r2.y : r2.y + r2.h;
+    if (!hit(mx, y1, mx, y2)) return { kind: 'product', pts: [{ x: mx, y: y1 }, { x: mx, y: y2 }] };
+    const n = rowUse['prod:R'] || 0;
+    rowUse['prod:R'] = n + 1;
+    const rx = Math.min(P.zone.x + P.zone.w - u * 2, Math.max.apply(null, pRects.map(o => o.x + o.w)) + u * 4 + n * u * 3);
+    const a = r1.y + r1.h / 2, b = r2.y + r2.h / 2;
+    return { kind: 'product', pts: [{ x: r1.x + r1.w, y: a }, { x: rx, y: a }, { x: rx, y: b }, { x: r2.x + r2.w, y: b }] };
+  }
+  // 活動→產品
+  const nonP = rects.filter(o => !isP(o));
+  const lo = Math.max.apply(null, nonP.map(o => o.x + o.w)) + u * 3;
+  const hi = Math.min.apply(null, pRects.map(o => o.x)) - u * 3;
+  const slots = [];
+  const band = (a, b) => {
+    if (b < a) return;
+    const n = Math.max(1, Math.floor((b - a) / opts.step));
+    for (let i = 0; i < n; i++) slots.push(b - (i + 0.5) * (b - a) / n);
+  };
+  const M = P.margin;
+  if (M) {
+    band(lo, M.x - u * 2);
+    band(Math.max(lo, M.x + M.w + u * 2), hi);
+    band(Math.max(lo, M.x + u * 4), Math.min(hi, M.x + M.w * 0.72 - u * 4));  // 箭身（不含箭頭尖）
+  } else band(lo, hi);
+  if (!slots.length) slots.push(Math.max(lo, Math.min(hi, (P.zone.x + lo) / 2)));
+  const k = rowUse['prod:corr'] || 0;
+  rowUse['prod:corr'] = k + 1;
+  const cx = slots[k % slots.length];
+  const x1 = r1.x + r1.w, y1 = r1.y + r1.h / 2, x2 = r2.x;
+  const ty = r2.y + r2.h / 2;
+  const clear = pts => pts.every((p, i) => !i || !hit(pts[i - 1].x, pts[i - 1].y, p.x, p.y));
+  const tail = [{ x: cx, y: ty }, { x: x2, y: ty }];
+  // 來源與產品幾乎同高：一條水平線
+  if (y1 > r2.y + u * 4 && y1 < r2.y + r2.h - u * 4 && !hit(x1, y1, x2, y1)) return { kind: 'product', pts: [{ x: x1, y: y1 }, { x: x2, y: y1 }] };
+  const direct = [{ x: x1, y: y1 }, { x: cx, y: y1 }].concat(tail);
+  if (clear(direct)) return { kind: 'product', pts: direct };
+  // 右邊被同列方塊擋住：外層群組（若有）當成這一列的方塊；先往目標方向的列間通道走，不行再試反方向
+  const outer = nonP.filter(o => contains(o, r1)).reduce((a, o) => (o.w * o.h > a.w * a.h ? o : a), r1);
+  const rowRects = nonP.filter(o => o === outer || (!contains(o, outer) && o.y < outer.y + outer.h && o.y + o.h > outer.y));
+  const sx = outer.x + outer.w;
+  const blockers = nonP.filter(o => o !== outer && !contains(o, outer) && !contains(outer, o) && o.x >= sx - u && o.y < y1 && o.y + o.h > y1);
+  const nextX = blockers.length ? Math.min.apply(null, blockers.map(o => o.x)) : null;
+  const gx = nextX === null ? sx + u * 6 : (sx + nextX) / 2;
+  const tries = [];
+  [ty < y1, ty >= y1].forEach(up => {
+    const edge = up ? Math.min.apply(null, rowRects.map(o => o.y)) : Math.max.apply(null, rowRects.map(o => o.y + o.h));
+    const nb = up ? nonP.map(o => o.y + o.h).filter(t => t <= edge + 0.5) : nonP.map(o => o.y).filter(t => t >= edge - 0.5);
+    const near = nb.length ? (up ? Math.max.apply(null, nb) : Math.min.apply(null, nb)) : null;
+    const mid = near === null ? edge + (up ? -1 : 1) * u * 8 : (edge + near) / 2;
+    const half = near === null ? u * 8 : Math.abs(edge - near) / 2;
+    const key = 'pgap:' + Math.round(mid);
+    const n = rowUse[key] || 0;
+    const off = Math.max(-(half - u), Math.min(half - u, (n % 2 ? 1 : -1) * Math.ceil(n / 2) * u * 3));
+    const gy = mid + off;
+    const cx1 = r1.x + r1.w / 2;
+    // 兩種出法：從頂／底邊出（單獨方塊優先），或右緣出、鑽同列方塊間的縫隙（群組內的子項優先，免得線在群組裡上下穿行）
+    const edgeTry = { key, n, pts: [{ x: cx1, y: up ? r1.y : r1.y + r1.h }, { x: cx1, y: gy }, { x: cx, y: gy }].concat(tail) };
+    const gapTry = nextX === null || nextX - sx >= u * 4 ? { key, n, pts: [{ x: x1, y: y1 }, { x: gx, y: y1 }, { x: gx, y: gy }, { x: cx, y: gy }].concat(tail) } : null;
+    (outer === r1 ? [edgeTry, gapTry] : [gapTry, edgeTry]).forEach(t => { if (t) tries.push(t); });
+  });
+  const pick = tries.find(t => clear(t.pts)) || tries[0];
+  rowUse[pick.key] = pick.n + 1;
+  return { kind: 'product', pts: pick.pts };
+}
+
 // 折線點 → SVG path；轉角用 Q 小圓角（半徑 r）
 function vcRoundedPath(pts, r) {
   let d = `M ${pts[0].x} ${pts[0].y}`;
@@ -3983,13 +4076,24 @@ function drawVcLinks() {
   const editor = document.getElementById('valueChainEditor');
   const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(Boolean);
   const rowUse = {};
+  // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
+  const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
+  // ST-23b：產品直欄的幾何（產品方塊、Margin 箭頭、產品欄），交給 vcLinkRoute 走產品專用接入規則
+  const prodBody = editor.querySelector('.vc-products-body');
+  const prodZone = editor.querySelector('.vc-zone-products');
+  const marginEl = editor.querySelector('.vc-margin-arrow');
+  const product = prodBody && prodZone ? {
+    rects: new Set(Array.from(prodBody.querySelectorAll('[data-vc-id]')).map(el => same(vcOffsetRect(el)))),
+    margin: marginEl ? vcOffsetRect(marginEl) : null,
+    zone: vcOffsetRect(prodZone),
+    horizontal: isVcHorizontal(prodBody)
+  } : null;
+  const routeOpts = { near: 40, lift: 18, step: 10, product };
   valueChain.links.forEach(link => {
     const r1 = getVcNodeRect(link.from);
     const r2 = getVcNodeRect(link.to);
     if (!r1 || !r2) return;
-    // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
-    const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
-    const route = vcLinkRoute(same(r1), same(r2), rects, { near: 40, lift: 18, step: 10 }, rowUse);
+    const route = vcLinkRoute(same(r1), same(r2), rects, routeOpts, rowUse);
     const d = vcRoundedPath(route.pts, 8);
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'vc-link');
