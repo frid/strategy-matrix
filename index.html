@@ -647,6 +647,46 @@
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
   }
 
+  /* ST-35b segment：同色分段式（C）。沿用 band 的 DOM／chevron 幾何（JS 同時掛 vc-layout-band），這裡只覆寫外觀：
+     同群組同色相（頂層序號 --vc-seg-idx 0–3 循環取 --vc-seg-0..3）、子項間 2px 縫、群組間較大缺口、群組名小字在群組底部。
+     四色白字對比 ≥ 4.5:1，與 COLOR_PALETTES 無關（各配色下都可讀）；≤800px 同 band 回直排 */
+  :root { --vc-seg-0: #3b6fb6; --vc-seg-1: #2a7f73; --vc-seg-2: #b5532f; --vc-seg-3: #6b7a2c; }
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 0"] { --vc-seg-c: var(--vc-seg-0); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 1"] { --vc-seg-c: var(--vc-seg-1); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 2"] { --vc-seg-c: var(--vc-seg-2); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 3"] { --vc-seg-c: var(--vc-seg-3); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { column-gap: 14px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group { gap: 4px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-group-body { gap: 2px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) {
+      background: var(--vc-seg-c, var(--vc-seg-0)); color: #fff;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea) { color: #fff; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):focus { color: var(--ink); }
+    /* 群組名：移到群組底部、小字、同色相字色，不畫橫帶底色 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head {
+      order: 2; background: transparent; border: none; border-radius: 0; min-height: 20px; padding: 0 4px;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+      color: var(--vc-seg-c, var(--vc-seg-0)); font-size: calc(var(--fs-sm) - 1px); font-weight: 700; text-align: center;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-group-body { order: 1; align-items: flex-start; border: none; }
+    /* 所有 chevron 頂緣同一條線：各層容器頂端對齊（群組名往下掛，深度只影響下方）；葉節點同高 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { align-items: flex-start; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group { align-self: flex-start; border: none; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit { min-height: 104px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus) { border-bottom-color: transparent; }  /* 隱藏群組名下的虛線 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { row-gap: 22px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head { border-bottom: none; box-shadow: none; }
+    /* 深色 chevron 上的「＋角色」改白色半透明（已設角色的標籤沿用原樣式） */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-role-none {
+      color: rgba(255,255,255,.9); border-color: rgba(255,255,255,.55); opacity: 1;
+    }
+  }
+
   /* ── Buttons ── */
   button {
     padding: 6px 14px; border-radius: 8px; font-size: var(--fs-base);
@@ -1509,6 +1549,7 @@ const VALUE_CHAIN_VERSION = 1;
 const VC_LAYOUTS = [
   { key: 'porter', label: '經典 Porter' },
   { key: 'band',   label: '橫帶式' },
+  { key: 'segment', label: '同色分段式' },
 ];
 const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
 
@@ -3802,6 +3843,11 @@ function buildVcNode(node, zone) {
     deleteVcNode(node.id), 'vc-act-remove'));
   el.appendChild(head);
 
+  // ST-35b 同色分段式：頂層節點（單元或群組）依序號循環取 4 色；群組內子項沿用群組的色（CSS 繼承 --vc-seg-c）
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'segment') {
+    const top = valueChain.primary.indexOf(node);
+    if (top >= 0) el.style.setProperty('--vc-seg-idx', top % 4);
+  }
   // ── 群組內容區：子節點；拖到空白處＝放到群組最後 ──
   if (isGroup) {
     // ST-35a 橫帶式：群組寬＝葉節點數 × 單支 chevron 寬（CSS 讀 --vc-leaves）；Porter 不寫，DOM 維持原樣
@@ -3990,6 +4036,7 @@ function renderValueChainEditor() {
   zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
   const layout = vcLayoutKey(valueChain.layout);
   if (layout !== 'porter') zones.classList.add('vc-layout-' + layout);  // ST-35a：Porter 的 DOM 維持原樣
+  if (layout === 'segment') zones.classList.add('vc-layout-band');  // ST-35b：分段式沿用橫帶式的 chevron 幾何，外觀由 .vc-layout-segment 覆寫
 
   // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
   const supportLabel = document.createElement('div');
@@ -4026,7 +4073,7 @@ function renderValueChainEditor() {
     bindVcDropArea(body, z.key, () => valueChain[z.key], null);
     zoneEl.appendChild(body);
     // ST-35a 橫帶式：整列第一支 chevron 不切左缺口
-    if (z.key === 'primary' && layout === 'band') {
+    if (z.key === 'primary' && layout !== 'porter') {
       const firstLeaf = body.querySelector('.vc-unit');
       if (firstLeaf) firstLeaf.classList.add('vc-chev-first');
     }
