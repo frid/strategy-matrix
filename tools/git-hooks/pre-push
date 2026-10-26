@@ -9,6 +9,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   case "$remote_ref" in
     refs/tags/*) continue ;;
   esac
+  # 刪除遠端分支（local_sha 全 0）放行，方便清掉舊分支
+  case "$local_sha" in 0000000000000000000000000000000000000000) continue ;; esac
   ok=0
   for a in $allowed; do [ "$remote_ref" = "$a" ] && ok=1; done
   if [ $ok -eq 0 ]; then
