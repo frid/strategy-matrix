@@ -46,3 +46,5 @@
 | 2026-10-26 | ST-23c | PPTX Margin 箭頭改 downArrow 不旋轉（原 rightArrow rot=90° 的 off/ext 是旋轉前尺寸，PowerPoint 會畫成橫向 3.5" 箭頭） | ST-01g 起的 bug，slide1 本次重排順手修 | 易 |
 | 2026-10-26 | ST-23c | 非產品連線的障礙物排除產品方塊（PPTX 與編輯器一致）；有產品→產品線時 PPTX 產品方塊右側讓 0.06" 通道 | 產品直條跨多列，當障礙會讓活動間的線退回斜線 | 易 |
 | 2026-10-26 | ST-23c | regression c 區段預設只比 slide2 以後，slide1 改驗結構（產品數／位置／連接器正交／skippedLinks 0），`--strict-slide1` 可全比 | slide1 版面已變，v1.0.0 基準不再適用 | 易 |
+| 2026-10-26 | ST-25 | 字級收斂用數值區間對應（<.715→xs、.72–.78→sm、.80–.86→base、.9–.95→md、1–1.15→lg），不逐項依角色調 | 結果與角色表只差個別標籤；可預期、可回溯 | 易 |
+| 2026-10-26 | ST-25 | 補全域 `button,input,select,textarea{font-size:var(--fs-sm)}` | 未指定字級的控制項用瀏覽器預設 13.33px，是第 7 種字級 | 易 |
