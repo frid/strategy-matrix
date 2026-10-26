@@ -90,3 +90,5 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [ ] ST-35d circle 版型真實拖曳與連線模式手感；連線壓過圓下名稱是否可接受；手機寬度
 - [ ] ST-35e hex 顏色偏深是否可接受（調亮要連動 --vc-hex-base）
 - [ ] ST-35h 三套分色配色觀感；藍綠紫頂層超過 5 個時第 5、6 相鄰同為藍
+- [ ] ST-35g 用 PowerPoint 開醫美範本四種版型的 PPTX：homePlate／chevron／hexagon adj 外觀、6–7pt 字是否溢出、無「需要修復」提示
+- [ ] ST-35f 專案區「🧩 版型」下拉位置觀感
