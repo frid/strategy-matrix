@@ -5,6 +5,47 @@
 
 # 新增功能
 
+# Bug
+規劃（2026-10-26）：建議順序 ST-22 → 26 → 24 → 23 → 25 → 27 → 28；ST-22 是 v1.1.0 迴歸，修完建議先 release v1.1.1。
+
+第 1 階段：修迴歸
+- [ ] ST-22 策略矩陣存檔載入失敗 ![](assets/20261026_144114.png), 檔案為 "策略矩陣_價值鏈.json"
+  - 原因（2026-10-26 headless 重現）：存檔格式正常、名稱都在；ST-21b 的 `.step-pane:not(.active){display:none}` 讓 `renderValueChainEditor()` 在 ① 頁籤隱藏時先渲染，主要活動名稱 `textarea.vc-name-wrap` 經 `sizeVcInput()` 量到 `scrollHeight=0` → `height:0px` 看不見；`guideGoto()` 切 tab 只重畫連線不重量高度。重新整理、主「載入」、在其他 tab 載範例都會中，v1.0.0 無此問題
+  - 已定：測試不放使用者作業檔（HW2），改由測試腳本自產有群組＋多層的去名價值鏈
+  - [ ] ST-22a 切到 ① 頁籤（`guideGoto`／`guideRedrawLines` 的 rAF）時對 `#valueChainEditor textarea.vc-name-wrap` 重跑 `sizeVcInput`；`sizeVcInput` 遇 `scrollHeight===0` 清空 style.height 而非寫 0px
+  - [ ] ST-22b 主「📂 載入」（`importStateJSON`）偵測 `kind==='strategyMatrix.valueChain'`：改走 `importValueChainJSON` 匯入價值鏈並提示，不再整份取代專案
+  - [ ] ST-22c 回歸：`tests/st-21-regression.mjs` 加「重新整理後／他 tab 載入後切回 ①，主要活動名稱 offsetHeight > 10」與「主載入價值鏈檔」兩項；依賴 ST-22a、ST-22b
+
+第 2 階段：矩陣操作
+- [ ] ST-26 ![](assets/20261026_145546.png) 不同策略的箭頭，不要混在一起。用切換的
+  - [ ] ST-26a `#overlayChk` 改為檢視切換 `matrixView`：只看目前（預設）／目前＋競爭者／全部；`drawLines()` 依視圖過濾構想；⚔ 對陣點標記只在含雙方的視圖顯示（`collectClashPoints` 與 PPTX 對陣點頁不變）；圖例只列畫出的構想；舊存檔 `overlayAll` 載入後一律用預設「只看目前」；更新 `doc/decisions.md`（推翻 2026-10-25 ST-14h「疊圖預設開」）
+- [ ] ST-24 ![](assets/20261026_145153.png) 策略矩陣站的板面太大，把下方的輸入欄，調整到更方便的輸入地方
+  - [ ] ST-24a 步驟 ②／④：`#cellPanel` 改為矩陣右側 sticky 側欄（top 讓出 `.project-panel`、max-height 視窗高、內捲），矩陣保留自己的橫向捲動；`selectCell` 拿掉 `scrollIntoView`（窄螢幕保留）；側欄改變矩陣寬度後重跑 `drawLines()`；≤800px 維持上下排
+
+第 3 階段：價值鏈版面
+- [ ] ST-23 產出的產品改放價值鏈最右邊，利潤的右側 ![](assets/20261026_144914.png)，用垂直的整條
+  - 已定：編輯器與 PPTX 價值鏈頁都改
+  - [ ] ST-23a 編輯器：`.vc-zones` grid 加第 4 欄 products（三列全高），產品改直條（`writing-mode: vertical-rl`），上下拖曳排序，「＋ 產品」放欄底；不依賴 `showArrowBg`；≤800px 回到橫列
+  - [ ] ST-23b 連線：直條產品的接入規則（從右緣出、接直條左緣，繞過 Margin 箭頭），在 `vcLinkRoute`／`vcCrossRoute` 用 opts 旗標區分，不影響 23c 以外的呼叫；依賴 ST-23a
+  - [ ] ST-23c PPTX 價值鏈頁（`buildValueChainShapesXml`）產品改在 Margin 右側直條：重算 `contentW`、`totalRows`、ST-20 `deepTotal`；更新 `tests/st-21-regression.mjs` 價值鏈頁 XML 比對基準（其他頁仍須一致）；依賴 ST-23b
+
+第 4 階段：字級（在 23／24／26 之後，因為會掃過全部 CSS）
+- [ ] ST-25 ![](assets/20261026_145342.png) 字的大小不一致，檢查全部的網頁，調整成適合的大小。
+  - 原因：`html{font-size:150%}`（1rem=24px），多數用 rem，但 `.sentence-box summary`／`.sentence-list` 13px、SWOT／對陣點／行動表 11–12px 寫死 px，只有旁邊一半大；rem 另有 26 種相近值，無字級變數
+  - [ ] ST-25a 在 `:root` 定 `--fs-xs .68rem`／`--fs-sm .74rem`／`--fs-base .80rem`／`--fs-md .92rem`／`--fs-lg 1.1rem`；所有 px 字級（`.sentence-box summary`、`.sentence-list`、`.premise-swot-*`、`.premise-quad`、`.clash-item`、`.action-toolbar`、`.action-table`）改用變數，表內 input 同一級
+  - [ ] ST-25b 其餘 rem 值依角色收斂到 5 階（h1 2rem 例外）；六 tab 前後截圖對照；manual.html 同步檢查；依賴 ST-25a
+
+第 5 階段：策略要素說明
+- [ ] ST-27 新增課本上策略要素的範例說明，Ex: 產品與市場之配合 (用簡圖、簡易說明、與範例)
+  - 規劃依據與頁碼見 doc/reference/策略管理新論-Ch8-51項策略要素.md
+  - 已定：既有 `STRATEGY_ELEMENTS` 的 id／name／def／example 不改（箭頭已存要素 id），只加欄位；文字用自己的話並標 [S 頁碼]
+  - [x] ST-27a 讀課本 S 285–339 摘要 51 項要素：簡易說明、書上範例、實際頁碼、簡圖形狀 → doc/reference/策略管理新論-Ch8-51項策略要素.md [S 285–339]（完成 2026-10-26：四段 subagent 讀掃描頁，51 項全；含簡圖表示法建議、與程式名稱／頁碼差異、可補的形狀規則；5-7 後文與部分密集圖未確定，見摘要第五節）
+  - [ ] ST-27b `STRATEGY_ELEMENTS` 加 `explain`／`caseExample`／`pages`／`shape`（簡圖規格：from/to 列、同欄／跨欄、投入／產出、匯流）資料，51 項依摘要檔填；依賴 ST-27a
+  - [ ] ST-27c 要素說明卡：要素 chip、「＋要素」面板每項旁 ⓘ 點開卡片——迷你矩陣 SVG 簡圖（依 `shape` 畫 3–4 欄 × 6 列與箭頭）＋簡易說明＋書上範例＋頁碼；取代原生 title tooltip；依賴 ST-27b
+
+第 6 階段：文件
+- [ ] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27
+
 ## Complete
 - [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）（release v1.1.0）
   - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
