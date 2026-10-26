@@ -61,3 +61,8 @@
 | 2026-10-26 | ST-34c | 優勢基礎改書上七項名稱與順序；舊值靠 alias 表在載入／範例／undo 遷移，存檔一律寫新名；SUPPORT_COLUMN_GROUP 不改 | 書 S 331–339；alias 比雙寫兩套名稱簡單；「支援活動」字串進 COLUMN_PATHS 存檔 | 中：alias 表可再加 |
 | 2026-10-26 | ST-35a | 版型存 `valueChain.layout`（非 TODO 原寫的專案層 vcLayout），舊檔預設 porter（非 B）；切換下拉先放價值鏈工具列；載入範本沿用目前版型 | 隨價值鏈檔一起匯出；舊使用者畫面不變；範本沒有 layout 不該把版型打回 | 易 |
 | 2026-10-26 | ST-29 | 折列跨列連線另寫 vcNestedRoute 作為 vcCrossRoute 的後備，不改既有通道規則 | 已找得到路的連線走法與通道佔用完全不變，regression 可逐張相同 | 易 |
+| 2026-10-26 | ST-35b | segment 版型同時掛 vc-layout-band 沿用 band 幾何，只覆寫外觀；四色改較深版以達白字 4.5:1 | 不複製 band 規則；範例色票對比不足 | 易 |
+| 2026-10-26 | ST-35i | 範例資料不加 icon，icon 只在自測動態設；icon 超過 4 字取前 4 個 code point；矩陣欄頭以欄名對應單元名取 icon | 保住 PPTX regression 逐張相同；保留輸入優於丟棄；欄位沒有 id，與 COLUMN_ROLES 作法一致 | 易 |
+| 2026-10-27 | ST-35e | 六角鏈不畫白描邊（clip-path 會裁掉 border／outline）；群組內深淺用往黑混而非透明度 | drop-shadow 描不到接縫；變淡會讓白字對比跌破 4.5 | 易 |
+| 2026-10-27 | ST-35h | 分色配色做成 COLOR_PALETTES 新三套（perUnit 欄位），不是獨立開關；支援活動／角落／Margin 改中性灰直接寫在 vars；分色配色優先於 hex 自己的色相 | 沿用既有配色下拉與 colorPaletteIdx 存檔；彩虹色與原橘綠會打架；兩套色序疊加對比失控 | 易 |
+| 2026-10-27 | ST-35d | circle 版型依葉節點順序取 8 色（非頂層序）、群組底板取首葉色；分色配色在 circle 下不生效；連線端點接圓心、允許壓到圓下名稱 | 符合範本 F 每顆一色；circle 已自帶分色；端點規格如此 | 易 |

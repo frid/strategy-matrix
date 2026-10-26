@@ -685,6 +685,233 @@
       position: absolute; right: 0; top: 50%; transform: translateY(-50%);
     }
     #valueChainEditor .vc-layout-fold .vc-zone-primary .vc-group.vc-folded > .vc-group-body { display: none; }
+  /* ST-35h per-unit colors：分色模式（COLOR_PALETTES[i].perUnit）。applyPerUnitColors() 在主要活動頂層節點寫 inline --vc-unit-color，
+     子項繼承；葉節點＝原色白字、群組底＝淡版（18% 混白）、群組名＝深版（70% 混黑）。支援活動色由該套 vars 給低彩度灰。
+     只在 .vc-zones.vc-per-unit（價值鏈）／#matrixTable.matrix-per-unit（矩陣表頭）下生效；Porter、橫帶式都適用 */
+  .vc-zones.vc-per-unit .vc-zone-primary > .vc-zone-body > .vc-unit:not(.vc-asset),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) {
+    background: var(--vc-unit-color); border-color: var(--vc-unit-color); color: #fff;
+  }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):not(:focus),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) :is(.vc-act, .vc-role-none) { color: #fff; }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group {
+    background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: transparent;
+  }
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+  .vc-zones.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+    color: color-mix(in srgb, var(--vc-unit-color) 70%, black); border-bottom-color: var(--vc-unit-color);
+  }
+  @media (min-width: 801px) {
+    /* 橫帶式：群組本身透明（同 ST-35a），上方名稱橫帶＝淡版底＋深版字 */
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group { background: transparent; }
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: var(--vc-unit-color);
+    }
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-band.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+      color: color-mix(in srgb, var(--vc-unit-color) 70%, black);
+    }
+  }
+  /* 矩陣表頭：data-vc-top＝該欄對應的主要活動頂層序（支援活動／產品欄沒有）；群組表頭與無群組欄＝原色、細項表頭＝淡版 */
+  #matrixTable.matrix-per-unit thead th[data-vc-top]:is(.col-header-group, .col-header) {
+    background: var(--vc-unit-color); color: #fff;
+  }
+  #matrixTable.matrix-per-unit thead th[data-vc-top].col-header-leaf {
+    background: color-mix(in srgb, var(--vc-unit-color) 18%, white); color: color-mix(in srgb, var(--vc-unit-color) 70%, black);
+  }
+
+  /* ST-35b segment：同色分段式（C）。沿用 band 的 DOM／chevron 幾何（JS 同時掛 vc-layout-band），這裡只覆寫外觀：
+     同群組同色相（頂層序號 --vc-seg-idx 0–3 循環取 --vc-seg-0..3）、子項間 2px 縫、群組間較大缺口、群組名小字在群組底部。
+     四色白字對比 ≥ 4.5:1，與 COLOR_PALETTES 無關（各配色下都可讀）；≤800px 同 band 回直排 */
+  :root { --vc-seg-0: #3b6fb6; --vc-seg-1: #2a7f73; --vc-seg-2: #b5532f; --vc-seg-3: #6b7a2c; }
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 0"] { --vc-seg-c: var(--vc-seg-0); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 1"] { --vc-seg-c: var(--vc-seg-1); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 2"] { --vc-seg-c: var(--vc-seg-2); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary [style*="--vc-seg-idx: 3"] { --vc-seg-c: var(--vc-seg-3); }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { column-gap: 14px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group { gap: 4px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-group-body { gap: 2px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) {
+      background: var(--vc-seg-c, var(--vc-seg-0)); color: #fff;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea) { color: #fff; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea):focus { color: var(--ink); }
+    /* 群組名：移到群組底部、小字、同色相字色，不畫橫帶底色 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head {
+      order: 2; background: transparent; border: none; border-radius: 0; min-height: 20px; padding: 0 4px;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+      color: var(--vc-seg-c, var(--vc-seg-0)); font-size: calc(var(--fs-sm) - 1px); font-weight: 700; text-align: center;
+    }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-group-body { order: 1; align-items: flex-start; border: none; }
+    /* 所有 chevron 頂緣同一條線：各層容器頂端對齊（群組名往下掛，深度只影響下方）；葉節點同高 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { align-items: flex-start; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group { align-self: flex-start; border: none; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit { min-height: 104px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus) { border-bottom-color: transparent; }  /* 隱藏群組名下的虛線 */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-zone-body { row-gap: 22px; }
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-group > .vc-node-head { border-bottom: none; box-shadow: none; }
+    /* 深色 chevron 上的「＋角色」改白色半透明（已設角色的標籤沿用原樣式） */
+    #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-role-none {
+      color: rgba(255,255,255,.9); border-color: rgba(255,255,255,.55); opacity: 1;
+    }
+    /* ST-35eh：分色配色優先——segment 下葉節點改用 --vc-unit-color、群組名改該色深版（對比同 band 分色） */
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-unit:not(.vc-asset) { background: var(--vc-unit-color, var(--vc-seg-c, var(--vc-seg-0))); }
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: color-mix(in srgb, var(--vc-unit-color) 70%, black); }
+  }
+  /* ST-35e hex 六角鏈式（G）：沿用 band 的橫帶與群組結構（zones 同時掛 vc-layout-band），只覆寫葉節點外觀：
+     六角形 clip-path 左右各咬 18px、相鄰顆負 margin 互相咬合；一個頂層項目一個色相（JS 寫 --vc-hex／--vc-hex-j），
+     群組內子項同色相、依序變深（白字對比 ≥ 4.5，所以用往黑混而不是變淡）；群組橫帶用同色相深版。
+     描邊取捨：clip-path 會把 border／outline／box-shadow 一起裁掉，故不畫白描邊，靠色相／深淺差區分相鄰顆。≤800px 不套用 */
+  #valueChainEditor .vc-layout-hex {
+    --vc-hex-0: #2aa7b8; --vc-hex-1: #3b6fb6; --vc-hex-2: #7b5cc4; --vc-hex-3: #e3832c;
+    --vc-hex-4: #d64a4a; --vc-hex-5: #e0b531; --vc-hex-6: #4a9d5c;
+  }
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit {
+      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
+      min-height: 62px;
+    }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit:not(.vc-asset) {
+      background: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - var(--vc-hex-j, 0) * 5%), #000);
+    }
+    /* 咬合：非第一顆往左縮 16px（群組本身與群組內第一顆不縮，橫帶才對得齊） */
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > :not(:first-child):is(.vc-unit, .vc-group) { margin-left: -16px; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group-body > .vc-group:not(:first-child) { margin-left: 0; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit > .vc-node-head { margin: 0 20px; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head .vc-act,
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head .vc-role-none { color: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - 12%), #000);
+      border-color: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - 22%), #000);
+    }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    /* ST-35eh：分色配色優先——hex 葉節點用 --vc-unit-color（往黑混表深淺）、群組橫帶淡版底＋深版字 */
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit:not(.vc-asset) {
+      background: color-mix(in srgb, var(--vc-unit-color) calc(100% - var(--vc-hex-j, 0) * 6%), #000);
+    }
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: var(--vc-unit-color);
+    }
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: color-mix(in srgb, var(--vc-unit-color) 70%, black); }
+  }
+
+  /* ST-35d circle：圓形 icon 式（F）。結構沿用 band 的 group 容器＋row flex（JS 只掛 vc-layout-circle、不掛 band），外觀全部寫在這裡：
+     主要活動每個葉節點＝48px 實色圓（.vc-icon-btn 放大；沒 icon 時顯示名稱首字 data-initial），名稱在圓下、標籤小字在名稱下；
+     群組＝同色淡底板＋虛線框，群組名小字在上緣；支援活動＝白底膠囊；Margin＝黑色大 chevron。
+     八色相依主要活動葉節點順序循環（JS 寫 --vc-circle-idx；群組取其第一個葉節點的序號），與 COLOR_PALETTES 無關；≤800px 回直排、圓與名稱左右並排。
+     ST-35h 分色配色（.vc-per-unit）在 circle 下不生效：本區 #valueChainEditor 規則蓋過它，circle 本身已每顆一色（主 session 決定接受） */
+  :root {
+    --vc-circle-0: #2aa7b8; --vc-circle-1: #3b6fb6; --vc-circle-2: #7b5cc4; --vc-circle-3: #e3832c;
+    --vc-circle-4: #d64a4a; --vc-circle-5: #e0b531; --vc-circle-6: #4a9d5c; --vc-circle-7: #8a7bb5;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 0"] { --vc-circle-c: var(--vc-circle-0); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 1"] { --vc-circle-c: var(--vc-circle-1); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 2"] { --vc-circle-c: var(--vc-circle-2); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 3"] { --vc-circle-c: var(--vc-circle-3); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 4"] { --vc-circle-c: var(--vc-circle-4); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 5"] { --vc-circle-c: var(--vc-circle-5); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 6"] { --vc-circle-c: var(--vc-circle-6); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary [style*="--vc-circle-idx: 7"] { --vc-circle-c: var(--vc-circle-7); }
+  /* Margin：黑色大 chevron（clip-path 沿用） */
+  #valueChainEditor .vc-layout-circle .vc-margin-arrow { background: #2b2d31; color: #fff; }
+  /* 支援活動：白底膠囊、細框，仍是直排清單（蓋掉 Porter 漸層與斜切） */
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit {
+    background: #fff; border: 1px solid var(--grid-line); border-radius: 999px; clip-path: none;
+    color: var(--ink); font-weight: 500; padding: 4px 16px;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit.vc-asset { border-color: var(--vc-asset-border); }
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-support .vc-unit :is(.vc-act, .vc-role-none) { color: var(--ink); }
+  /* 主要活動：葉節點本身透明（只看得到圓＋名稱），群組＝淡色底板 */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit {
+    background: transparent; border: none; border-radius: 0; clip-path: none; padding: 2px 4px; box-shadow: none;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-act,
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-role-none { color: var(--ink); }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit .vc-node-head :is(input, textarea):focus { background: #fff; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn {
+    flex: 0 0 48px; width: 48px; height: 48px; padding: 0; border-radius: 50%; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--vc-circle-c, var(--vc-circle-0)); color: #fff; font-size: 22px; line-height: 1; opacity: 1;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn:hover { filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(0,0,0,0.12); }
+  /* 沒 icon：按鈕原本的淡色 ☺ 收起，改顯示名稱首字（JS 給 data-initial） */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn.vc-icon-empty[data-initial] { font-size: 0; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn.vc-icon-empty[data-initial]::before {
+    content: attr(data-initial); font-size: 20px; font-weight: 700;
+  }
+  /* 資產：淡黃底圓＋資產色框（與一般活動區分） */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit.vc-asset > .vc-node-head > .vc-icon-btn {
+    background: var(--vc-asset-bg); border: 2px solid var(--vc-asset-border); color: var(--vc-asset-text, var(--ink));
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group {
+    background: color-mix(in srgb, var(--vc-circle-c, var(--vc-circle-0)) 12%, white);
+    border: 1px dashed var(--vc-circle-c, var(--vc-circle-0)); border-radius: 10px; clip-path: none;
+    padding: 3px 4px 6px; gap: 2px;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head { min-height: 18px; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head .vc-act {
+    color: var(--vc-circle-c, var(--vc-circle-0)); font-size: var(--fs-xs); font-weight: 700; text-align: center;
+  }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus) { border-bottom-color: transparent; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body { margin: 0; padding: 0; border-color: transparent; }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body.drag-over { border-color: var(--col-header); }
+  @media (min-width: 801px) {
+    /* 一列圓：每格固定寬，名稱在圓下置中、標籤小字在名稱下；頂層單元下移與群組內的圓同高 */
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-zone-body { align-items: flex-start; column-gap: 6px; row-gap: 14px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit {
+      flex: 0 0 auto; width: 84px; box-sizing: border-box; justify-content: center; align-items: flex-start;
+      text-align: center; white-space: normal;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-zone-body > .vc-unit { margin-top: 24px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head {
+      flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 1px; column-gap: 2px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-icon-btn { margin: 0 calc(50% - 24px) 2px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100% !important; width: auto !important; text-align: center; font-weight: 600;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > :is(.vc-kind, .vc-role) {
+      margin: 0; font-size: 10px; line-height: 1.3; padding: 0 3px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-act { display: none; margin-top: 0; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit:hover > .vc-node-head > .vc-act { display: inline; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group {
+      flex: 0 0 auto; align-self: flex-start; min-width: max(84px, calc(var(--vc-name-len, 2) * var(--fs-xs) + 24px));
+      white-space: normal;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head {
+      flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 0; margin: 0; padding: 0 4px;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100%; width: auto; height: auto !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > .vc-act { display: none; margin-top: 0; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head:hover > .vc-act { display: inline; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body {
+      flex-direction: row; align-items: flex-start; gap: 6px; min-height: 84px;
+    }
+  }
+  @media (max-width: 800px) {
+    /* 直排：圓與名稱同一行，標籤換到名稱下一行（左緣對齊名稱），名稱不被標籤擠成一字一行 */
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 1px; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 1 calc(100% - 56px) !important; width: auto !important; min-width: 4em; font-weight: 600;
+    }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 51px; }
   }
 
   /* ── Buttons ── */
@@ -1216,6 +1443,32 @@
   .sm-modal-list .sm-modal-empty { color: var(--ink-light); font-style: italic; }
   .sm-modal-code { font-family: 'DM Mono', monospace; }
   .sm-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  /* ST-35i unit icon：價值單元名稱前的 icon 按鈕、icon 選單、矩陣欄頭 icon */
+  .vc-icon-btn {
+    flex: 0 0 auto; border: none; background: transparent; padding: 0 1px; margin: 0;
+    font-size: 1.05em; line-height: 1.2; cursor: pointer; color: inherit; border-radius: 3px;
+  }
+  .vc-icon-btn:hover { background: rgba(255,255,255,0.35); }
+  .vc-icon-btn.vc-icon-empty { opacity: 0.3; font-size: 0.95em; }
+  .vc-icon-btn.vc-icon-empty:hover { opacity: 0.8; }
+  .vc-icon-picker {
+    position: absolute; z-index: 9990; background: white; border: 1px solid #ccc; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18); padding: 8px; width: 236px; color: var(--ink);
+  }
+  .vc-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+  .vc-icon-grid button {
+    border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 2px 0;
+    font-size: 17px; line-height: 1.3; cursor: pointer;
+  }
+  .vc-icon-grid button:hover { background: var(--cell-hover); }
+  .vc-icon-grid button.vc-icon-cur { border-color: var(--col-header); }
+  .vc-icon-row { display: flex; gap: 4px; margin-top: 6px; }
+  .vc-icon-row input { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); padding: 2px 4px; }
+  .vc-icon-row button { flex: 0 0 auto; white-space: nowrap; font-size: var(--fs-sm); padding: 2px 6px; cursor: pointer; }
+  /* 產品欄名稱 textarea 原本佔滿一列只留 ✕ 的寬度（ST-31）；有 icon 按鈕時再讓出 icon 寬，icon、名稱、✕ 同列 */
+  .vc-products-body > .vc-unit > .vc-node-head > .vc-icon-btn + textarea.vc-name-wrap { flex-basis: calc(100% - 24px - 1.6em); }
+  #matrixTable thead th .col-icon { text-orientation: upright; margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -1236,6 +1489,9 @@
     <button class="btn-pptx" onclick="exportPptx()">📊 匯出 PPTX</button>
     <label class="palette-picker" title="切換價值鏈與策略矩陣的配色">🎨 配色
       <select id="paletteSelect" onchange="applyPalette(Number(this.value)); saveState();"></select>
+    </label>
+    <label class="palette-picker" title="切換價值鏈主要活動列的版型（與價值鏈工具列的版型下拉同步）">🧩 版型
+      <select id="vcLayoutSelect" onchange="valueChain.layout = vcLayoutKey(this.value); commitValueChain();"></select>
     </label>
     <label class="palette-picker" title="載入書上的完整策略範例（會取代目前的價值鏈、策略構想與箭頭）">
       <select id="exampleSelect" onchange="if (this.value) loadExampleProject(this.value); this.value = '';">
@@ -1403,6 +1659,7 @@
   </div>
   <button class="btn-ghost" id="industryToggleBtn" onclick="toggleIndustryMatrix()" title="切換左側標籤：策略矩陣／加上產業矩陣簡稱（產業矩陣出自司徒講義，非新論 Ch8／9）">策略矩陣</button>
   <label class="short-view-toggle" title="只顯示跟產品特色有關的欄位（短版策略矩陣；出自彭朱如講義 [P3 57]）"><input type="checkbox" id="shortViewChk" onchange="toggleShortView(this.checked)"> ✂ 短版矩陣</label>
+  <label class="short-view-toggle" title="矩陣欄頭（含 PPTX）在欄名前顯示價值單元的 icon；icon 在價值鏈頁名稱前的按鈕設定（ST-35i）"><input type="checkbox" id="unitIconChk" checked onchange="toggleUnitIcons(this.checked)"> 欄頭 icon</label>
   <label class="short-view-toggle step-pane" data-steps="ideas premise action control" title="矩陣上要畫哪些策略構想的箭頭：只看目前構想／目前＋競爭者／全部構想（非目前構想變淡、競爭者虛線）；含雙方時以 ⚔ 標出對陣點（ST-26a）">👁 檢視 <select id="matrixViewSel" onchange="setMatrixView(this.value)"><option value="current">只看目前構想</option><option value="rivals">目前＋競爭者</option><option value="all">全部構想</option></select></label>
   <button class="btn-ghost step-pane" data-steps="ideas premise action control" onclick="autoHideUnusedCols()" title="把所有策略構想都沒有箭頭起訖的投入欄隱藏，並開啟短版矩陣">自動隱藏無箭頭欄</button>
   <button class="btn-undo" id="undoBtn" onclick="undo()" disabled>↩ 復原</button>
@@ -1537,11 +1794,14 @@ let productSepIdx = 13;
 
 // 是否顯示左側「產業矩陣」欄標籤文字（預設隱藏，僅顯示策略矩陣）
 let showIndustryLabels = false;
+// ST-35i：矩陣欄頭（畫面＋PPTX）是否在欄名前加價值單元的 icon；由操作列「欄頭 icon」勾選切換，存檔；舊存檔沒有 → true
+let showUnitIcons = true;
 
 // ── Value Chain ───────────────────────────────────────────────────────────
 // 價值鏈資料（ST-01a）：矩陣欄位由價值鏈「展開到策略矩陣」產生（ST-01d），展開前矩陣維持原本欄位
 // 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
 //       unit 可選 unitRole: 'semi'|'lead'|'influencer'（ST-14i 特殊價值單元；沒有此欄位＝一般單元，舊存檔照常載入）
+//       unit 可選 icon: emoji 字串（ST-35i；≤ 4 字、去空白；沒有此欄位＝不畫 icon，舊存檔照常載入）；group 不帶 icon
 // valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg, layout }
 //   layout（ST-35a）：主要活動列的版型 key，見 VC_LAYOUTS；舊存檔沒有 → 'porter'
 const VALUE_CHAIN_VERSION = 1;
@@ -1550,6 +1810,9 @@ const VC_LAYOUTS = [
   { key: 'porter', label: '經典 Porter' },
   { key: 'band',   label: '橫帶式' },
   { key: 'fold',   label: '摺疊式' },  // ST-35c：群組收成一支 chevron，點開以橫帶撐開
+  { key: 'segment', label: '同色分段式' },
+  { key: 'circle', label: '圓形 icon 式' },
+  { key: 'hex',    label: '六角鏈式' },
 ];
 const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
 
@@ -1644,6 +1907,23 @@ function makeDefaultValueChain() {
     layout: 'porter' };
 }
 
+// ST-35i：價值單元 icon 正規化：非字串／空白 → ''；去空白後超過 4 字（以 code point 計）只取前 4 字
+function normVcIcon(v) {
+  if (typeof v !== 'string') return '';
+  const s = v.replace(/\s+/g, '');
+  return s ? [...s].slice(0, 4).join('') : '';
+}
+// ST-35i：欄名 → icon（矩陣欄頭用；欄位與價值單元以名稱對應，同名取第一個有 icon 的）
+function vcIconByName() {
+  const map = new Map();
+  const walk = list => (list || []).forEach(n => {
+    if (n.type === 'group') walk(n.children);
+    else if (n.icon && !map.has(n.name || '（未命名）')) map.set(n.name || '（未命名）', n.icon);
+  });
+  walk(valueChain.support); walk(valueChain.primary); walk(valueChain.products);
+  return map;
+}
+
 // 驗證／正規化存檔中的 valueChain：丟掉壞節點、補預設欄位、id 去重、清掉斷掉的連線；不丟例外
 function normaliseValueChain(raw) {
   const src = (raw && typeof raw === 'object') ? raw : {};
@@ -1668,6 +1948,7 @@ function normaliseValueChain(raw) {
       } else {
         const unit = { id: takeId(n.id), name, type: 'unit', unitKind: n.unitKind === 'asset' ? 'asset' : 'activity' };
         if (vcRoleInfo(n.unitRole)) unit.unitRole = n.unitRole;  // ST-14i：只留合法角色，其他值（含舊存檔沒有）視為一般
+        if (normVcIcon(n.icon)) unit.icon = normVcIcon(n.icon);  // ST-35i：只留非空字串（≤ 4 字），其他值（含舊存檔沒有）不存
         out.push(unit);
       }
     });
@@ -2905,6 +3186,87 @@ const COLOR_PALETTES = [
       '--vc-link': '#A0452E', '--vc-product-border': '#E2CBB0',
     },
   },
+  {
+    // ST-35h：分色模式（perUnit）候選 1 鮮彩六色（SlideEgg Linear 列）；各色已調暗到白字對比 ≥ 4.5
+    name: '分色・鮮彩',
+    perUnit: ['#A9650B', '#D73B24', '#2075CB', '#8E44AD', '#1E864A', '#128091'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#2075CB', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #2075CB, #2075CB)',
+      '--mx-corner-bg': '#3D4654', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#3D4654', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #3D4654, #3D4654)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #2075CB, #2075CB)', '--vc-primary-bg': '#2075CB',
+      '--vc-primary-border': '#2075CB', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #646B76, #646B76)', '--vc-support-bg': '#646B76',
+      '--vc-support-border': '#4F555E', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#E9EBEE', '--mx-support-leaf-text': '#3A414B',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#3D4654', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
+  {
+    // ST-35h：分色模式候選 3 沉穩土色（Download SC Slides）；白字對比 ≥ 4.5
+    name: '分色・沉穩土色',
+    perUnit: ['#2D3E66', '#8B2E3C', '#2A7F8C', '#6C7A33', '#8D721B', '#707580'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#2D3E66', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #2D3E66, #2D3E66)',
+      '--mx-corner-bg': '#3B3A38', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#3B3A38', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #3B3A38, #3B3A38)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #2D3E66, #2D3E66)', '--vc-primary-bg': '#2D3E66',
+      '--vc-primary-border': '#2D3E66', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #6B655D, #6B655D)', '--vc-support-bg': '#6B655D',
+      '--vc-support-border': '#55504A', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#ECEAE7', '--mx-support-leaf-text': '#45413C',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#3B3A38', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
+  {
+    // ST-35h：分色模式候選 4 藍綠紫（Creative chevron）；白字對比 ≥ 4.5
+    name: '分色・藍綠紫',
+    perUnit: ['#387BA2', '#4A813A', '#7A2E8E', '#587F2A', '#2B6CB0'],
+    vars: {
+      '--mx-leaf-bg': '#EEF0F3', '--mx-leaf-text': '#3A414B',
+      '--mx-group-bg': '#387BA2', '--mx-group-text': '#FFFFFF',
+      '--mx-group-grad': 'linear-gradient(90deg, #387BA2, #387BA2)',
+      '--mx-corner-bg': '#38404A', '--mx-corner-text': '#FFFFFF',
+      '--mx-rowlabel-bg': '#38404A', '--mx-rowlabel-text': '#FFFFFF',
+      '--mx-rowlabel-grad': 'linear-gradient(90deg, #38404A, #38404A)',
+      '--mx-product-header-bg': '#C98A8A', '--mx-product-header-text': '#4A2020',
+      '--mx-product-cell-bg': '#F2E0E0', '--mx-product-cell-hover': '#e6caca',
+      '--mx-code-text': '#1a5fa8',
+      // 價值鏈：主要活動逐一取 perUnit 色（applyPerUnitColors），這裡的 primary 只是退路；支援活動＝低彩度灰
+      '--vc-primary-grad': 'linear-gradient(90deg, #387BA2, #387BA2)', '--vc-primary-bg': '#387BA2',
+      '--vc-primary-border': '#387BA2', '--vc-primary-text': '#FFFFFF',
+      '--vc-support-grad': 'linear-gradient(90deg, #626B72, #626B72)', '--vc-support-bg': '#626B72',
+      '--vc-support-border': '#4D545A', '--vc-support-text': '#FFFFFF',
+      '--vc-child-bg': '#EEF0F3', '--vc-child-text': '#3A414B',
+      '--mx-support-leaf-bg': '#E9ECEE', '--mx-support-leaf-text': '#3B4247',
+      '--vc-asset-bg': '#fff8e8', '--vc-asset-border': '#e8c87a', '--vc-asset-text': '#7A5A12',
+      '--vc-asset-tag-bg': '#f3dfa8', '--vc-asset-tag-text': '#7a5200',
+      '--vc-margin-bg': '#38404A', '--vc-margin-text': '#FFFFFF',
+      '--vc-link': '#5a4fcf', '--vc-product-border': '#e6bcbc',
+    },
+  },
 ];
 let colorPaletteIdx = 0; // 預設採用「價值鏈同調（藍橘）」（ST-01o）；由「專案」區的配色下拉選單切換
 
@@ -2916,7 +3278,65 @@ function applyPalette(idx) {
   // ST-12：配色下拉選單跟著顯示目前配色（載入存檔時）；價值鏈連線（SVG 寫死屬性）換色後重畫
   const sel = document.getElementById('paletteSelect');
   if (sel) sel.value = String(idx);
+  applyPerUnitColors();  // ST-35h
   drawVcLinks();
+}
+
+// ── 價值鏈版型下拉同步（ST-35f）：專案區 #vcLayoutSelect 與價值鏈工具列 .vc-layout-select 雙向同步；選項由 VC_LAYOUTS 產生 ──
+function syncVcLayoutSelects() {
+  const cur = vcLayoutKey(valueChain && valueChain.layout);
+  const proj = document.getElementById('vcLayoutSelect');
+  if (proj) {
+    if (proj.options.length !== VC_LAYOUTS.length) {
+      proj.innerHTML = '';
+      VC_LAYOUTS.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.key;
+        opt.textContent = l.label;
+        proj.appendChild(opt);
+      });
+    }
+    proj.value = cur;
+  }
+  document.querySelectorAll('.vc-layout-select').forEach(s => { s.value = cur; });
+}
+
+// ── 分色模式（ST-35h）：COLOR_PALETTES[i].perUnit＝主要活動頂層依序取色的 HEX 陣列；沒有此欄位＝單色模式 ──
+function currentPerUnitColors() {
+  const p = COLOR_PALETTES[colorPaletteIdx];
+  return p && Array.isArray(p.perUnit) && p.perUnit.length ? p.perUnit : null;
+}
+// 矩陣第 ci 欄對應的主要活動頂層序（valueChain.primary 的 index）：有群組看 path[0]、沒群組看欄名；支援活動／產品欄／對不上 → -1
+function vcTopIndexForColumn(ci, paths) {
+  const p = paths[ci];
+  if (ci >= productSepIdx || !Array.isArray(p) || isSupportColumnPath(p)) return -1;
+  const key = p.length ? p[0] : COLUMNS[ci];
+  return valueChain.primary.findIndex(n => (p.length ? n.type === 'group' : n.type !== 'group') && (n.name || '（未命名）') === key);
+}
+// 在價值鏈主要活動頂層節點與矩陣表頭（th[data-vc-top]）寫／清 inline --vc-unit-color；單色模式清乾淨（不留空 style／class）
+function applyPerUnitColors() {
+  const colors = currentPerUnitColors();
+  const setVar = (el, c) => {
+    if (c) { el.style.setProperty('--vc-unit-color', c); return; }
+    el.style.removeProperty('--vc-unit-color');
+    if (el.getAttribute('style') === '') el.removeAttribute('style');
+  };
+  const setCls = (el, cls) => {
+    el.classList.toggle(cls, !!colors);
+    if (el.getAttribute('class') === '') el.removeAttribute('class');
+  };
+  const zones = document.querySelector('#valueChainEditor .vc-zones');
+  if (zones) {
+    setCls(zones, 'vc-per-unit');
+    zones.querySelectorAll('.vc-zone-primary > .vc-zone-body > [data-vc-id]')
+      .forEach((el, i) => setVar(el, colors && colors[i % colors.length]));
+  }
+  const table = document.getElementById('matrixTable');
+  if (table) {
+    setCls(table, 'matrix-per-unit');
+    table.querySelectorAll('thead th[data-vc-top]')
+      .forEach(th => setVar(th, colors && colors[Number(th.dataset.vcTop) % colors.length]));
+  }
 }
 
 // ── 「專案」區「🎨 配色」下拉選單（ST-12／ST-12a）：選項由 COLOR_PALETTES 產生，選了就 applyPalette ──
@@ -2941,6 +3361,12 @@ function syncShortViewControls() {
 function afterShortViewChange() {
   cancelPending();
   syncShortViewControls();
+  rebuildTable();
+  saveState();
+}
+// ST-35i：欄頭 icon 開關（偏好設定，不記復原點）
+function toggleUnitIcons(on) {
+  showUnitIcons = !!on;
   rebuildTable();
   saveState();
 }
@@ -3752,6 +4178,71 @@ function makeVcAction(text, title, onClick, extraClass = '') {
   return a;
 }
 
+// ── ST-35i：價值單元 icon 選單（常用 24 個 emoji＋自由輸入＋清除）──
+const VC_ICON_CHOICES = ['🔬','🧪','🧬','💊','🩺','🏥','⚙️','🏭','✅','📐','📦','🚚',
+                         '🏬','🛒','📣','🤝','💬','💻','📊','💰','👥','🎓','⭐','📚'];
+function closeVcIconPicker() {
+  const pop = document.getElementById('vcIconPicker');
+  if (pop) pop.remove();
+  document.removeEventListener('mousedown', vcIconPickerOutside, true);
+  document.removeEventListener('keydown', vcIconPickerKey, true);
+}
+function vcIconPickerOutside(e) {
+  const pop = document.getElementById('vcIconPicker');
+  if (pop && !pop.contains(e.target)) closeVcIconPicker();
+}
+function vcIconPickerKey(e) { if (e.key === 'Escape') closeVcIconPicker(); }
+function setVcIcon(node, v) {
+  const icon = normVcIcon(v);
+  if (icon) node.icon = icon; else delete node.icon;
+  closeVcIconPicker();
+  commitValueChain();
+  if (showUnitIcons) rebuildTable();  // 矩陣欄頭同步
+}
+function openVcIconPicker(node, anchor) {
+  closeVcIconPicker();
+  const pop = document.createElement('div');
+  pop.id = 'vcIconPicker';
+  pop.className = 'vc-icon-picker';
+  pop.addEventListener('mousedown', e => e.stopPropagation());
+  pop.addEventListener('click', e => e.stopPropagation());
+  const grid = document.createElement('div');
+  grid.className = 'vc-icon-grid';
+  VC_ICON_CHOICES.forEach(ic => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = ic;
+    if (ic === node.icon) b.classList.add('vc-icon-cur');
+    b.addEventListener('click', () => setVcIcon(node, ic));
+    grid.appendChild(b);
+  });
+  pop.appendChild(grid);
+  const row = document.createElement('div');
+  row.className = 'vc-icon-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = '自訂（最多 4 字）';
+  inp.value = node.icon || '';
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); setVcIcon(node, inp.value); } });
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.textContent = '套用';
+  ok.addEventListener('click', () => setVcIcon(node, inp.value));
+  const clr = document.createElement('button');
+  clr.type = 'button';
+  clr.textContent = '清除';
+  clr.addEventListener('click', () => setVcIcon(node, ''));
+  row.append(inp, ok, clr);
+  pop.appendChild(row);
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect();
+  const left = Math.max(8, Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 8));
+  pop.style.left = left + 'px';
+  pop.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  document.addEventListener('mousedown', vcIconPickerOutside, true);
+  document.addEventListener('keydown', vcIconPickerKey, true);
+}
+
 function buildVcNode(node, zone) {
   const isGroup = node.type === 'group';
   const el = document.createElement('div');
@@ -3771,6 +4262,18 @@ function buildVcNode(node, zone) {
   // ── 標題列：名稱 + （單元）活動／資產標記 + ＋同層 / ＋子項 / ✕ ──
   const head = document.createElement('div');
   head.className = 'vc-node-head';
+
+  // ST-35i：價值單元名稱前的 icon 按鈕（有 icon 顯示該 emoji，沒有顯示淡色 ☺）；點開 icon 選單（群組不帶 icon）
+  if (!isGroup) {
+    const iconBtn = document.createElement('button');
+    iconBtn.type = 'button';
+    iconBtn.className = 'vc-icon-btn' + (node.icon ? '' : ' vc-icon-empty');
+    iconBtn.textContent = node.icon || '☺';
+    iconBtn.title = node.icon ? '更換 icon' : '選 icon（矩陣欄頭與 PPTX 會畫在名稱前）';
+    iconBtn.addEventListener('mousedown', e => e.stopPropagation());
+    iconBtn.addEventListener('click', e => { e.stopPropagation(); openVcIconPicker(node, iconBtn); });
+    head.appendChild(iconBtn);
+  }
 
   // 主要活動區（群組標題＋子項）與產品欄（ST-31）名稱用 textarea 讓長名稱自動換行（ST-09）；其他區維持單行 input
   const wrapName = zone === 'primary' || zone === 'products';
@@ -3792,6 +4295,8 @@ function buildVcNode(node, zone) {
     inp.title = node.name;
     sizeVcInput(inp);
     if (el.style.getPropertyValue('--vc-name-len')) el.style.setProperty('--vc-name-len', Math.max(2, [...node.name].length));  // ST-35a 橫帶
+    const initBtn = head.querySelector('.vc-icon-btn[data-initial]');  // ST-35d 圓形：首字跟著改名
+    if (initBtn) initBtn.dataset.initial = [...node.name][0];
     saveState();
   });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
@@ -3842,6 +4347,43 @@ function buildVcNode(node, zone) {
   head.appendChild(makeVcAction('✕', isGroup ? '刪除群組（含其下所有項目）' : '刪除', () =>
     deleteVcNode(node.id), 'vc-act-remove'));
   el.appendChild(head);
+
+  // ST-35b 同色分段式：頂層節點（單元或群組）依序號循環取 4 色；群組內子項沿用群組的色（CSS 繼承 --vc-seg-c）
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'segment') {
+    const top = valueChain.primary.indexOf(node);
+    if (top >= 0) el.style.setProperty('--vc-seg-idx', top % 4);
+  }
+  // ST-35d 圓形 icon 式：葉節點依主要活動的葉節點順序循環取 8 色（群組取其第一個葉節點的色，底板同色相）；
+  // 沒 icon 的單元在圓內顯示名稱首字（data-initial，CSS 顯示；點圓仍開 icon 選單）
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'circle') {
+    let seq = 0, idx = -1;
+    const walk = n => {
+      if (idx >= 0) return;
+      if (n === node && n.type === 'group') { idx = seq; return; }
+      if (n.type === 'group') n.children.forEach(walk);
+      else { if (n === node) idx = seq; seq++; }
+    };
+    valueChain.primary.forEach(walk);
+    if (idx >= 0) el.style.setProperty('--vc-circle-idx', idx % 8);
+    const circleBtn = head.querySelector('.vc-icon-btn');
+    if (circleBtn && !node.icon) circleBtn.dataset.initial = [...(node.name || '?')][0];
+  }
+  // ── ST-35e 六角鏈：頂層序決定色相（--vc-hex-0..6 輪替），群組內葉節點序決定深淺；其他版型不寫 ──
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'hex') {
+    const top = valueChain.primary.findIndex(function has(n) { return n.id === node.id || (n.children && n.children.some(has)); });
+    if (top >= 0) {
+      let j = 0;
+      if (!isGroup && valueChain.primary[top].type === 'group') {
+        let k = 0;
+        const walk = n => { if (n.id === node.id) { j = k; return true; } if (n.type !== 'group') { k++; return false; } return n.children.some(walk); };
+        walk(valueChain.primary[top]);
+      }
+      el.style.setProperty('--vc-hex-idx', top);
+      el.style.setProperty('--vc-hex-j', Math.min(j, 4));
+      el.style.setProperty('--vc-hex', 'var(--vc-hex-' + (top % 7) + ')');
+      el.style.setProperty('--vc-hex-base', (top % 7 === 5 ? 54 : 66) + '%');  // 黃色亮度高，要多混黑才夠白字對比
+    }
+  }
 
   // ── 群組內容區：子節點；拖到空白處＝放到群組最後 ──
   if (isGroup) {
@@ -4066,6 +4608,8 @@ function renderValueChainEditor() {
   const layout = vcLayoutKey(valueChain.layout);
   if (layout !== 'porter') zones.classList.add('vc-layout-' + layout);  // ST-35a：Porter 的 DOM 維持原樣
   if (layout === 'fold') zones.classList.add('vc-layout-band');  // ST-35c：摺疊式沿用橫帶幾何
+  if (layout === 'segment') zones.classList.add('vc-layout-band');  // ST-35b：分段式沿用橫帶式的 chevron 幾何，外觀由 .vc-layout-segment 覆寫
+  if (layout === 'hex') zones.classList.add('vc-layout-band');  // ST-35e：六角鏈沿用橫帶的群組結構，只覆寫葉節點外觀
 
   // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
   const supportLabel = document.createElement('div');
@@ -4102,7 +4646,7 @@ function renderValueChainEditor() {
     bindVcDropArea(body, z.key, () => valueChain[z.key], null);
     zoneEl.appendChild(body);
     // ST-35a 橫帶式：整列第一支 chevron 不切左缺口
-    if (z.key === 'primary' && layout === 'band') {
+    if (z.key === 'primary' && layout !== 'porter') {
       const firstLeaf = body.querySelector('.vc-unit');
       if (firstLeaf) firstLeaf.classList.add('vc-chev-first');
     }
@@ -4251,6 +4795,8 @@ function renderValueChainEditor() {
 
   drawVcLinks();
   renderGuideBar();  // ST-14d
+  applyPerUnitColors();  // ST-35h
+  syncVcLayoutSelects();  // ST-35f
 }
 
 // ── Value chain links：畫方塊間的細箭頭（連線清單資料 → SVG）──────────────
@@ -4259,6 +4805,16 @@ function getVcNodeRect(id) {
   const editor = document.getElementById('valueChainEditor');
   const el = editor.querySelector(`[data-vc-id="${id}"]`);
   return el ? vcOffsetRect(el) : null;
+}
+// ST-35d：連線端點用的矩形。圓形 icon 式下，主要活動的葉單元改用圓（.vc-icon-btn）的矩形，線接到圓外框（圓心對位）；
+// 其他版型與其他區照 getVcNodeRect
+function vcNodeRectForLayout(id) {
+  if (vcLayoutKey(valueChain.layout) === 'circle') {
+    const el = document.getElementById('valueChainEditor').querySelector(`.vc-zone-primary .vc-unit[data-vc-id="${id}"]`);
+    const btn = el && el.querySelector(':scope > .vc-node-head > .vc-icon-btn');
+    if (btn && btn.offsetWidth) return vcOffsetRect(btn);
+  }
+  return getVcNodeRect(id);
 }
 // 任一元素相對於 #valueChainEditor 的矩形（ST-23b：也拿來量 Margin 箭頭與產品欄）
 function vcOffsetRect(el) {
@@ -4666,7 +5222,7 @@ function drawVcLinks() {
   svg.appendChild(defs);
 
   const editor = document.getElementById('valueChainEditor');
-  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => getVcNodeRect(el.getAttribute('data-vc-id'))).filter(r => r && (r.w || r.h));  // ST-35c：收合（量不到）的不當障礙
+  const rects = Array.from(editor.querySelectorAll('[data-vc-id]')).map(el => vcNodeRectForLayout(el.getAttribute('data-vc-id'))).filter(r => r && (r.w || r.h));  // ST-35c：收合（量不到）的不當障礙
   const rowUse = {};
   // 用同一份 rect 物件比對「其他方塊」：把算出的矩形換成 rects 裡座標相同的那個
   const same = r => rects.find(o => o.x === r.x && o.y === r.y && o.w === r.w && o.h === r.h) || r;
@@ -4684,8 +5240,9 @@ function drawVcLinks() {
   // ST-23c：活動之間的線不把產品直欄當障礙（產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線）；與 PPTX 一致
   const actRects = product && !product.horizontal ? rects.filter(o => !product.rects.has(o)) : rects;
   valueChain.links.forEach(link => {
-    const r1 = vcFoldEndRect(link.from);  // ST-35c：收合群組內的端點改接該群組
-    const r2 = vcFoldEndRect(link.to);
+    const vcEnd = id => vcLayoutKey(valueChain.layout) === 'fold' ? vcFoldEndRect(id) : vcNodeRectForLayout(id);  // ST-35c 收合群組內端點接該群組／ST-35d circle 接圓
+    const r1 = vcEnd(link.from);
+    const r2 = vcEnd(link.to);
     if (!r1 || !r2) return;
     const a = same(r1), b = same(r2);
     if (a === b) return;  // ST-35c：同一個收合群組內部的連線不畫
@@ -4915,7 +5472,10 @@ function buildTable() {
     if (ci === productSepIdx) { th.classList.add('product-separator'); th.style.borderLeft = '3px solid #000000'; }
     if (ci >= productSepIdx) th.classList.add('product-col-header');
     else if (isSupportColumnPath(paths[ci])) th.classList.add('support-col-header'); // ST-12a：支援活動欄用支援色
+    const top = vcTopIndexForColumn(ci, paths);  // ST-35h：分色模式用（顏色由 applyPerUnitColors 寫）
+    if (top >= 0) th.dataset.vcTop = String(top);
   };
+  const iconByName = vcIconByName();  // ST-35i
   // 左上角 corner 儲存格（淺青綠底，配合 Y 軸列標籤）
   const cornerL = document.createElement('th');
   cornerL.className = 'col-header-corner';
@@ -4945,6 +5505,12 @@ function buildTable() {
           const th = document.createElement('th');
           th.className = level === 0 ? 'col-header' : 'col-header-leaf';
           th.textContent = COLUMNS[ci];
+          if (showUnitIcons && iconByName.has(COLUMNS[ci])) {  // ST-35i：欄名前加 icon
+            const ic = document.createElement('span');
+            ic.className = 'col-icon';
+            ic.textContent = iconByName.get(COLUMNS[ci]);
+            th.prepend(ic);
+          }
           const role = getColumnRole(ci);  // ST-14i：特殊價值單元在欄名後加小標記
           if (role) {
             const tag = document.createElement('span');
@@ -5033,6 +5599,7 @@ function buildTable() {
   renderCellNoteMarks();
   renderCellPanel();
   renderGuideBar();  // ST-14d
+  applyPerUnitColors();  // ST-35h：表頭分色
 }
 
 // ── Cell Click — free arrow drawing ───────────────────────────────────────
@@ -7405,7 +7972,18 @@ function pptxPalette() {
     vcMarginBg:   pptxHex(vars['--vc-margin-bg'], '2E8B3D'),
     vcMarginText: pptxHex(vars['--vc-margin-text'], 'FFFFFF'),
     vcLink:       pptxHex(vars['--vc-link'], '5A4FCF'),
+    // ST-35h：分色模式色序（HEX 無 #）；單色模式 null
+    perUnit: (() => { const pu = currentPerUnitColors(); return pu ? pu.map(c => pptxHex(c, '1F7AC4')) : null; })(),
   };
+}
+
+// ST-35h：分色模式第 i 個頂層單元的 PPTX 色組 { c 原色, tint 淡版（18% 混白）, ink 深版（70% 混黑） }，同畫面 color-mix；單色模式 null
+function pptxPerUnit(P, i) {
+  if (!P.perUnit || i < 0) return null;
+  const c = P.perUnit[i % P.perUnit.length];
+  const mix = (w, pct) => [0, 2, 4].map(k => Math.round(parseInt(c.slice(k, k + 2), 16) * pct + parseInt(w.slice(k, k + 2), 16) * (1 - pct))
+    .toString(16).padStart(2, '0')).join('').toUpperCase();
+  return { c, tint: mix('FFFFFF', 0.18), ink: mix('000000', 0.7) };
 }
 
 // 競爭者色 → 淡化後的 HEX（同 colorToLight 的混白比例，只是輸出格式不同）
@@ -7488,6 +8066,7 @@ function buildMatrixTableXml(L, shapeId) {
 
   // 先把每個表頭格算進 (level, k) 網格（k＝第幾個可見欄，ST-03），再逐列輸出，避免延續格漏掉
   const grid = Array.from({ length: depth + 1 }, () => new Array(nCols).fill(null));
+  const iconByName = vcIconByName();  // ST-35i
   for (let level = 0; level <= depth; level++) {
     let k = 0;
     while (k < nCols) {
@@ -7503,7 +8082,8 @@ function buildMatrixTableXml(L, shapeId) {
         if (p.length === level) {
           const rs = depth + 1 - level;
           const role = getColumnRole(ci);  // ST-14i：特殊價值單元標記，同畫面表頭
-          grid[level][k] = { text: COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
+          const icon = showUnitIcons ? iconByName.get(COLUMNS[ci]) : '';  // ST-35i：有 icon 才前置
+          grid[level][k] = { text: (icon ? icon + ' ' : '') + COLUMNS[ci] + (role ? `〔${role.label}〕` : ''), rowSpan: rs, isLeaf: true, ci };
           for (let l = level + 1; l <= depth; l++) grid[l][k] = { vMerge: true, ci };
         }
         k++;
@@ -7524,10 +8104,13 @@ function buildMatrixTableXml(L, shapeId) {
       const isProd = ci >= productSepIdx;
       const isSup  = !isProd && isSupportColumnPath(paths[ci]); // ST-12a：支援活動欄用支援色
       const isGrp  = !!(g && g.isGroup);
+      // ST-35h：分色模式下主要活動欄依頂層單元取色（群組表頭／無群組欄＝原色白字、細項＝淡版深字）
+      const U = P.perUnit && !isProd && !isSup ? pptxPerUnit(P, vcTopIndexForColumn(ci, paths)) : null;
+      const uFull = isGrp || paths[ci].length === 0;
       const base = {
         thickLeft: ci === productSepIdx,
-        fill:  isProd ? P.prodHeadBg   : isSup ? (isGrp ? P.vcSupportBg   : P.supportLeafBg)   : (isGrp ? P.groupBg   : P.leafBg),
-        color: isProd ? P.prodHeadText : isSup ? (isGrp ? P.vcSupportText : P.supportLeafText) : (isGrp ? P.groupText : P.leafText),
+        fill:  U ? (uFull ? U.c : U.tint) : isProd ? P.prodHeadBg   : isSup ? (isGrp ? P.vcSupportBg   : P.supportLeafBg)   : (isGrp ? P.groupBg   : P.leafBg),
+        color: U ? (uFull ? P.vcPrimaryText : U.ink) : isProd ? P.prodHeadText : isSup ? (isGrp ? P.vcSupportText : P.supportLeafText) : (isGrp ? P.groupText : P.leafText),
         bold: true,
         sz: 1000,
       };
@@ -7718,13 +8301,13 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
           <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
         </p:spPr>
         <p:txBody><a:bodyPr${vert ? ` vert="${vert}"` : ''} anchor="ctr" wrap="square" lIns="45720" rIns="${prst === 'homePlate' ? 160000 : 45720}" tIns="${ins}" bIns="${ins}"><a:normAutofit/></a:bodyPr><a:lstStyle/>
-          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(name.name || '（未命名）')}</a:t></a:r></a:p>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${sz}" b="${bold ? 1 : 0}" dirty="0"><a:solidFill><a:srgbClr val="${textColor}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml((name.icon ? name.icon + ' ' : '') + (name.name || '（未命名）'))}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
   };
 
   // ST-20：子群組框（第二層群組）：淡底、細框、標題靠上；同樣登記 rectById
-  const frame = (node, x, y, w, h, titleH) => {
+  const frame = (node, x, y, w, h, titleH, U = null) => {  // U：ST-35h 分色色組（null＝單色，輸出不變）
     rectById[node.id] = { x, y, w, h };
     return `
       <p:sp>
@@ -7732,11 +8315,11 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
         <p:spPr>
           <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
           <a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 8000"/></a:avLst></a:prstGeom>
-          <a:solidFill><a:srgbClr val="${P.vcChildBg}"/></a:solidFill>
-          <a:ln w="9525"><a:solidFill><a:srgbClr val="${P.vcPrimaryBg}"/></a:solidFill></a:ln>
+          <a:solidFill><a:srgbClr val="${U ? U.tint : P.vcChildBg}"/></a:solidFill>
+          <a:ln w="9525"><a:solidFill><a:srgbClr val="${U ? U.c : P.vcPrimaryBg}"/></a:solidFill></a:ln>
         </p:spPr>
         <p:txBody><a:bodyPr anchor="t" wrap="square" lIns="36000" rIns="36000" tIns="${Math.max(0, Math.round((titleH - deepSz / 100 * 12700 * 1.2) / 2))}" bIns="0"/><a:lstStyle/>
-          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${deepSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${P.vcChildText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(node.name || '（未命名）')}</a:t></a:r></a:p>
+          <a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="${deepSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${U ? U.ink : P.vcChildText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>${escXml(node.name || '（未命名）')}</a:t></a:r></a:p>
         </p:txBody>
       </p:sp>`;
   };
@@ -7777,6 +8360,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   let primaryBottom = primaryTop;
   primary.forEach((n, i) => {
     const x = contentX + (colW + gap) * i;
+    const U = pptxPerUnit(P, i);  // ST-35h：分色模式（群組＝淡版底深字、子項／頂層單元＝原色白字）；單色 null
     if (n.type === 'group') {
       const kids   = vcKids(n);
       // ST-20：子項若是有子項的群組 → 畫成框，框內放攤平後的孫項；沒有孫項的維持原樣（兩層以內座標不變）
@@ -7784,31 +8368,31 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
       const subTitleH = dd.subT, grandH = dd.grand;
       const kidH = k => deepKidH(k, dd);
       const groupH = pad * 2 + unitH + kids.reduce((s, k) => s + kidH(k) + pad, 0);
-      xml += box(n, x, primaryTop, colW, groupH, boxPrst, P.vcPrimaryBg, P.vcPrimaryText, true, 1000);
+      xml += box(n, x, primaryTop, colW, groupH, boxPrst, U ? U.tint : P.vcPrimaryBg, U ? U.ink : P.vcPrimaryText, true, 1000);
       primaryBottom = Math.max(primaryBottom, primaryTop + groupH);
       let ky = primaryTop + pad + unitH;
       const kW = colW - pad * 2 - (arrowBg ? in2emu(0.14) : 0);
       kids.forEach(k => {
         if (k.type === 'group' && vcKids(k).length) {
           const fh = kidH(k);
-          xml += frame(k, x + pad, ky, kW, fh, subTitleH);
+          xml += frame(k, x + pad, ky, kW, fh, subTitleH, U);
           let gy = ky + subTitleH;
           vcDesc(k).forEach(g => {
             const gAsset = g.unitKind === 'asset';
             xml += box(g, x + pad * 2, gy, kW - pad * 2, grandH, 'roundRect',
-              gAsset ? P.vcAssetBg : 'FFFFFF', gAsset ? P.vcAssetText : P.vcChildText, false, deepSz, deepIns);
+              gAsset ? P.vcAssetBg : U ? U.c : 'FFFFFF', gAsset ? P.vcAssetText : U ? P.vcPrimaryText : P.vcChildText, false, deepSz, deepIns);
             gy += grandH + pad;
           });
           ky += fh + pad;
           return;
         }
-        const kFill = k.unitKind === 'asset' ? P.vcAssetBg : P.vcChildBg;
-        const kTxt  = k.unitKind === 'asset' ? P.vcAssetText : P.vcChildText;
+        const kFill = k.unitKind === 'asset' ? P.vcAssetBg : U ? U.c : P.vcChildBg;
+        const kTxt  = k.unitKind === 'asset' ? P.vcAssetText : U ? P.vcPrimaryText : P.vcChildText;
         xml += box(k, x + pad, ky, kW, childH, 'roundRect', kFill, kTxt, false, 900);
         ky += childH + pad;
       });
     } else {
-      const fill = n.unitKind === 'asset' ? P.vcAssetBg : P.vcPrimaryBg;
+      const fill = n.unitKind === 'asset' ? P.vcAssetBg : U ? U.c : P.vcPrimaryBg;
       const txt  = n.unitKind === 'asset' ? P.vcAssetText : P.vcPrimaryText;
       xml += box(n, x, primaryTop, colW, unitH, boxPrst, fill, txt, true, 1000);
       primaryBottom = Math.max(primaryBottom, primaryTop + unitH);
@@ -8680,6 +9264,7 @@ function saveState() {
       productSepIdx,
       showIndustryLabels,
       colorPaletteIdx,
+      showUnitIcons,                                      // ST-35i
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     renderGuideBar();  // ST-14d：任何存檔點都順便刷新完成度
@@ -8748,6 +9333,7 @@ function loadState() {
     if (typeof state.productSepIdx === 'number') productSepIdx = state.productSepIdx;
     if (typeof state.showIndustryLabels === 'boolean') showIndustryLabels = state.showIndustryLabels;
     if (typeof state.colorPaletteIdx === 'number' && COLOR_PALETTES[state.colorPaletteIdx]) colorPaletteIdx = state.colorPaletteIdx;
+    showUnitIcons = state.showUnitIcons !== false;  // ST-35i：舊存檔沒有 → true
     // 價值鏈：有存就正規化；舊存檔沒有 → 由欄位群組轉換（不自動補「品牌／商譽」）
     try {
       if (state.valueChain && typeof state.valueChain === 'object') {
@@ -8967,8 +9553,10 @@ loadState();
 buildPaletteSelect();
 buildExampleSelect();
 applyPalette(colorPaletteIdx);
+syncVcLayoutSelects();  // ST-35f
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 syncShortViewControls();
+document.getElementById('unitIconChk').checked = showUnitIcons;  // ST-35i
 normaliseCompetitorKinds();  // ST-14h：預設構想（沒有存檔時）也補 kind
 syncMatrixViewControls();
 syncCompKindSelect();
