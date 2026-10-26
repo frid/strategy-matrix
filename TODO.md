@@ -5,10 +5,10 @@
 
 # 新增功能
 
-- [ ] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md
+- [~] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md
   - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
   - 第 1 階段：文案
-  - [ ] ST-21a 教材說明卡文案常數 `GUIDE_CONTENT`：六步各含「目的／課本怎麼說（短引文）／在這裡做什麼／完成檢查點／延伸頁碼／手冊錨點」；由 subagent 讀掃描 PDF 指定頁，定稿同步補進摘要檔第三節 [S 270–281、285–286、343–346、369–379]
+  - [x] ST-21a 教材說明卡文案常數 `GUIDE_CONTENT`：六步各含「目的／課本怎麼說（短引文）／在這裡做什麼／完成檢查點／延伸頁碼／手冊錨點」；由 subagent 讀掃描 PDF 指定頁，定稿同步補進摘要檔第三節 [S 270–281、285–286、343–346、369–379]（完成 2026-10-26：index.html 純新增常數 129 行，key 同 GUIDE_STEPS（chain／cells／ideas／premise／action／control）、每步 purpose／quote[{text,page}]／todo／checks／pages／manual；11 則引文各 ≤40 字；定稿見 doc/reference/策略管理新論-分步引導版面.md 第三節）
   - 第 2 階段：版面
   - [ ] ST-21b tab 骨架：`#guideBar` 改為六格 tab 列（各步完成度條＋整體 %）；各區塊標 `data-step` 歸入 tab 容器；矩陣於 ②–⑥ 常駐、① 隱藏；切 tab 自動切換描述／繪製／檢視模式並重畫 SVG；`guideGoto()` 改為切 tab；支援 URL hash `#step-N`；窄螢幕 3×2
   - [ ] ST-21c 教材說明卡元件：每 tab 第一塊用 `GUIDE_CONTENT` 渲染（左：目的＋引文＋延伸頁碼；右：做什麼＋檢查點），可收合並記住（沿用 `guideOpen`）；底部「📖 手冊」錨點連結與上一步／下一步按鈕；依賴 ST-21a、ST-21b
