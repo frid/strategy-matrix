@@ -129,10 +129,10 @@ th{font-size:.75rem;letter-spacing:.08em;color:var(--mute);font-weight:500}
 
 <section>
   <h2>配色與 icon 參考</h2>
-  <div class="fig"><svg id="figP" viewBox="0 0 900 210"></svg></div>
+  <div class="fig"><svg id="figP" viewBox="0 0 900 400"></svg></div>
   <div class="notes">
     <div><b>SlideEgg 三套範本的共通手法</b><ul><li>主要活動「一活動一色相」，五到六個高彩度色輪均分（藍、青、紫、橘、紅、黃），支援活動則用低彩度或白底，讓視線先落在主要活動。</li><li>icon 一律線條單色白色、放在實色圓裡；文字在 icon 下方或右方，不壓在色塊上。</li><li>Margin 用黑或深灰，與彩色活動形成對比。</li></ul></div>
-    <div><b>套到本工具的建議</b><ul><li>現行 <code>COLOR_PALETTES</code> 是「整條價值鏈一色系」；可新增一套「彩虹分色」配色，每個主要活動依序取色，矩陣欄頭同色，PPTX 跟著走。</li><li>icon 不做圖庫，讓每個價值單元可選一個 emoji（存在 unit 新欄位 <code>icon</code>，舊檔無此欄位即不畫）；PPTX 直接輸出 emoji 文字。</li><li>群組底色固定用該群組第一個子單元色相的 15% 透明版，避免再多一套顏色。</li></ul></div>
+    <div><b>套到本工具的建議</b><ul><li>現行 <code>COLOR_PALETTES</code> 是「整條價值鏈一色系」；新增「彩虹分色」模式，每個主要活動依序取色，矩陣欄頭同色，PPTX 跟著走。色序候選 1～5 取自 SlideEgg 範本列表（見下圖），實作時以對比度檢查後微調。</li><li>icon 不做圖庫，讓每個價值單元可選一個 emoji（存在 unit 新欄位 <code>icon</code>，舊檔無此欄位即不畫）；PPTX 直接輸出 emoji 文字。</li><li>群組底色固定用該群組第一個子單元色相的 15% 透明版，避免再多一套顏色。</li></ul></div>
   </div>
 </section>
 
@@ -411,13 +411,18 @@ const N=14; // 缺口深度
     {name:'SlideEgg Linear（六角鏈）',cols:['#d64a4a','#e3832c','#e0b531','#4a9d5c','#2aa7b8']},
     {name:'SlideEgg Industry（支援列）',cols:['#7b5cc4','#d64a4a','#e3832c','#2aa7b8','#3b6fb6']},
     {name:'本工具現行預設（價值鏈同調）',cols:[css('--pri'),css('--pri2'),css('--pri3'),css('--sup'),css('--sup2')]},
+    {name:'候選 1 鮮彩六色（Linear 列）',cols:['#F2A33A','#E05A47','#2E86DE','#8E44AD','#27AE60','#17A2B8']},
+    {name:'候選 2 粉彩膠囊（Download Our SCM）',cols:['#8E6BBE','#E4705A','#4BB3A6','#F2A541','#5B8DEF']},
+    {name:'候選 3 沉穩土色（Download SC Slides）',cols:['#2D3E66','#8B2E3C','#2A7F8C','#7A8A3A','#C9A227','#8A8F99']},
+    {name:'候選 4 藍綠紫（Creative chevron）',cols:['#3A7FA8','#5FA64B','#7A2E8E','#8BC34A','#2B6CB0']},
+    {name:'候選 5 深底霓虹（dark 版）',cols:['#1E2235','#4F7BEA','#9B5DE5','#F15BB5','#00BB9F','#FEE440']},
   ];
   rows.forEach((r,i)=>{ const y=16+i*40; text(svg,20,y+12,r.name,{size:12,anchor:'start'}); r.cols.forEach((c,j)=>svg.appendChild(el('rect',{x:250+j*44,y,width:40,height:24,rx:4,fill:c}))); });
   // icon 樣式三種
-  const ix=520, iy=16;
+  const ix=560, iy=16;
   text(svg,ix,iy+12,'icon 放法',{size:12,anchor:'start'});
   const demo=[['實色圓＋白 icon','#3b6fb6','#fff'],['淡底圓＋彩 icon','#dce7f5','#3b6fb6'],['無圓，icon 在名稱前','none','#3b6fb6']];
   demo.forEach((d,i)=>{ const y=iy+40+i*40; if(d[1]!=='none') svg.appendChild(el('circle',{cx:ix+16,cy:y+12,r:14,fill:d[1]})); text(svg,ix+16,y+13,'⚙',{size:14,fill:d[2]}); text(svg,ix+40,y+12,d[0],{size:12,anchor:'start'}); });
-  text(svg,20,196,'色票取自縮圖目視近似值，非官方色碼。',{size:10,fill:css('--mute'),weight:400,anchor:'start'});
+  text(svg,20,386,'色票取自縮圖目視近似值，非官方色碼；候選 1～5 取自 SlideEgg 供應鏈範本列表截圖（doc/reference/slideegg-supply-chain-templates-20261026.png）。',{size:10,fill:css('--mute'),weight:400,anchor:'start'});
 })();
 </script>

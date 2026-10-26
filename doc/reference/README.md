@@ -62,4 +62,5 @@
 | 來源 | 內容 | 本機摘要 |
 |---|---|---|
 | SlideEgg「Value Chain」範本頁 https://www.slideegg.com/value-chain | 主範本：支援活動白底膠囊列、主要活動彩色圓形 icon、右側黑色大 chevron 當 Margin；相關範本 Linear Value Chain（彩虹六角鏈）、Industry Value Chain（Porter 彩色橫條、環狀分段、花瓣式） | `價值鏈-版型與群組畫法範例.html`（F／G／H 與「配色與 icon 參考」一節；色票為縮圖目視近似值） |
+| SlideEgg 供應鏈範本列表截圖 `slideegg-supply-chain-templates-20261026.png`（使用者 2026-10-26 提供） | 24 套範本縮圖：六角鏈、膠囊、圓形 icon、chevron、深底霓虹等配色 | 範例頁「配色與 icon 參考」候選 1～5 色票（目視近似值），ST-35h 的取色依據 |
 | 其他網搜（Edraw、Visual Paradigm、Creately、Infodiagram、Miro） | Chevron 箭頭、直式、環狀、清單、金字塔、泳道、桑基七種排版 | 同上（A～E 為 Chevron 群組畫法）；結論：主版型以 B 橫帶式為優先 |

@@ -13,17 +13,19 @@
   - [x] ST-34a 文字層（不碰存檔與 PPTX）：③ 要點改「策略點之間」；「新增策略名稱／清除目前策略／最多 8 個策略」改「策略構想」；「主活動」→「主要活動」；h2「策略矩陣展開」→「策略矩陣」、h2「價值鏈」→「經營流程（價值鏈）」；統一「投入欄（價值單元）／產出欄（產品）」；「單元」補「價值單元」；列頭 tooltip 加六大構面全名＋頁碼；支援／主要活動、Margin、產業矩陣、短版加出處 tooltip；因果認知前提 desc 補 [S 378]；manual／README 同步（對照表 #5–7、11–12、14、16–18、21–23、26；完成 2026-10-26：文字層對齊課本：③ 要點改策略點之間、策略構想用語統一、h2 改名、投入欄（價值單元）／產出欄（產品）、價值單元補全、列頭與 Porter／講義出處 tooltip；不碰 PPTX 與存檔常數；自測 tools/selftest/ST-34a.mjs）
   - [ ] ST-34b 【尚未做】會改 PPTX 文字（需更新 regression 基準並記 decisions）：`cellDefaultText` 誤用 leftLabel（「製造的關聯(A07)」）改 rightLabel／貢獻／優勢；B 列全名「目標市場之區隔方式與選擇」（先對原書 S 276–281）；要素 1-4 name 改「保證」；「策略前提控制表」與 PPTX 頁名統一；角色「主導」→「主導權責」；「KSF's」→「KSF」；選做：「未來方向」→「新策略方向」、「自製」→「自行負責」、「須轉移」→「轉移陣地」（#2–4、8、10、19、30、32–33）
   - [ ] ST-34c 【尚未做】需舊檔遷移：`ADV_BASES` 改書上名稱與順序並加舊值對照（#31）；`SUPPORT_COLUMN_GROUP`「支援活動」建議不改常數只加註（#13）
-- [ ] ST-35 價值鏈版型可切換：Chevron 群組畫法 B 橫帶／C 同色分段／E 摺疊三選一，候選再加 SlideEgg 式 F／G／H（2026-10-26 網搜七種排版＋ SlideEgg 三套範本後規劃；示範與取捨對照見 doc/reference/價值鏈-版型與群組畫法範例.html，來源登記在 doc/reference/README.md「網路版型參考」）
+- [ ] ST-35 價值鏈版型可切換：Chevron 群組畫法 B 橫帶／C 同色分段／E 摺疊＋ SlideEgg 式 F 圓形 icon／G 六角鏈，五選一；另做彩虹分色配色與價值單元 icon（2026-10-26 網搜七種排版＋ SlideEgg 三套範本後規劃；示範與取捨對照見 doc/reference/價值鏈-版型與群組畫法範例.html，來源登記在 doc/reference/README.md「網路版型參考」）
   - 已定：支援活動橫條、Margin 箭頭、最右產品欄（ST-31）不動，只換主要活動列；預設 B；PPTX 只輸出 B／C（E 收合態不輸出）；版型存專案存檔新欄位 `vcLayout`，舊存檔沒有時視為 B；「經典 Porter」保留為可回退選項
-  - **待使用者挑選**：F 圓形 icon 節點、G 六角鏈、H 環狀分段要不要納入（H 與矩陣欄不對位，建議只當 PPTX 總覽頁）；配色／icon（ST-35g、h）要不要做
+  - 已定（2026-10-26 使用者）：F、G 納入，H 環狀不做（與矩陣欄不對位）；ST-35g、h 都做；配色除彩虹分色外，再從 SlideEgg 範本列表截圖挑色（doc/reference/slideegg-supply-chain-templates-20261026.png，候選 1～5 色票見範例頁「配色與 icon 參考」）
   - [ ] ST-35a 橫帶式（B）：葉節點等寬一排 chevron（CSS clip-path），群組名掛上方橫帶跨其子單元，巢狀疊帶；與矩陣「群組表頭＋細項表頭」一對一；改名、拖曳、群組化、活動／資產切換、連線端點全部保留；≤800px 回現行直排
   - [ ] ST-35b 同色分段式（C）：同群組同色相、子單元間細縫、群組間完整缺口；群組名小字寫在該段底部；4 色循環並在 `COLOR_PALETTES` 各配色下可讀；依賴 ST-35a
   - [ ] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a
-  - [ ] ST-35d 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–c
-  - [ ] ST-35e PPTX 價值鏈頁：`buildValueChainShapesXml` 依 `vcLayout` 畫 B（矩形橫帶＋chevron）或 C（同色長箭頭＋白縫）；E 與 Porter 走原邏輯；更新 regression slide1 基準並記 decisions；依賴 ST-35d
-  - [ ] ST-35f 手冊／README 補各版型截圖與切換說明；自測 tools/selftest/ST-35.mjs（各版型截圖、切換後 drawLines 連線端點仍對齊）；依賴 ST-35e
-  - [ ] ST-35g（待挑選）「彩虹分色」配色：新增一套 `COLOR_PALETTES`，主要活動一活動一色相、矩陣欄頭同色、支援活動低彩度；PPTX 跟著走
-  - [ ] ST-35h（待挑選）價值單元 icon：unit 新欄位 `icon`（emoji），畫在方塊左側或 F 版的圓內；舊檔無此欄位不畫；PPTX 輸出 emoji 文字
+  - [ ] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i
+  - [ ] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a
+  - [ ] ST-35f 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／F／G／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–e
+  - [ ] ST-35g PPTX 價值鏈頁：`buildValueChainShapesXml` 依 `vcLayout` 畫 B（矩形橫帶＋chevron）、C（同色長箭頭＋白縫）、F（ellipse＋文字）、G（hexagon）；E 走 B、Porter 走原邏輯；更新 regression slide1 基準並記 decisions；依賴 ST-35f
+  - [ ] ST-35h 彩虹分色配色：`COLOR_PALETTES` 新增「分色模式」欄位（`perUnit: [...]` 色序），主要活動依序取色、矩陣欄頭同色、支援活動低彩度、群組底色取第一個子單元色的淡版；至少加候選 1 鮮彩六色、3 沉穩土色、4 藍綠紫三套（色票見範例頁，實作時以白字對比度 ≥ 4.5 微調）；PPTX 跟著走；依賴 ST-35a
+  - [ ] ST-35i 價值單元 icon：unit 新欄位 `icon`（emoji 字串），價值鏈編輯器名稱旁加「選 icon」小按鈕（常用 24 個＋自由輸入）；B／C／E／G 畫在方塊左側、F 畫在圓內；矩陣欄頭可選顯示；舊檔無此欄位不畫；PPTX 輸出 emoji 文字；`normaliseValueChain` 只留字串
+  - [ ] ST-35j 手冊／README 補五種版型與分色配色截圖、icon 選法；自測 tools/selftest/ST-35.mjs（五版型各截圖、切換後 drawLines 連線端點仍對齊、三套分色配色下白字可讀）；依賴 ST-35g–i
 
 
 # Bug
