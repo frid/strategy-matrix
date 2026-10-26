@@ -19,7 +19,7 @@
   - [x] ST-35a 橫帶式（B）：葉節點等寬一排 chevron（CSS clip-path），群組名掛上方橫帶跨其子單元，巢狀疊帶；與矩陣「群組表頭＋細項表頭」一對一；改名、拖曳、群組化、活動／資產切換、連線端點全部保留；≤800px 回現行直排（完成 2026-10-26：`valueChain.layout`＝porter|band，舊檔預設 porter；工具列加版型下拉；群組橫帶依名稱長度撐寬、hover 動作鈕換行；自測 tools/selftest/ST-35a.mjs）
   - [x] ST-35b 同色分段式（C）：同群組同色相、子單元間細縫、群組間完整缺口；群組名小字寫在該段底部；4 色循環並在 `COLOR_PALETTES` 各配色下可讀；依賴 ST-35a（完成 2026-10-26：layout=segment 沿用 band 幾何、四色 #3b6fb6/#2a7f73/#b5532f/#6b7a2c 白字對比 ≥4.5、chevron 頂線對齊、群組名小字在底；自測 tools/selftest/ST-35b.mjs）
   - [ ] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a
-  - [ ] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i
+  - [x] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i（完成 2026-10-27：layout=circle，葉節點依序 8 色、無 icon 顯示首字、群組虛線底板取首葉色、分色配色在 circle 下不生效；vcNodeRectForLayout 讓連線接圓；自測 tools/selftest/ST-35d.mjs）
   - [x] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a（完成 2026-10-27：layout=hex 沿用 band 橫帶結構，六角 clip-path Q=18px、相鄰 −16px 咬合、七色相依頂層序、群組內往黑混深淺；clip-path 下無法白描邊；自測 tools/selftest/ST-35e.mjs）
   - [ ] ST-35f 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／F／G／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–e
   - [ ] ST-35g PPTX 價值鏈頁：`buildValueChainShapesXml` 依 `vcLayout` 畫 B（矩形橫帶＋chevron）、C（同色長箭頭＋白縫）、F（ellipse＋文字）、G（hexagon）；E 走 B、Porter 走原邏輯；更新 regression slide1 基準並記 decisions；依賴 ST-35f

@@ -87,3 +87,6 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [ ] ST-35a 真實滑鼠在 band 版型拖放手感；801–900px 寬 band 是否擁擠
 - [ ] ST-35b segment 下真實拖曳排序、focus 改名字色；六套配色觀感
 - [ ] ST-35i Windows PowerPoint 開 PPTX 看 emoji 是否以 Segoe UI Emoji 正常顯示；band 下 icon 在名稱上方是否可接受
+- [ ] ST-35d circle 版型真實拖曳與連線模式手感；連線壓過圓下名稱是否可接受；手機寬度
+- [ ] ST-35e hex 顏色偏深是否可接受（調亮要連動 --vc-hex-base）
+- [ ] ST-35h 三套分色配色觀感；藍綠紫頂層超過 5 個時第 5、6 相鄰同為藍
