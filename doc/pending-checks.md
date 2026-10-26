@@ -42,3 +42,5 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [ ] ST-21b 在 ④ 的 SWOT 清單實際點「跳到箭頭」，確認切到 ③ 並閃爍
 - [ ] ST-21b 窄螢幕（手機或縮到 700px）看 tab 3×2 與矩陣擠壓
 - [ ] ST-21c 真實瀏覽器點說明卡收合／展開手感；手冊 📖 連結在 GitHub Pages 上能跳到 manual.html 對應錨點
+- [ ] ST-21f 瀏覽器點 manual.html 目錄各章與說明卡「📖 手冊」，確認落在正確章節；手機寬度看目錄排版
+- [ ] ST-21f 人工翻一遍 manual/img 30 張重拍圖是否貼合各章文字（verifier 只抽看 3 張）

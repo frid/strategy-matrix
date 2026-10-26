@@ -32,3 +32,5 @@
 | 2026-10-26 | ST-21b | tab 列不再畫 #guideDetail 要點折疊區；points／tip／guideOpen 保留給 ST-21c 說明卡 | 避免與 21c 打架；21c 上線前畫面暫無要點 | 易 |
 | 2026-10-26 | ST-21b | 窄螢幕斷點統一 800px（原步驟條用 900） | 與價值鏈、專案列一致 | 易 |
 | 2026-10-26 | ST-21b | URL hash 用 history.replaceState，不進瀏覽器歷史 | 全域 history 變數是 undo 堆疊；且避免上一頁在 tab 間跳 | 中 |
+| 2026-10-26 | ST-21f | 手冊舊 26 個章節 id 全保留（14 個降為 h3 id），GUIDE_CONTENT.manual 指到六步 h2 | 外部連結與說明卡錨點不斷 | 易 |
+| 2026-10-26 | ST-21 | 21b 與 21d 合併由同一 worker 實作 | tab 骨架與區塊歸位改同一段 HTML，分開必撞 | — |
