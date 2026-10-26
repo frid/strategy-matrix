@@ -98,29 +98,24 @@
     color: var(--col-header);
     margin-bottom: 10px;
   }
-  /* ── ST-14d：流程導引步驟條 ── */
-  .guide-bar { margin-bottom: 14px; }
-  .guide-steps { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding-bottom: 4px; }
-  .guide-step { flex: 1 1 120px; min-width: 120px; background: white; border: 1px solid var(--grid-line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+  /* ── ST-21b：分步 tab 列（沿用 ST-14d 步驟條的格子樣式）── */
+  .guide-bar { margin-bottom: 14px; scroll-margin-top: 72px; }  /* 72px：讓出 sticky 專案列 */
+  .guide-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .guide-step { min-width: 0; background: white; border: 1px solid var(--grid-line); border-radius: 8px; padding: 8px 10px; cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
   .guide-step:hover { background: var(--cell-hover); }
-  .guide-step.current { border-color: var(--col-header); box-shadow: 0 0 0 2px var(--col-header-light); }
+  .guide-step.current { border-color: var(--col-header); box-shadow: 0 0 0 2px var(--col-header-light); background: var(--col-header-light); }
   .guide-step-head { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; }
   .guide-step-num { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--grid-line); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: 0.78rem; }
   .guide-step.done .guide-step-num { background: var(--col-header); color: white; }
   .guide-step-bar { height: 4px; border-radius: 2px; background: var(--grid-line); overflow: hidden; margin: 6px 0 4px; }
   .guide-step-fill { height: 100%; background: var(--col-header); transition: width 0.2s; }
   .guide-step-label { font-size: 0.7rem; color: var(--ink-light); line-height: 1.3; }
-  .guide-total { flex: 0 0 auto; align-self: center; font-size: 0.82rem; font-weight: 700; color: var(--col-header); white-space: nowrap; padding: 0 6px; }
-  .guide-detail { margin-top: 8px; font-size: 0.8rem; line-height: 1.6; }
-  .guide-detail summary { cursor: pointer; font-weight: 600; }
-  .guide-points { margin: 6px 0 4px 18px; padding: 0; }
-  .guide-tip { color: var(--ink-light); }
-  .guide-go { margin-left: 8px; }
-  @media (max-width: 900px) {
-    .guide-steps { flex-wrap: wrap; overflow-x: visible; }
-    .guide-step { flex: 1 1 30%; min-width: 0; }
-    .guide-total { flex-basis: 100%; text-align: right; }
+  .guide-total { margin-top: 6px; text-align: right; font-size: 0.82rem; font-weight: 700; color: var(--col-header); }
+  @media (max-width: 800px) {
+    .guide-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }  /* 窄螢幕 3×2 */
   }
+  /* tab 內容：.step-pane 用 data-step（單一步）或 data-steps（空白分隔多步），只有 .active 顯示 */
+  .step-pane:not(.active) { display: none; }
 
   .section-title {
     font-size: 1.1rem;
@@ -811,7 +806,6 @@
   td.matrix-cell.product-col.used { background: var(--mx-product-cell-bg) !important; }
   td.matrix-cell.product-col:hover { background: var(--mx-product-cell-hover) !important; }
 
-  .instructions { font-size: 0.74rem; color: var(--ink-light); line-height: 1.7; }
 
   /* ── 策略點描述（ST-14a）：格子標記＋矩陣下方點選面板 ── */
   td.matrix-cell.has-note::after {
@@ -1046,20 +1040,6 @@
   </div>
 </div>
 
-<!-- Strategy info -->
-<h2 class="section-title">策略名稱與說明</h2>
-<div class="panel">
-  <div class="strategy-input-area">
-    <div class="strategy-title-row">
-      <label>策略名稱</label>
-      <input type="text" id="strategyTitle" placeholder="例：A 公司工廠外移策略" autocomplete="off" />
-    </div>
-    <div class="strategy-desc-row">
-      <textarea id="strategyDesc" placeholder="例：A 公司為 B 市場(B14)製造 C 產品(A14)。工廠外移(E07)，以降低生產成本(A07)，…" autocomplete="off"></textarea>
-    </div>
-  </div>
-</div>
-
 <!-- 專案（ST-12a）：整體專案相關操作；panel 捲動時固定在頁面頂端 -->
 <h2 class="section-title">專案</h2>
 <div class="panel project-panel">
@@ -1079,8 +1059,25 @@
   </div>
 </div>
 
-<!-- 流程導引步驟條（ST-14d）：六步完成度＋教科書要點 -->
+<!-- 分步 tab 列（ST-21b；取代 ST-14d 步驟條）：六步各自完成度＋整體 % -->
 <div class="panel guide-bar" id="guideBar"></div>
+
+<!-- ① 經營流程（ST-21b／21d）-->
+<section class="step-pane" data-step="chain" id="pane-chain">
+<div class="guide-card" id="guideCard-chain"></div>
+<!-- Strategy info -->
+<h2 class="section-title">策略名稱與說明</h2>
+<div class="panel">
+  <div class="strategy-input-area">
+    <div class="strategy-title-row">
+      <label>策略名稱</label>
+      <input type="text" id="strategyTitle" placeholder="例：A 公司工廠外移策略" autocomplete="off" />
+    </div>
+    <div class="strategy-desc-row">
+      <textarea id="strategyDesc" placeholder="例：A 公司為 B 市場(B14)製造 C 產品(A14)。工廠外移(E07)，以降低生產成本(A07)，…" autocomplete="off"></textarea>
+    </div>
+  </div>
+</div>
 
 <!-- Value chain editor（ST-01b）：支援活動｜主要活動｜產品 -->
 <h2 class="section-title" id="secValueChain">價值鏈</h2>
@@ -1088,21 +1085,41 @@
   <div class="vc-editor" id="valueChainEditor"></div>
 </div>
 
-<!-- Legend + Arrow list (matrix drawing itself moved to bottom of page) -->
-<h2 class="section-title" id="secMatrix">策略矩陣展開</h2>
-<!-- Legend -->
-<div class="panel" style="padding:10px 16px; margin-bottom:12px;">
-  <div class="legend" id="legendContainer"></div>
-</div>
+</section>
 
+<!-- ② 策略點描述（ST-21b／21d）-->
+<section class="step-pane" data-step="cells" id="pane-cells">
+<div class="guide-card" id="guideCard-cells"></div>
+</section>
+
+<!-- ③ 策略構想（ST-21b／21d）-->
+<section class="step-pane" data-step="ideas" id="pane-ideas">
+<div class="guide-card" id="guideCard-ideas"></div>
 <!-- Arrow list -->
 <div class="panel" id="arrowListPanel">
   <div class="panel-title">已繪製的箭頭（點 ✕ 可刪除）</div>
   <!-- ST-14f：策略模組（目前策略構想；把箭頭圈成有名字的一組）-->
   <div class="module-box" id="moduleBox"></div>
   <div class="arrow-list" id="arrowList"></div>
+  <!-- ST-14c：策略句型（依箭頭自動產生） -->
+  <details class="sentence-box" id="sentenceBox" open>
+    <summary>📝 策略句型</summary>
+    <ol class="sentence-list" id="sentenceList"></ol>
+    <div class="sentence-actions">
+      <button type="button" class="btn-ghost" id="sentenceCopyBtn" onclick="copyStrategySentences()">📋 複製</button>
+      <button type="button" class="btn-ghost" onclick="fillStrategySentencesToDesc()">⬇ 填入說明</button>
+    </div>
+  </details>
+</div>
+
+</section>
+
+<!-- ④ 前提驗證（ST-21b／21d）-->
+<section class="step-pane" data-step="premise" id="pane-premise">
+<div class="guide-card" id="guideCard-premise"></div>
+<div class="panel">
   <!-- ST-14g：前提與 SWOT（目前策略構想的箭頭前提，依類型＋成立度歸到 S／W／O／T） -->
-  <details class="sentence-box premise-box" id="premiseBox">
+  <details class="sentence-box premise-box" id="premiseBox" open>
     <summary>🧭 前提與 SWOT（<span id="premiseSwotComp">目前策略構想</span>）</summary>
     <div id="premiseSwotBody"></div>
     <div class="sentence-actions">
@@ -1110,15 +1127,22 @@
     </div>
   </details>
   <!-- ST-14h：對陣點（本公司現行／未來方向 vs 競爭者構想用到同一策略點）＋回應標記 -->
-  <details class="sentence-box premise-box" id="clashBox">
+  <details class="sentence-box premise-box" id="clashBox" open>
     <summary>⚔ 對陣點（本公司 vs 競爭者）</summary>
     <div id="clashBody"></div>
     <div class="sentence-actions">
       <button type="button" class="btn-ghost" id="clashCopyBtn" onclick="copyClashPoints()">📋 複製</button>
     </div>
   </details>
+</div>
+</section>
+
+<!-- ⑤ 行動計畫（ST-21b／21d）-->
+<section class="step-pane" data-step="action" id="pane-action">
+<div class="guide-card" id="guideCard-action"></div>
+<div class="panel">
   <!-- ST-14j：行動計畫（目前策略構想；從箭頭拆出行動項目、負責單元、期程、跨部門協調） -->
-  <details class="sentence-box premise-box" id="actionBox">
+  <details class="sentence-box premise-box" id="actionBox" open>
     <summary>🗂 行動計畫（<span id="actionBoxComp">目前策略構想</span>）</summary>
     <div class="action-toolbar">
       <button type="button" class="btn-ghost" onclick="generateActionsFromArrows()" title="為目前策略構想每條還沒有行動項目的箭頭各建一筆">✨ 從箭頭產生行動項目</button>
@@ -1130,8 +1154,15 @@
       <button type="button" class="btn-ghost" id="actionCopyBtn" onclick="copyActionPlan()">📋 複製</button>
     </div>
   </details>
+</div>
+</section>
+
+<!-- ⑥ 策略控制（ST-21b／21d）-->
+<section class="step-pane" data-step="control" id="pane-control">
+<div class="guide-card" id="guideCard-control"></div>
+<div class="panel">
   <!-- ST-14k：策略前提控制表（關鍵前提 → 觀察指標、燈號、下次檢視日） -->
-  <details class="sentence-box premise-box" id="controlBox">
+  <details class="sentence-box premise-box" id="controlBox" open>
     <summary>🚦 策略前提控制表（<span id="controlBoxComp">目前策略構想</span>）</summary>
     <div class="action-toolbar">
       <label><input type="checkbox" id="ctlOnlyKeyChk" onchange="toggleCtlOnlyKey(this.checked)"> 只顯示關鍵前提</label>
@@ -1142,16 +1173,8 @@
       <button type="button" class="btn-ghost" onclick="exportControlCsv()">⬇ 匯出 CSV</button>
     </div>
   </details>
-  <!-- ST-14c：策略句型（依箭頭自動產生） -->
-  <details class="sentence-box" id="sentenceBox">
-    <summary>📝 策略句型</summary>
-    <ol class="sentence-list" id="sentenceList"></ol>
-    <div class="sentence-actions">
-      <button type="button" class="btn-ghost" id="sentenceCopyBtn" onclick="copyStrategySentences()">📋 複製</button>
-      <button type="button" class="btn-ghost" onclick="fillStrategySentencesToDesc()">⬇ 填入說明</button>
-    </div>
-  </details>
 </div>
+</section>
 
 <!-- Column editor (content swapped under 價值單元欄位管理)；ST-01d 起欄位改由價值鏈「展開到策略矩陣」產生，此區先隱藏（程式保留）-->
 <h2 class="section-title" style="display:none">價值單元欄位管理</h2>
@@ -1160,7 +1183,10 @@
   <div class="col-editor" id="colEditor"></div>
 </div>
 
-<!-- Competitors (content swapped under 策略構想) -->
+<!-- 共用矩陣區（ST-21b）：②–⑥ 常駐、① 隱藏；DOM 只有一份 -->
+<div class="step-pane" data-steps="cells ideas premise action control" id="stepMatrix">
+<div class="step-pane" data-steps="ideas premise action control">
+<!-- Competitors：③–⑥ 都看得到，切目前策略構想（ST-21d）-->
 <h2 class="section-title">策略構想</h2>
 <div class="panel">
   <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／未來方向／競爭者）</div>
@@ -1171,6 +1197,14 @@
       <button class="btn-primary" onclick="addCompetitor()">＋ 新增</button>
     </div>
   </div>
+</div>
+
+</div>
+<!-- Legend（ST-21b 起在共用矩陣區）-->
+<h2 class="section-title" id="secMatrix">策略矩陣展開</h2>
+<!-- Legend -->
+<div class="panel" style="padding:10px 16px; margin-bottom:12px;">
+  <div class="legend" id="legendContainer"></div>
 </div>
 
 <!-- Action bar -->
@@ -1199,13 +1233,9 @@
 </div>
 <div class="hidden-cols-bar" id="hiddenColsBar"></div>
 <!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自製／外包、F 列優勢基礎；填寫進度） -->
-<div class="panel cell-panel" id="cellPanel"></div>
+<div class="panel cell-panel step-pane" data-steps="cells premise" id="cellPanel"></div>
 
-<p class="instructions">
-  ✏️ <b>繪製模式：</b>點第一格（起點，變黃色）→ 再點第二格（終點）→ 自動畫出帶箭頭的連線<br>
-  若想取消起點，再次點擊黃色格子即可<br>
-  📝 <b>描述策略點：</b>切到「📝 描述策略點」後點任一格，在矩陣下方面板看定義、引導問題並填寫描述
-</p>
+</div>
 
 <!-- 展開到策略矩陣：確認／結果對話框（ST-01d）-->
 <div id="expandModal" class="sm-modal">
@@ -3855,6 +3885,7 @@ function vcRoundedPath(pts, r) {
 function drawVcLinks() {
   const svg = document.getElementById('vcLineCanvas');
   if (!svg) return;
+  if (svg.parentElement && svg.parentElement.offsetParent === null) return;  // ST-21b：所在 tab 隱藏時取不到座標，切回來再畫
   svg.innerHTML = '';
   if (!valueChain.links.length) return;
 
@@ -4534,6 +4565,7 @@ function getCellCenter(rowId, colIdx) {
 
 function drawLines() {
   const svg = document.getElementById('lineCanvas');
+  if (document.getElementById('matrixContainer').offsetParent === null) return;  // ST-21b：① 隱藏矩陣時取不到座標，切回來再畫
   svg.innerHTML = '';
   // Clear used class from all cells
   document.querySelectorAll('td.cell.used').forEach(td => td.classList.remove('used'));
@@ -6024,6 +6056,7 @@ function collectPremiseSwot(ci) {
 }
 
 function flashArrowItem(arrowId) {
+  if (guideStep !== 'ideas') guideGoto('ideas');  // ST-21b：箭頭清單在 ③
   const el = [...document.querySelectorAll('#arrowList .arrow-item')].find(x => x.dataset.arrowId === arrowId);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -7433,34 +7466,36 @@ function escXml(str) {
 }
 
 
-// ── ST-14d：流程導引步驟條 ─────────────────────────────────────────────────
+// ── ST-14d：流程導引步驟條 → ST-21b：分步 tab（anchor＝tab 內容區 id）─────────────
 // 要點是用自己的話整理的《策略管理新論》（司徒達賢）要點，頁碼見 doc/reference/策略管理新論-Ch8Ch9-八步流程與功能差距.md
 const GUIDE_STEPS = [
-  { k: 'chain', num: '①', title: '經營流程', anchor: '#secValueChain',
+  { k: 'chain', num: '①', title: '經營流程', anchor: '#pane-chain',
     points: ['先把整個產業的經營流程畫出來，列出每個價值單元（活動或資產）；不只列自己做的部分，上下游也要涵蓋 [S 270–275]。'],
     tip: '至少列出 3 個價值單元，再按「展開到策略矩陣」。' },
-  { k: 'cells', num: '②', title: '策略點描述', anchor: '#secMatrix',
+  { k: 'cells', num: '②', title: '策略點描述', anchor: '#pane-cells',
     points: ['矩陣上每個格子是一個策略點，投入欄與產出欄、A–F 各列各有固定意義 [S 275–281]。',
              '幾十甚至上百個策略點都逐一了解後，策略現狀就掌握了大半 [S 281]。'],
     tip: '切到「描述策略點」模式，點格子逐格填寫。' },
-  { k: 'ideas', num: '③', title: '策略構想', anchor: '#arrowListPanel',
+  { k: 'ideas', num: '③', title: '策略構想', anchor: '#pane-ideas',
     points: ['用箭頭表達策略要素之間的因果，多條相關箭頭可組成「模組」，再由模組組成整套策略組合 [S 343–346]。'],
     tip: '先畫出主要箭頭並寫備註、勾策略要素，再把相關箭頭圈成模組。' },
-  { k: 'premise', num: '④', title: '前提驗證', anchor: '#premiseBox',
+  { k: 'premise', num: '④', title: '前提驗證', anchor: '#pane-premise',
     points: ['有了具體方案才談 SWOT：每個策略動作或因果關係都有前提，分環境前提（機會／威脅）與條件前提（優勢／劣勢）[S 369]。',
              '同一件事在不同方案下可能是優勢也可能是劣勢，所以要依方案分別彙整 [S 375]。'],
     tip: '在箭頭上加前提並標成立度，把「待驗證」逐項釐清。' },
-  { k: 'action', num: '⑤', title: '行動計畫', anchor: '#actionBox',
+  { k: 'action', num: '⑤', title: '行動計畫', anchor: '#pane-action',
     points: ['行動計畫與形成策略方向相反：把選定的策略組合拆回模組與策略要素，每個用得上的要素就是一個行動重點 [S 375]。',
              '多數行動可歸屬某個價值單元的負責單位；跨單元的行動需要跨部門協調 [S 377]。'],
     tip: '按「從箭頭產生行動項目」，再補負責單元與期程。' },
-  { k: 'control', num: '⑥', title: '策略控制', anchor: '#controlBox',
+  { k: 'control', num: '⑥', title: '策略控制', anchor: '#pane-control',
     points: ['策略控制以行動控制與前提控制最能借助策略矩陣 [S 377]。',
              '前提控制是挑出較關鍵的環境與條件前提密切追蹤，前提變動太大就要重新思考策略 [S 378]。'],
     tip: '把關鍵前提標出來，設指標、燈號與下次檢視日。' },
 ];
-let guideStep = '';   // ''＝依完成度自動選第一個未完成的步驟
-let guideOpen = true;
+let guideStep = '';   // ''＝依完成度自動選第一個未完成的步驟；ST-21b 起即目前 tab（init 時定下來）
+let guideOpen = true;  // ST-14d 要點折疊；ST-21b 起 tab 列不用，保留給 ST-21c 說明卡
+// ST-21b：切到該步時自動切換的模式（① 不切）
+const GUIDE_STEP_MODE = { cells: 'describe', ideas: 'draw', premise: 'view', action: 'view', control: 'view' };
 
 function guideVcUnitNames() {
   const out = [];
@@ -7500,18 +7535,50 @@ function guideCurrentKey(prog) {
   const first = GUIDE_STEPS.find(g => prog[g.k].pct < 100);
   return (first || GUIDE_STEPS[GUIDE_STEPS.length - 1]).k;
 }
-function guideGoto(k) {
+// ST-21b：只切 tab 內容的顯示（.step-pane 依 data-step／data-steps），回傳是否有變動
+function guideApplyPane(k) {
+  let changed = false;
+  document.querySelectorAll('.step-pane').forEach(el => {
+    const on = (el.dataset.steps || el.dataset.step || '').split(' ').includes(k);
+    if (el.classList.contains('active') !== on) { el.classList.toggle('active', on); changed = true; }
+  });
+  return changed;
+}
+// 顯示後才取得到座標：重畫矩陣與價值鏈連線（隱藏時兩者會直接 return）
+function guideRedrawLines() {
+  requestAnimationFrame(() => { drawLines(); drawVcLinks(); });
+}
+function guideKeyFromHash() {  // #step-N（N＝1–6）→ 步驟 key；不合法回傳 ''
+  const m = /^#step-([1-6])$/.exec(location.hash || '');
+  return m ? GUIDE_STEPS[Number(m[1]) - 1].k : '';
+}
+// 切 tab：設 guideStep、切內容、切模式、更新 #step-N、存檔、重畫連線；opts.init＝初始化（不存檔、不捲動）
+function guideGoto(k, opts = {}) {
   const g = GUIDE_STEPS.find(x => x.k === k);
   if (!g) return;
   guideStep = k;
-  const el = document.querySelector(g.anchor);
-  if (el && el.tagName === 'DETAILS') el.open = true;
-  renderGuideBar();
-  saveState();
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  guideApplyPane(k);
+  const mode = GUIDE_STEP_MODE[k];
+  if (mode && currentMode !== mode) setMode(mode);
+  const hash = `#step-${GUIDE_STEPS.indexOf(g) + 1}`;
+  if (location.hash !== hash) window.history.replaceState(null, '', hash);  // 全域 history 是 undo 堆疊，要用 window.history
+  if (opts.init) renderGuideBar(); else saveState();  // saveState 會順便 renderGuideBar
+  guideRedrawLines();
+  if (!opts.init) {
+    const bar = document.getElementById('guideBar');
+    if (bar && bar.getBoundingClientRect().top < 72) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
-function guideSelect(k) {  // 點節點：切換目前步驟並捲到錨點
+function guideSelect(k) {  // 點 tab
   guideGoto(k);
+}
+// 初始化：URL #step-N ＞ 存檔的 guideStep ＞ 第一個未完成的步驟
+function guideInitTab() {
+  let k = guideKeyFromHash() || guideStep;
+  if (!GUIDE_STEPS.some(g => g.k === k)) {
+    try { guideStep = ''; k = guideCurrentKey(guideProgress()); } catch (e) { k = GUIDE_STEPS[0].k; }
+  }
+  guideGoto(k, { init: true });
 }
 function renderGuideBar() {
   const bar = document.getElementById('guideBar');
@@ -7523,12 +7590,16 @@ function renderGuideBar() {
   bar.innerHTML = '';
   const steps = document.createElement('div');
   steps.className = 'guide-steps';
+  steps.setAttribute('role', 'tablist');
   GUIDE_STEPS.forEach(g => {
     const pr = prog[g.k];
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'guide-step' + (g.k === cur ? ' current' : '') + (pr.pct >= 100 ? ' done' : '');
     b.dataset.step = g.k;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', g.k === cur ? 'true' : 'false');
+    b.setAttribute('aria-controls', g.anchor.slice(1));
     b.title = g.tip;
     b.innerHTML = `<div class="guide-step-head"><span class="guide-step-num">${pr.pct >= 100 ? '✓' : g.num}</span><span>${g.title}</span></div>` +
       `<div class="guide-step-bar"><div class="guide-step-fill" style="width:${pr.pct}%"></div></div>` +
@@ -7536,36 +7607,13 @@ function renderGuideBar() {
     b.onclick = () => guideSelect(g.k);
     steps.appendChild(b);
   });
+  bar.appendChild(steps);
   const tot = document.createElement('div');
   tot.className = 'guide-total';
   tot.id = 'guideTotal';
   tot.textContent = `整體 ${total}%`;
-  steps.appendChild(tot);
-  bar.appendChild(steps);
-  const g = GUIDE_STEPS.find(x => x.k === cur);
-  const det = document.createElement('details');
-  det.className = 'guide-detail';
-  det.id = 'guideDetail';
-  det.open = guideOpen;
-  det.addEventListener('toggle', () => { if (guideOpen !== det.open) { guideOpen = det.open; saveState(); } });
-  const sum = document.createElement('summary');
-  sum.textContent = `${g.num} ${g.title}：教科書要點`;
-  const go = document.createElement('button');
-  go.type = 'button';
-  go.className = 'btn-ghost guide-go';
-  go.textContent = '前往 ▸';
-  go.onclick = e => { e.preventDefault(); e.stopPropagation(); guideGoto(g.k); };
-  sum.appendChild(go);
-  det.appendChild(sum);
-  const ul = document.createElement('ul');
-  ul.className = 'guide-points';
-  g.points.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
-  det.appendChild(ul);
-  const tip = document.createElement('div');
-  tip.className = 'guide-tip';
-  tip.textContent = `下一步建議：${g.tip}`;
-  det.appendChild(tip);
-  bar.appendChild(det);
+  bar.appendChild(tot);
+  if (guideApplyPane(cur)) guideRedrawLines();  // 內容區跟著 tab 列（不切模式、不存檔）
 }
 
 // ── LocalStorage Persistence ──────────────────────────────────────────────
@@ -7880,6 +7928,8 @@ renderCompetitorBar();
 renderArrowList();
 updateStatus();
 drawLines();
+guideInitTab();  // ST-21b：定下目前 tab（會切模式並重畫連線）
+window.addEventListener('hashchange', () => { const k = guideKeyFromHash(); if (k && k !== guideStep) guideGoto(k); });
 document.getElementById('compNameInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') addCompetitor();
 });
