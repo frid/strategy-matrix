@@ -1214,7 +1214,7 @@
       <button type="button" class="btn-ghost" id="premiseSwotCopyBtn" onclick="copyPremiseSwot()">📋 複製 SWOT</button>
     </div>
   </details>
-  <!-- ST-14h：對陣點（本公司現行／未來方向 vs 競爭者構想用到同一策略點）＋回應標記 -->
+  <!-- ST-14h：對陣點（本公司現行／新策略方向 vs 競爭者構想用到同一策略點）＋回應標記 -->
   <details class="sentence-box premise-box" id="clashBox" open>
     <summary>⚔ 對陣點（本公司 vs 競爭者）</summary>
     <div id="clashBody"></div>
@@ -1277,7 +1277,7 @@
 <!-- Competitors：③–⑥ 都看得到，切目前策略構想（ST-21d）-->
 <h2 class="section-title">策略構想</h2>
 <div class="panel">
-  <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／未來方向／競爭者）｜一個策略構想＝一套策略方案（策略組合）[S 343、365]</div>
+  <div class="panel-title">點擊名稱可直接改名｜點〔本〕〔未〕〔競〕切換類型（本公司現行／新策略方向／競爭者）｜一個策略構想＝一套策略方案（策略組合）[S 343、365]</div>
   <div class="competitor-row" id="competitorBar">
     <div class="add-competitor">
       <input type="text" id="compNameInput" placeholder="新增策略構想名稱" maxlength="14" />
@@ -1323,7 +1323,7 @@
     <table id="matrixTable"></table>
   </div>
 </div>
-<!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自製／外包、F 列優勢基礎；填寫進度） -->
+<!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自行負責／外包、F 列優勢基礎；填寫進度） -->
 <div class="panel cell-panel step-pane" data-steps="cells premise" id="cellPanel"></div>
 </div>
 
@@ -1428,7 +1428,7 @@ const ROWS = [
   { id: 'C', leftLabel: '垂直', rightLabel: '垂直', label: '垂直整合程度之取決' },
   { id: 'D', leftLabel: '規模', rightLabel: '規模', label: '相對規模與規模經濟' },
   { id: 'E', leftLabel: '地理', rightLabel: '地理', label: '地理涵蓋範圍' },
-  { id: 'F', leftLabel: "KSF's", rightLabel: '競優', label: '競爭優勢' },
+  { id: 'F', leftLabel: 'KSF', rightLabel: '競優', label: '競爭優勢' },
 ];
 
 const COLORS = ['#d64545','#3d7dd6','#2ca05a','#e07c1a','#8b4fcf','#0097a7','#c2185b','#4e342e'];
@@ -1459,7 +1459,7 @@ function genNodeId(taken) {
 // ST-14i：特殊價值單元角色。陣列順序＝編輯器點擊循環順序（一般→半成品→主導→影響者→一般）
 const VC_UNIT_ROLES = [
   { key: 'semi',       label: '半成品', title: '半成品：流程中途的產出不再往下加工，部分直接賣給其他產業（策略要素 2-8、3-2）[S 273, 282–283]' },
-  { key: 'lead',       label: '主導',   title: '主導權責：由誰主導整條上下游、承擔風險並享受利潤，其他階段只是代工 [S 361–362]' },
+  { key: 'lead',       label: '主導權責',   title: '主導權責：由誰主導整條上下游、承擔風險並享受利潤，其他階段只是代工 [S 361–362]' },
   { key: 'influencer', label: '影響者', title: '影響者：不直接買賣卻左右採購決策的單位，如政府主管機關、互補業者（策略要素 2-11）[S 308–309]' },
 ];
 function vcRoleInfo(role) { return VC_UNIT_ROLES.find(r => r.key === role) || null; }
@@ -2068,7 +2068,7 @@ const STRATEGY_ELEMENTS = [
     caseExample: '書上只講原則，沒有具名公司',
     pages: '289–291',
     shape: { type: 'cells', cells: [['A', 'in'], ['A', 'in2']], note: '投入欄 A 列整列反灰，不畫箭頭' } },
-  { id: '1-4',  cat: 1, name: '產品品質之確保', def: '安排價值活動以確保產品品質穩定', example: '自建品管實驗室，降低出貨不良率',
+  { id: '1-4',  cat: 1, name: '產品品質之保證', def: '安排價值活動以確保產品品質穩定', example: '自建品管實驗室，降低出貨不良率',
     explain: '每個價值單元都要提升並確保品質（全面品管），同時與降低成本取得平衡',
     caseExample: '全面品管；但基層自提的品管主題可能與策略重點不一致',
     pages: '290–291', fullName: '產品品質之保證',
@@ -2422,7 +2422,7 @@ const ELEMENT_SUGGEST_RULES = [
 ];
 
 // ST-14a：策略點的意義（依列 × 投入欄／產出欄）＋引導問題；文字用自己的話摘要，頁碼見 doc/reference 第二節
-// C 列只對投入欄有意義（自製／外包），產出欄 output＝null
+// C 列只對投入欄有意義（自行負責／外包），產出欄 output＝null
 const STRATEGY_POINT_DEFS = {
   A: { label: '產品線廣度與特色',
     input:  { def: '此價值單元對各產品在特色、成本、品質、交貨速度上的潛在貢獻', page: 'S 279–280',
@@ -2435,8 +2435,8 @@ const STRATEGY_POINT_DEFS = {
     output: { def: '該產品的目標市場區隔方式與選擇', page: 'S 279, 281',
               questions: ['這項產品鎖定哪些顧客？', '市場怎麼區隔？為什麼選這一塊？'] } },
   C: { label: '垂直整合程度之取決',
-    input:  { def: '此價值單元自製或外包的狀態（圖 8.08：○ 自行負責、✕ 外包）', page: 'S 280',
-              questions: ['這個價值單元是自製、外包，還是局部整合？', '為什麼這樣安排？'] },
+    input:  { def: '此價值單元自行負責或外包的狀態（圖 8.08：○ 自行負責、✕ 外包）', page: 'S 280',
+              questions: ['這個價值單元是自行負責、外包，還是局部整合？', '為什麼這樣安排？'] },
     output: null },
   D: { label: '相對規模與規模經濟',
     input:  { def: '此價值單元是否已達經濟規模，策略上是否要發揮規模（或範疇經濟）優勢', page: 'S 281',
@@ -2455,7 +2455,7 @@ const STRATEGY_POINT_DEFS = {
               questions: ['顧客為什麼選這項產品、不選競爭者的？', '它的競爭優勢是什麼？'] } },
 };
 // C 列垂直整合標記 [S 280；局部整合見策略要素 3-5]
-const VI_OPTIONS = [{ k: 'make', sym: '○', label: '自製' }, { k: 'buy', sym: '✕', label: '外包' }, { k: 'partial', sym: '◐', label: '局部整合' }];
+const VI_OPTIONS = [{ k: 'make', sym: '○', label: '自行負責' }, { k: 'buy', sym: '✕', label: '外包' }, { k: 'partial', sym: '◐', label: '局部整合' }];
 // F 列優勢基礎 [S 281；分類同策略要素 6-2～6-8，S 338–339]
 const ADV_BASES = ['能力', '獨佔', '時機', '財力', '綜效', '關係', '資訊科技'];
 // ST-14g：箭頭前提類型。先有方案再驗證前提＝SWOT [S 369]；環境前提成立＝機會、不成立＝威脅 [S 374]；
@@ -2505,11 +2505,11 @@ const GUIDE_CONTENT = {
     todo: [
       '切到「📝 描述策略點」模式，點格子打開策略點面板逐格填寫。',
       '產出欄（產品）：A–F 列描述該產品的特色、目標市場、規模、地理範圍與競爭優勢 [S 279]。',
-      '投入欄：A 列寫對產品的貢獻、B 列寫不自己做時交給誰、C 列寫自製或外包、D 列寫規模經濟、E 列寫地理分布、F 列寫是否為競爭優勢及其基礎 [S 279–281]。',
+      '投入欄：A 列寫對產品的貢獻、B 列寫不自己做時交給誰、C 列寫自行負責或外包、D 列寫規模經濟、E 列寫地理分布、F 列寫是否為競爭優勢及其基礎 [S 279–281]。',
       '對照面板裡每列的定義與提問，看「填寫進度」掌握還有多少格沒寫。',
     ],
     checks: [
-      '主要價值單元的 C 列（自製或外包）都已標明。',
+      '主要價值單元的 C 列（自行負責或外包）都已標明。',
       '每個產品欄的 A、B 列（特色、目標市場）都已描述。',
       '「填寫進度」接近完成，自己能說出本公司在每個價值單元的作法。',
     ],
@@ -2522,7 +2522,7 @@ const GUIDE_CONTENT = {
       { text: '「必須要將若干『元件』組合成『組件』，再由『組件』組合成『系統』」', page: 343 },
     ],
     todo: [
-      '先選這套構想的類型：本公司現行、未來方向或競爭者 [S 369, 371–372]。',
+      '先選這套構想的類型：本公司現行、新策略方向或競爭者 [S 369, 371–372]。',
       '切到「✏️ 繪製箭頭」模式，從「因」的策略點拉到「果」的策略點；箭頭備註寫清楚因果 [S 345]。',
       '在箭頭上勾選對應的策略要素（元件），例如規模經濟之發揮、產品特色之形成 [S 346]。',
       '把彼此相關的幾條箭頭圈成「模組」（組件）；多個模組合起來就是策略組合（系統）[S 343, 346]。',
@@ -2602,14 +2602,14 @@ const GUIDE_CONTENT = {
 // 找出雙方「對陣」之處 [S 372–373]。舊存檔沒有 kind → normaliseCompetitorKinds 推定（不會猜成競爭者）
 const STRATEGY_KINDS = [
   { k: 'current', label: '本公司現行', short: '本', desc: '本公司目前的作法 [S 369]' },
-  { k: 'future',  label: '未來方向',   short: '未', desc: '本公司考慮中的新策略方向 [S 369, 371]' },
+  { k: 'future',  label: '新策略方向', short: '未', desc: '本公司考慮中的新策略方向 [S 369, 371]' },
   { k: 'rival',   label: '競爭者',     short: '競', desc: '可能競爭者的策略；畫在同一矩陣上與我方比對，找出對陣點 [S 372–373]' },
 ];
 const STRATEGY_KIND_MAP = Object.fromEntries(STRATEGY_KINDS.map(k => [k.k, k]));
 // ST-14h：對陣點回應。書上：哪裡可創造優勢、哪裡須立即加強、哪裡須轉移陣地 [S 373]
 const CLASH_RESPONSES = [
   { k: 'strengthen', label: '💪 可強化', text: '可強化' },
-  { k: 'shift',      label: '↪ 須轉移', text: '須轉移' },
+  { k: 'shift',      label: '↪ 轉移陣地', text: '轉移陣地' },
   { k: '',           label: '— 未定',   text: '未定' },
 ];
 const PREMISE_STATUS = [{ k: 'ok', label: '成立' }, { k: 'unsure', label: '待驗證' }, { k: 'no', label: '不成立' }];
@@ -2915,11 +2915,11 @@ let matrixView = 'current';
 // ST-14h：對陣點回應。clashNotes＝{ '欄名|列字母': { resp: 'strengthen'|'shift'|'', text } }，key 慣例同 cellNotes；沒內容就不存 key
 let clashNotes = {};
 
-// 沒有合法 kind 的構想（舊存檔）→ 第 0 個＝現行、名稱含「未來」＝未來方向、其餘＝現行（不猜成競爭者）
+// 沒有合法 kind 的構想（舊存檔）→ 第 0 個＝現行、名稱含「未來」或「新策略」＝新策略方向、其餘＝現行（不猜成競爭者）
 function normaliseCompetitorKinds() {
   competitors.forEach((c, ci) => {
     if (STRATEGY_KIND_MAP[c.kind]) return;
-    c.kind = ci === 0 ? 'current' : (String(c.name || '').includes('未來') ? 'future' : 'current');
+    c.kind = ci === 0 ? 'current' : (/未來|新策略/.test(String(c.name || '')) ? 'future' : 'current');
   });
 }
 function compKind(ci) { const c = competitors[ci]; return c && STRATEGY_KIND_MAP[c.kind] ? c.kind : 'current'; }
@@ -4651,7 +4651,7 @@ function buildTable() {
     const tr = document.createElement('tr');
 
     // Y軸左側標籤：預設（按鈕顯示「策略矩陣」）與右側同組標籤（產品/市場/垂直/規模/地理/競優）；
-    // 按下切換鈕後（按鈕顯示「策略矩陣＋產業矩陣」）改顯示產業構面簡稱（關聯/市場/垂直/規模/地理/KSF's）
+    // 按下切換鈕後（按鈕顯示「策略矩陣＋產業矩陣」）改顯示產業構面簡稱（關聯/市場/垂直/規模/地理/KSF）
     const tdL = document.createElement('td');
     tdL.className = 'row-label-left';
     tdL.textContent = showIndustryLabels ? row.leftLabel : row.rightLabel;
@@ -4906,7 +4906,7 @@ function renderCellPanel() {
   if (!def) {
     const na = document.createElement('div');
     na.className = 'cell-panel-empty';
-    na.textContent = '此列不適用於產品欄（垂直整合只描述價值單元自製或外包）';
+    na.textContent = '此列不適用於產品欄（垂直整合只描述價值單元自行負責或外包）';
     panel.appendChild(na);
     updateCellProgress();
     return;
@@ -4932,7 +4932,7 @@ function renderCellPanel() {
 
   const note = getCellNote(ci, rowId) || { text: '', vi: '', bases: [] };
 
-  // C 列投入欄：自製／外包／局部整合（再點一次取消）
+  // C 列投入欄：自行負責／外包／局部整合（再點一次取消）
   if (rowId === 'C') {
     const line = document.createElement('div');
     line.className = 'cell-opt-line';
@@ -5153,9 +5153,9 @@ function renderClashBox() {
   const st = clashStats(points);
   const stats = document.createElement('div');
   stats.className = 'premise-swot-stats';
-  stats.textContent = `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`;
+  stats.textContent = `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜轉移陣地 ${st.shift}｜未定 ${st.none}`;
   body.appendChild(stats);
-  hint.textContent = '把競爭者的策略畫在同一張矩陣上，與本公司（現行／未來方向）用到同一個策略點之處就是雙方直接抗衡的「對陣」點；'
+  hint.textContent = '把競爭者的策略畫在同一張矩陣上，與本公司（現行／新策略方向）用到同一個策略點之處就是雙方直接抗衡的「對陣」點；'
     + '再判斷哪裡可以強化、創造優勢，哪裡必須轉移陣地 [S 372–373]。' + (matrixView !== 'current' ? '矩陣上以 ⚔ 標出。' : '將「👁 檢視」切到「目前＋競爭者」或「全部構想」可在矩陣上看到 ⚔ 標記。');
   body.appendChild(hint);
   if (!points.length) {
@@ -5216,7 +5216,7 @@ function clashPointsText() {
   const points = collectClashPoints();
   if (!points.length) return '';
   const st = clashStats(points);
-  const lines = ['【對陣點（本公司 vs 競爭者）】', `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`];
+  const lines = ['【對陣點（本公司 vs 競爭者）】', `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜轉移陣地 ${st.shift}｜未定 ${st.none}`];
   points.forEach(p => {
     const n = clashNotes[p.key] || { resp: '', text: '' };
     const r = CLASH_RESPONSES.find(x => x.k === n.resp);
@@ -6138,7 +6138,8 @@ function cellDefaultText(cell) {
   const row = ROWS.find(r => r.id === cell.row);
   const colName = COLUMNS[cell.col] || `欄${cell.col + 1}`;
   const isProduct = cell.col >= productSepIdx;
-  const rowName = row ? ((isProduct && row.id === 'A') ? '特色' : row.leftLabel) : cell.row;
+  // ST-34b：改用課本的右側分類名（rightLabel）；A 列產品欄＝特色、A 列投入欄＝貢獻、F 列＝優勢
+  const rowName = row ? (row.id === 'A' ? (isProduct ? '特色' : '貢獻') : row.id === 'F' ? '優勢' : row.rightLabel) : cell.row;
   return `${colName}的${rowName}`;
 }
 function sentenceCellKey(c) { return `${c.row}-${c.col}`; }
@@ -7776,7 +7777,7 @@ function pptxClashSlides() {
     + pptxTableFrameXml(11, '對陣點', rx, G.top, pptxColWidths(rw, [1.5, 0.8, 0.8, 0.8, 2]),
         pptxDataTableTrs(['代號', '本公司', '競爭者', '回應', '理由'], pg, { sz: 800, headH: in2emu(0.26), rowH: in2emu(0.3), algns: ['l', 'ctr', 'ctr', 'ctr', 'l'] }))
     + pptxTextBoxXml(5, 'footer', rx, G.bottom - in2emu(0.5), rw, in2emu(0.5), [
-        { text: `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜須轉移 ${st.shift}｜未定 ${st.none}`, sz: 1000 },
+        { text: `對陣點 ${st.total} 個：可強化 ${st.strengthen}｜轉移陣地 ${st.shift}｜未定 ${st.none}`, sz: 1000 },
         { text: '矩陣：實線＝本公司構想、虛線＝競爭者構想', sz: 900, color: '6B6B80' }], { anchor: 'b' })) };
 }
 
@@ -7819,7 +7820,7 @@ function pptxControlSlides(ci) {
   const footer = `關鍵前提 ${st.key} 項：綠 ${st.green}｜黃 ${st.yellow}｜紅 ${st.red}｜未設 ${st.unset}｜逾期未檢視 ${st.overdue}`
     + (keyRows.length ? '' : '　（尚未標記關鍵前提，列出全部前提）');
   const pages = pptxChunk(rows, 10);
-  return { bodies: pages.map((pg, k) => buildTableSlideXml(pptxPagedTitle('策略前提控制（監測）', k, pages.length),
+  return { bodies: pages.map((pg, k) => buildTableSlideXml(pptxPagedTitle('策略前提控制表', k, pages.length),
     ['★', '類型', '前提', '成立度', '觀察指標', '燈號', '下次檢視日', '備註'], pg,
     { tag: pptxCompTag(ci), weights: [0.35, 1, 2.8, 0.7, 1.9, 0.55, 1.05, 1.7], algns: ['ctr', 'ctr', 'l', 'ctr', 'l', 'ctr', 'ctr', 'l'],
       rowH: in2emu(0.32), sz: 900, footer })) };
