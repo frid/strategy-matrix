@@ -719,6 +719,10 @@
     #valueChainEditor .vc-layout-segment .vc-zone-primary .vc-unit:not(.vc-asset) .vc-role-none {
       color: rgba(255,255,255,.9); border-color: rgba(255,255,255,.55); opacity: 1;
     }
+    /* ST-35eh：分色配色優先——segment 下葉節點改用 --vc-unit-color、群組名改該色深版（對比同 band 分色） */
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-unit:not(.vc-asset) { background: var(--vc-unit-color, var(--vc-seg-c, var(--vc-seg-0))); }
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-segment.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: color-mix(in srgb, var(--vc-unit-color) 70%, black); }
   }
   /* ST-35e hex 六角鏈式（G）：沿用 band 的橫帶與群組結構（zones 同時掛 vc-layout-band），只覆寫葉節點外觀：
      六角形 clip-path 左右各咬 18px、相鄰顆負 margin 互相咬合；一個頂層項目一個色相（JS 寫 --vc-hex／--vc-hex-j），
@@ -751,6 +755,15 @@
     #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
     #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: #fff; }
     #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    /* ST-35eh：分色配色優先——hex 葉節點用 --vc-unit-color（往黑混表深淺）、群組橫帶淡版底＋深版字 */
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit:not(.vc-asset) {
+      background: color-mix(in srgb, var(--vc-unit-color) calc(100% - var(--vc-hex-j, 0) * 6%), #000);
+    }
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-unit-color) 18%, white); border-color: var(--vc-unit-color);
+    }
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):not(:focus),
+    #valueChainEditor .vc-layout-hex.vc-per-unit .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: color-mix(in srgb, var(--vc-unit-color) 70%, black); }
   }
 
   /* ST-35d circle：圓形 icon 式（F）。結構沿用 band 的 group 容器＋row flex（JS 只掛 vc-layout-circle、不掛 band），外觀全部寫在這裡：
