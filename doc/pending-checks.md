@@ -70,3 +70,6 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 
 ## 2026-10-26 ST-28
 - [ ] ST-28 瀏覽器翻一遍 manual.html 39 張新圖（verifier 全看過，重點看 02、07、13、37）
+
+## 2026-10-26 ST-31
+- [ ] ST-31 真實滑鼠拖曳產品排序、長名稱輸入換行；PowerPoint 開 slide1 看 1.0–1.2" 產品方塊文字

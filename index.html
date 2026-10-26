@@ -336,10 +336,11 @@
   #vcLineCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
   /* ST-01h：版型依循經典 Porter 價值鏈圖——支援活動在上（橫跨全寬的橫條，由上而下堆疊）、
      主要活動＋產品在下（並排方塊），右側 Margin 箭頭，左／下括號標示支援／主要活動 */
-  /* ST-23a：產品改放最右邊（Margin 箭頭右側）一整條直欄（三列全高）；關閉大箭頭時不留 Margin 空欄 */
+  /* ST-23a：產品改放最右邊（Margin 箭頭右側）一整條直欄（三列全高）；關閉大箭頭時不留 Margin 空欄
+     ST-31：產品欄固定 200px（與主要活動群組同寬），方塊文字橫排 */
   .vc-zones {
     position: relative; display: grid; gap: 10px;
-    grid-template-columns: 22px minmax(0, 1fr) 76px auto;
+    grid-template-columns: 22px minmax(0, 1fr) 76px 200px;
     grid-template-rows: auto 1fr auto;  /* 產品直欄比圖高時，多出的高度只給主要活動列（不撐大上方支援活動與下方括號） */
     grid-template-areas:
       "supportlabel support    margin products"
@@ -348,7 +349,7 @@
     align-items: stretch;
   }
   .vc-zones:not(.vc-arrow-bg) {
-    grid-template-columns: 22px minmax(0, 1fr) auto;
+    grid-template-columns: 22px minmax(0, 1fr) 200px;
     grid-template-areas:
       "supportlabel support    products"
       ".            activities products"
@@ -459,36 +460,34 @@
   .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) { background: var(--vc-child-bg); }
   .vc-zone-primary .vc-group-body > .vc-unit:not(.vc-asset) .vc-node-head :is(input, textarea) { color: var(--vc-child-text); }
   /* 產品欄（ST-01i 起不畫進 Porter 圖；ST-23a 改放 .vc-zones 最右邊的直欄）：展開到策略矩陣後成為產品欄。
-     寬螢幕產品方塊直排（vertical-rl）、由上而下排序；≤800px 回到圖下方的橫列 */
+     ST-31：方塊文字改橫排、由上而下堆疊；名稱用 textarea（同主要活動），長名稱換到第二行；≤800px 回到圖下方的橫列 */
   .vc-zone-products {
     grid-area: products; display: flex; flex-direction: column; gap: 6px; align-self: stretch;
-    min-width: 64px; padding: 6px; border-radius: 8px;
+    min-width: 0; padding: 6px; border-radius: 8px;
     border: 1px dashed var(--grid-line); background: #faf9fd;
   }
   .vc-zone-products > .vc-zone-title { text-align: center; cursor: help; }
   .vc-products-body {
-    flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;
-    min-height: 34px; padding: 4px; border-radius: 6px; border: 1px dashed transparent;
+    flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+    min-height: 34px; padding: 4px 2px; border-radius: 6px; border: 1px dashed transparent;
   }
   .vc-products-body.drag-over { border-color: var(--col-header); background: var(--cell-hover); }
   .vc-products-body > .vc-unit:not(.vc-asset) { background: var(--mx-product-cell-bg); border-color: var(--vc-product-border); }
-  /* 直排產品方塊：名稱與「活動／資產」「＋角色」「＋同層」「✕」順著直排由上往下；名稱寬度由 sizeVcInput 寫 inline-size */
-  .vc-products-body > .vc-unit { writing-mode: vertical-rl; padding: 6px 3px; }
-  .vc-products-body > .vc-unit .vc-node-head :is(input, textarea) { padding: 2px 1px; min-width: 0; min-inline-size: 2em; }
-  /* 直排時「＋同層」「✕」與未設定的「＋角色」平時隱藏、滑鼠移到方塊才顯示（同主要活動區作法），縮短方塊高度、少撐高 Porter 圖 */
-  .vc-products-body > .vc-unit > .vc-node-head > :is(.vc-act, .vc-role-none) { display: none; }
-  .vc-products-body > .vc-unit:hover > .vc-node-head > :is(.vc-act, .vc-role-none) { display: inline; }
-  .vc-products-body > .vc-drop-placeholder { writing-mode: vertical-rl; padding: 10px 0; }
-  .vc-products-body > .vc-zone-empty { writing-mode: vertical-rl; }
+  /* 產品方塊：200px 欄寬放不下名稱＋四個標籤同一列 → 第一行「名稱＋✕」（長名稱在名稱欄內換行），
+     第二行「活動／資產」「＋角色」「＋同層」；全部常駐（不用 hover 才顯示，避免滑過時名稱寬度改變被裁字） */
+  .vc-products-body > .vc-unit { min-width: 0; padding: 4px 5px; }
+  .vc-products-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 2px; align-items: flex-start; }
+  .vc-products-body > .vc-unit > .vc-node-head > textarea.vc-name-wrap { flex: 1 0 calc(100% - 24px); }
+  .vc-products-body > .vc-unit > .vc-node-head > .vc-act-remove { order: 1; margin-top: 2px; }
+  .vc-products-body > .vc-unit > .vc-node-head > :is(.vc-kind, .vc-role, .vc-act:not(.vc-act-remove)) { order: 2; }
   .vc-products-footer { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
   .vc-products-footer > .col-item-add { white-space: nowrap; }
   @media (max-width: 800px) {
     /* 裝飾括號與 Margin 箭頭的 display:flex 寫在上方 media query 之後，會蓋掉那裡的 display:none；在此再隱藏一次（ST-23a） */
     .vc-support-label, .vc-primary-label, .vc-margin-arrow { display: none; }
     .vc-products-body { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
-    .vc-products-body > .vc-unit, .vc-products-body > .vc-drop-placeholder, .vc-products-body > .vc-zone-empty { writing-mode: horizontal-tb; }
-    .vc-products-body > .vc-unit { padding: 3px 6px; }
-    .vc-products-body > .vc-unit > .vc-node-head > :is(.vc-act, .vc-role-none) { display: inline; }
+    /* 橫列時每個產品方塊固定 200px（名稱 textarea 是 flex 填滿，方塊本身要有寬度） */
+    .vc-products-body > .vc-unit { flex: 0 1 200px; }
     .vc-products-body > .vc-drop-placeholder { padding: 0 10px; }
     .vc-zone-products > .vc-zone-title { text-align: left; }
     .vc-products-footer { justify-content: flex-start; }
@@ -3603,8 +3602,8 @@ function bindVcDropArea(el, zone, getList, ownerId) {
 // 名稱輸入框尺寸調整：input 寬度隨字數；主要活動區的 textarea（可換行）高度隨內容撐開（ST-09）
 function sizeVcInput(inp) {
   if (inp.tagName === 'TEXTAREA') {
-    // 主要活動區最外層單元（不在群組內）維持依字數的自然寬度，不換行
-    if (inp.closest('.vc-unit') && !inp.closest('.vc-group-body')) {
+    // 主要活動區最外層單元（不在群組內）維持依字數的自然寬度，不換行；產品欄（ST-31）固定欄寬、填滿換行
+    if (inp.closest('.vc-unit') && !inp.closest('.vc-group-body, .vc-products-body')) {
       inp.style.width = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
       inp.style.flex = '0 0 auto';
     }
@@ -3614,7 +3613,6 @@ function sizeVcInput(inp) {
     inp.style.height = inp.scrollHeight + 'px';
     return;
   }
-  // 用 inline-size（邏輯寬）：橫排＝寬、產品欄直排（ST-23a）＝高，同一公式兩種方向都對
   inp.style.inlineSize = (Math.max(2, [...inp.value].length) + 0.6) + 'em';
 }
 
@@ -3648,8 +3646,8 @@ function buildVcNode(node, zone) {
   const head = document.createElement('div');
   head.className = 'vc-node-head';
 
-  // 主要活動區（群組標題＋子項）名稱用 textarea 讓長名稱自動換行（ST-09）；其他區維持單行 input
-  const wrapName = zone === 'primary';
+  // 主要活動區（群組標題＋子項）與產品欄（ST-31）名稱用 textarea 讓長名稱自動換行（ST-09）；其他區維持單行 input
+  const wrapName = zone === 'primary' || zone === 'products';
   const inp = document.createElement(wrapName ? 'textarea' : 'input');
   if (wrapName) { inp.rows = 1; inp.className = 'vc-name-wrap'; } else inp.type = 'text';
   inp.value = node.name;
@@ -7266,7 +7264,7 @@ function buildArrowShapesXml(L, allSteps, activeStep, startId) {
 // ── 價值鏈頁（原生圖形）──────────────────────────────────────────────────
 // 不量 DOM（編輯區可能被隱藏），改用與編輯器相同結構的自有版面計算：
 // 支援活動＝上方橫條（由上往下堆）、主要活動＝下方並排的欄（群組內子項垂直排列）、
-// 產品＝最右側直排一欄（ST-23c，對應編輯器 .vc-zones 第 4 欄）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）
+// 產品＝最右側一欄（ST-23c，對應編輯器 .vc-zones 第 4 欄；ST-31 起方塊文字橫排）。showArrowBg 為真時方塊改用 homePlate（右尖箭頭）
 // 並在產品欄左邊加 Margin 箭頭。
 function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtraH = 0) {
   let id = startId;
@@ -7276,7 +7274,6 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const zoneTitleH= in2emu(0.2);
   const labelW    = in2emu(0.26);             // 左側「支援活動」括號
   const marginW   = in2emu(0.34);             // 右側 Margin／利潤 箭頭
-  const prodColW  = in2emu(0.5);              // ST-23c：最右側產品直欄寬（直排文字）
   const arrowBg   = !!valueChain.showArrowBg;
   const boxPrst   = arrowBg ? 'homePlate' : 'roundRect';
   const P         = pptxPalette();             // ST-12：價值鏈色跟著目前配色
@@ -7285,6 +7282,9 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const primary = valueChain.primary;
 
   const products = valueChain.products.filter(n => n.type === 'unit');  // ST-18／ST-23c：產品直欄（Margin 右側，由上往下）
+  // ST-31：產品方塊文字橫排，欄寬 1.0"（10pt 約 6–7 字）；最長名稱超過 8 字時每多 1 字加 0.05"，上限 1.2"（再長由 autofit 縮字）
+  const prodMaxLen = Math.max(0, ...products.map(n => [...(n.name || '')].length));
+  const prodColW = in2emu(Math.min(1.2, Math.max(1.0, 1.0 + (prodMaxLen - 8) * 0.05)));
   const prodW    = products.length ? prodColW + gap : 0;
   const contentX = areaX + labelW + gap;
   const contentW = areaW - labelW - gap - prodW - (arrowBg ? marginW + gap : 0);
@@ -7471,10 +7471,10 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
       </p:sp>`;
   }
 
-  // ── 產品直欄（ST-18 → ST-23c）：欄頂「產品」小標與區塊標題同列；方塊直排文字、等分欄高（每塊最高 1.6"，太少就從上排起）──
+  // ── 產品直欄（ST-18 → ST-23c → ST-31）：欄頂「產品」小標與區塊標題同列；方塊橫排文字、等分欄高（每塊最高 0.6"，太少就從上排起）──
   if (products.length) {
     const pN = products.length;
-    const pH = Math.min(in2emu(1.6), Math.floor((mh - gap * (pN - 1)) / pN));
+    const pH = Math.min(in2emu(0.6), Math.floor((mh - gap * (pN - 1)) / pN));
     // 有「產品→產品」且中間隔著別的產品時，線要沿欄右側上下（vcProductRoute）：方塊右邊讓出一條窄通道
     const pIds = new Set(products.map(n => n.id));
     const pLane = valueChain.links.some(l => pIds.has(l.from) && pIds.has(l.to)) ? in2emu(0.06) : 0;
@@ -7482,7 +7482,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
     products.forEach((n, i) => {
       const isAsset = n.unitKind === 'asset';
       xml += box(n, prodX, supportTop + (pH + gap) * i, prodColW - pLane, pH, 'roundRect',
-        isAsset ? P.vcAssetBg : P.prodCellBg, isAsset ? P.vcAssetText : P.vcProductText, true, 1000, 45720, 'eaVert');
+        isAsset ? P.vcAssetBg : P.prodCellBg, isAsset ? P.vcAssetText : P.vcProductText, true, 1000, 45720);
     });
   }
 

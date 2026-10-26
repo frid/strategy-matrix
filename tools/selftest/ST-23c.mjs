@@ -1,11 +1,12 @@
 // ST-23c 自測：PPTX 價值鏈頁（slide1）產品改在 Margin 右側直欄，到產品的連線走 vcProductRoute（全程正交）
+// ST-31 更新：產品方塊文字改橫排（不再有 vert="eaVert"）、寬 1.0～1.2"、高 ≤ 0.6"
 // 跑法（Node 24+、/usr/bin/google-chrome）：  node tools/selftest/ST-23c.mjs [基準版 index.html，預設 git show HEAD:index.html]
 //   基準版只用來比 ST-20 lastInfo（字級／壓縮）與連線條數，不比座標（產品列移位後 slide1 本來就會不同）
 // 情境（新版逐一匯出、攔 JSZip.generateAsync 取 slide1.xml 與 buildValueChainShapesXml.lastInfo）：
 //   book＝範例「網路書店 A 公司」、foundry＝範例「晶圓代工 T 公司」、pharma＝範本 bio-pharma-tw、
 //   ae＝範本 bio-aesthetic（第三層，ST-20）、book-noarrow＝書店關掉大箭頭背景
 // 每個情境測：
-//   1) 產品方塊數＝valueChain.products 單元數，每塊直排（bodyPr vert="eaVert"）、同一 x、由上往下不重疊
+//   1) 產品方塊數＝valueChain.products 單元數，每塊橫排（bodyPr 無 vert，ST-31）、寬 1.0～1.2"（扣通道 0.06"）、高 ≤ 0.6"、同一 x、由上往下不重疊
 //   2) 有 Margin 時：Margin 右緣 + gap ≤ 產品 x；主要／支援活動最右緣 ≤ Margin x（沒 Margin 就 ≤ 產品 x）；產品右緣 ≤ slide 寬
 //   3) 每段 connector 的 cx 或 cy 為 0（正交）；每條 link 至少一段；lastInfo.skippedLinks === 0
 //   4) 到產品的線：最後一段水平、終點落在目標產品左緣；所有段不穿過非端點的產品方塊
@@ -82,7 +83,8 @@ for (const [key] of SCEN) {
   writeFileSync(`${tmp}/${key}-slide1.xml`, xml);
   const sh = parse(xml);
   const sp = sh.filter(s => s.kind === 'sp'), cx = sh.filter(s => s.kind === 'cxnSp');
-  const prods = vc.products.map(n => sp.find(s => s.name === n && s.vert === 'eaVert'));
+  // 產品方塊＝同名 shape 中最右邊那個（名稱可能與欄頂小標以外的活動同名時取最右）
+  const prods = vc.products.map(n => sp.filter(s => s.name === n && /prst="roundRect"/.test(s.raw)).sort((a, b) => b.x - a.x)[0]);
   const margin = sp.find(s => s.name === 'Margin／利潤');
   const prodSet = new Set(prods.filter(Boolean));
   const labels = new Set(['支援活動', '主要活動', '產品', '價值鏈']);
@@ -96,7 +98,11 @@ for (const [key] of SCEN) {
   if (margin) row(margin, '[M] ');
   prods.filter(Boolean).forEach(s => row(s, '[產品] '));
 
-  chk(prods.every(Boolean) && prods.length === vc.products.length, `[${key}] 產品方塊 ${prods.filter(Boolean).length}/${vc.products.length}，皆 eaVert 直排`);
+  chk(prods.every(Boolean) && prods.length === vc.products.length && prods.every(p => p && !p.vert && !/vert="eaVert"/.test(p.raw)),
+    `[${key}] 產品方塊 ${prods.filter(Boolean).length}/${vc.products.length}，皆橫排（無 eaVert）`);
+  const LANE = Math.round(0.06 * 914400);
+  chk(prods.every(p => p && p.w >= 914400 - LANE - 2 && p.w <= Math.round(1.2 * 914400) + 2 && p.h <= Math.round(0.6 * 914400) + 2),
+    `[${key}] 產品寬 1.0～1.2"、高 ≤ 0.6"（${prods.filter(Boolean).map(p => inch(p.w) + '×' + inch(p.h)).join(' ')}）`);
   const px = prods[0] ? prods[0].x : NaN;
   chk(prods.every(p => p && p.x === px) && prods.every((p, i) => !i || p.y >= prods[i - 1].y + prods[i - 1].h), `[${key}] 產品同一 x、由上往下不重疊`);
   chk(prods.every(p => p && p.x + p.w <= SLIDE_W), `[${key}] 產品右緣 ${inch(px + (prods[0] || {}).w)}in ≤ slide 寬`);
