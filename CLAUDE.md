@@ -11,7 +11,8 @@
 - 修改一律在新的 worktree／feature branch 上做（從 `dev` 分出），不要直接改 `dev` 或 `main`。
 - **使用者說「merge」→ 合併到 `dev`**（worktree branch → dev，合併後可刪該 branch）。
 - **使用者說「release」→ 從 `dev` 合併到 `main` 並打 tag**；版號由使用者指定，沒指定就提議一個（patch +1）再確認。release 時順便把 `TODO.md` 已完成的項目搬到 `## Complete` 區並標 release 版號（平時收尾只勾 `[x]` 不搬）。
-- 沒聽到上面兩個字之前，只能 commit / push 分支。
+- 沒聽到上面兩個字之前，只能 commit（本機分支）。
+- **remote 只放 `dev` 與 `main`**：worktree／feature 分支不 push，併入 `dev` 後 push `dev` 即可，分支用完就刪。由 `tools/git-hooks/pre-push` 鎖住（tag 不受限）；新 clone 要先跑 `sh tools/git-hooks/install.sh` 安裝到 `.git/hooks`。
 
 ## 參考資料
 

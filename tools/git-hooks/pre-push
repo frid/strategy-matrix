@@ -1,0 +1,19 @@
+#!/bin/sh
+# 只允許 push dev 與 main 到 remote；其他分支一律擋下（worktree／feature 分支只留本機，併入 dev 後即可刪）。
+# 安裝：bash tools/git-hooks/install.sh（複製到 .git/hooks/pre-push，所有 worktree 共用）。
+# 緊急略過：git push --no-verify（請勿常用）。
+allowed="refs/heads/dev refs/heads/main"
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$remote_ref" ] && continue
+  case "$remote_ref" in
+    refs/tags/*) continue ;;
+  esac
+  ok=0
+  for a in $allowed; do [ "$remote_ref" = "$a" ] && ok=1; done
+  if [ $ok -eq 0 ]; then
+    echo "pre-push：禁止 push $remote_ref（只允許 dev 與 main；分支併入 dev 後再 push dev）" >&2
+    status=1
+  fi
+done
+exit $status
