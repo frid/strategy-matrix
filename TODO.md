@@ -17,8 +17,8 @@
   - [x] ST-22c 回歸：`tests/st-21-regression.mjs` 加「重新整理後／他 tab 載入後切回 ①，主要活動名稱 offsetHeight > 10」與「主載入價值鏈檔」兩項；依賴 ST-22a、ST-22b（完成 2026-10-26）
 
 第 2 階段：矩陣操作
-- [ ] ST-26 ![](assets/20261026_145546.png) 不同策略的箭頭，不要混在一起。用切換的
-  - [ ] ST-26a `#overlayChk` 改為檢視切換 `matrixView`：只看目前（預設）／目前＋競爭者／全部；`drawLines()` 依視圖過濾構想；⚔ 對陣點標記只在含雙方的視圖顯示（`collectClashPoints` 與 PPTX 對陣點頁不變）；圖例只列畫出的構想；舊存檔 `overlayAll` 載入後一律用預設「只看目前」；更新 `doc/decisions.md`（推翻 2026-10-25 ST-14h「疊圖預設開」）
+- [x] ST-26 ![](assets/20261026_145546.png) 不同策略的箭頭，不要混在一起。用切換的（完成 2026-10-26：箭頭檢視改三段切換（只看目前／目前＋競爭者／全部），不再疊在一起；舊存檔 overlayAll 一律改只看目前）
+  - [x] ST-26a `#overlayChk` 改為檢視切換 `matrixView`：只看目前（預設）／目前＋競爭者／全部；`drawLines()` 依視圖過濾構想；⚔ 對陣點標記只在含雙方的視圖顯示（`collectClashPoints` 與 PPTX 對陣點頁不變）；圖例只列畫出的構想；舊存檔 `overlayAll` 載入後一律用預設「只看目前」；更新 `doc/decisions.md`（推翻 2026-10-25 ST-14h「疊圖預設開」）（完成 2026-10-26：👁 檢視下拉 #matrixViewSel、matrixView 取代 overlayAll、visibleIdeaIdxs()、圖例只列畫出的構想；自測 tools/selftest/ST-26a.mjs）
 - [ ] ST-24 ![](assets/20261026_145153.png) 策略矩陣站的板面太大，把下方的輸入欄，調整到更方便的輸入地方
   - [ ] ST-24a 步驟 ②／④：`#cellPanel` 改為矩陣右側 sticky 側欄（top 讓出 `.project-panel`、max-height 視窗高、內捲），矩陣保留自己的橫向捲動；`selectCell` 拿掉 `scrollIntoView`（窄螢幕保留）；側欄改變矩陣寬度後重跑 `drawLines()`；≤800px 維持上下排
 
