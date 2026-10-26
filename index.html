@@ -1312,6 +1312,9 @@
   <span class="status" id="statusText"></span>
 </div>
 
+<!-- ST-32：隱藏欄回復列放在矩陣上方，不必捲到頁底 -->
+<div class="hidden-cols-bar" id="hiddenColsBar"></div>
+
 <!-- Matrix（ST-24a：矩陣＋策略點面板同列，面板為右側 sticky 側欄） -->
 <div class="matrix-row" id="matrixRow">
 <div class="matrix-wrapper">
@@ -1323,7 +1326,6 @@
 <!-- ST-14a：策略點點選面板（定義＋引導問題＋描述；C 列自製／外包、F 列優勢基礎；填寫進度） -->
 <div class="panel cell-panel step-pane" data-steps="cells premise" id="cellPanel"></div>
 </div>
-<div class="hidden-cols-bar" id="hiddenColsBar"></div>
 
 </div>
 
@@ -2849,19 +2851,21 @@ function unhideColumn(name) {
 function showAllColumns() {
   pushHistory();
   hiddenCols = {};
+  shortView = false;  // ST-32：回到完整矩陣（表頭 ✕ 一併消失）
   afterShortViewChange();
 }
 // 所有策略構想都沒有箭頭起訖的投入欄 → 加入 hiddenCols，並開啟短版
 function autoHideUnusedCols() {
   const used = new Set();
   arrows.forEach(list => list.forEach(a => { used.add(a.from.col); used.add(a.to.col); }));
+  if (!used.size) { document.getElementById('statusText').textContent = '目前構想尚無箭頭，沒有可依據的欄位'; return; }  // ST-32：沒箭頭不隱藏
   pushHistory();
   hiddenCols = { ...hiddenCols };
   COLUMNS.forEach((name, ci) => { if (ci < productSepIdx && !used.has(ci)) hiddenCols[name] = true; });
   shortView = true;
   afterShortViewChange();
 }
-// 表格下方「已隱藏 N 欄」chip 列（只在短版開啟且有隱藏欄時顯示）
+// 矩陣上方「已隱藏 N 欄」chip 列（只在短版開啟且有隱藏欄時顯示）
 function renderHiddenColsBar() {
   const bar = document.getElementById('hiddenColsBar');
   if (!bar) return;
