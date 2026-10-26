@@ -5,6 +5,18 @@
 
 # 新增功能
 
+- [ ] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md
+  - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
+  - 第 1 階段：文案
+  - [ ] ST-21a 教材說明卡文案常數 `GUIDE_CONTENT`：六步各含「目的／課本怎麼說（短引文）／在這裡做什麼／完成檢查點／延伸頁碼／手冊錨點」；由 subagent 讀掃描 PDF 指定頁，定稿同步補進摘要檔第三節 [S 270–281、285–286、343–346、369–379]
+  - 第 2 階段：版面
+  - [ ] ST-21b tab 骨架：`#guideBar` 改為六格 tab 列（各步完成度條＋整體 %）；各區塊標 `data-step` 歸入 tab 容器；矩陣於 ②–⑥ 常駐、① 隱藏；切 tab 自動切換描述／繪製／檢視模式並重畫 SVG；`guideGoto()` 改為切 tab；支援 URL hash `#step-N`；窄螢幕 3×2
+  - [ ] ST-21c 教材說明卡元件：每 tab 第一塊用 `GUIDE_CONTENT` 渲染（左：目的＋引文＋延伸頁碼；右：做什麼＋檢查點），可收合並記住（沿用 `guideOpen`）；底部「📖 手冊」錨點連結與上一步／下一步按鈕；依賴 ST-21a、ST-21b
+  - [ ] ST-21d 區塊歸位：策略名稱與說明 → ①；填寫進度與 `#cellPanel` 緊貼矩陣下方 → ②；構想分型、`#moduleBox`、`#arrowList`、`#sentenceBox` → ③；`#premiseBox`、`#clashBox` → ④；`#actionBox` → ⑤；`#controlBox` → ⑥；各區在自己的 tab 內預設展開；刪除 `p.instructions`（併入說明卡）；依賴 ST-21b
+  - 第 3 階段：驗證與文件
+  - [ ] ST-21e 回歸驗證：兩個 fixtures 舊存檔載入後六 tab 截圖與連線重畫、載範例後各 tab 完成度、PPTX 匯出 XML 與 v1.0.0 一致（用 tools/cdp-harness.mjs，腳本放 tests/）；依賴 ST-21d
+  - [ ] ST-21f manual.html 與 README 改為依六步分章、重拍截圖（tools/capture-manual.mjs 配合 tab 切換）；index.html 說明卡連到對應錨點；依賴 ST-21e
+
 ## Complete
 - [x] ST-03 短版策略矩陣：只顯示跟產品特色有關的欄位（可勾選隱藏其他欄）[P3 56]（完成 2026-10-25：✂ 短版矩陣開關、自動隱藏無箭頭欄、表頭 ✕ 個別隱藏、chip 列回復；代號維持原編號；PPTX 依可見欄匯出）（release v1.0.0）
 - [x] ST-05 價值鏈連線美化：相鄰方塊的短線看不清楚；長線會壓過同一列方塊的名稱（ST-01c 驗證時發現）（完成 2026-10-25：相鄰改直短箭頭、同列跨越改走方塊上方圓角繞行＋白描邊，PPTX 同步三段連接器）（release v1.0.0）
