@@ -1342,6 +1342,9 @@
     <label class="palette-picker" title="切換價值鏈與策略矩陣的配色">🎨 配色
       <select id="paletteSelect" onchange="applyPalette(Number(this.value)); saveState();"></select>
     </label>
+    <label class="palette-picker" title="切換價值鏈主要活動列的版型（與價值鏈工具列的版型下拉同步）">🧩 版型
+      <select id="vcLayoutSelect" onchange="valueChain.layout = vcLayoutKey(this.value); commitValueChain();"></select>
+    </label>
     <label class="palette-picker" title="載入書上的完整策略範例（會取代目前的價值鏈、策略構想與箭頭）">
       <select id="exampleSelect" onchange="if (this.value) loadExampleProject(this.value); this.value = '';">
         <option value="">📚 載入範例…</option>
@@ -3129,6 +3132,25 @@ function applyPalette(idx) {
   drawVcLinks();
 }
 
+// ── 價值鏈版型下拉同步（ST-35f）：專案區 #vcLayoutSelect 與價值鏈工具列 .vc-layout-select 雙向同步；選項由 VC_LAYOUTS 產生 ──
+function syncVcLayoutSelects() {
+  const cur = vcLayoutKey(valueChain && valueChain.layout);
+  const proj = document.getElementById('vcLayoutSelect');
+  if (proj) {
+    if (proj.options.length !== VC_LAYOUTS.length) {
+      proj.innerHTML = '';
+      VC_LAYOUTS.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.key;
+        opt.textContent = l.label;
+        proj.appendChild(opt);
+      });
+    }
+    proj.value = cur;
+  }
+  document.querySelectorAll('.vc-layout-select').forEach(s => { s.value = cur; });
+}
+
 // ── 分色模式（ST-35h）：COLOR_PALETTES[i].perUnit＝主要活動頂層依序取色的 HEX 陣列；沒有此欄位＝單色模式 ──
 function currentPerUnitColors() {
   const p = COLOR_PALETTES[colorPaletteIdx];
@@ -4563,6 +4585,7 @@ function renderValueChainEditor() {
   drawVcLinks();
   renderGuideBar();  // ST-14d
   applyPerUnitColors();  // ST-35h
+  syncVcLayoutSelects();  // ST-35f
 }
 
 // ── Value chain links：畫方塊間的細箭頭（連線清單資料 → SVG）──────────────
@@ -9260,6 +9283,7 @@ loadState();
 buildPaletteSelect();
 buildExampleSelect();
 applyPalette(colorPaletteIdx);
+syncVcLayoutSelects();  // ST-35f
 document.getElementById('industryToggleBtn').textContent = showIndustryLabels ? '策略矩陣＋產業矩陣' : '策略矩陣';
 syncShortViewControls();
 document.getElementById('unitIconChk').checked = showUnitIcons;  // ST-35i
