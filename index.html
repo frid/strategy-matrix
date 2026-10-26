@@ -647,6 +647,39 @@
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
   }
 
+  /* ST-35e hex 六角鏈式（G）：沿用 band 的橫帶與群組結構（zones 同時掛 vc-layout-band），只覆寫葉節點外觀：
+     六角形 clip-path 左右各咬 18px、相鄰顆負 margin 互相咬合；一個頂層項目一個色相（JS 寫 --vc-hex／--vc-hex-j），
+     群組內子項同色相、依序變深（白字對比 ≥ 4.5，所以用往黑混而不是變淡）；群組橫帶用同色相深版。
+     描邊取捨：clip-path 會把 border／outline／box-shadow 一起裁掉，故不畫白描邊，靠色相／深淺差區分相鄰顆。≤800px 不套用 */
+  #valueChainEditor .vc-layout-hex {
+    --vc-hex-0: #2aa7b8; --vc-hex-1: #3b6fb6; --vc-hex-2: #7b5cc4; --vc-hex-3: #e3832c;
+    --vc-hex-4: #d64a4a; --vc-hex-5: #e0b531; --vc-hex-6: #4a9d5c;
+  }
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit {
+      clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0 50%);
+      min-height: 62px;
+    }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit:not(.vc-asset) {
+      background: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - var(--vc-hex-j, 0) * 5%), #000);
+    }
+    /* 咬合：非第一顆往左縮 16px（群組本身與群組內第一顆不縮，橫帶才對得齊） */
+    #valueChainEditor .vc-layout-hex .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > :not(:first-child):is(.vc-unit, .vc-group) { margin-left: -16px; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group-body > .vc-group:not(:first-child) { margin-left: 0; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit > .vc-node-head { margin: 0 20px; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head .vc-act,
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head .vc-role-none { color: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-unit:not(.vc-asset) > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head {
+      background: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - 12%), #000);
+      border-color: color-mix(in srgb, var(--vc-hex, #3b6fb6) calc(var(--vc-hex-base, 60%) - 22%), #000);
+    }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: #fff; }
+    #valueChainEditor .vc-layout-hex .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+  }
+
   /* ── Buttons ── */
   button {
     padding: 6px 14px; border-radius: 8px; font-size: var(--fs-base);
@@ -1509,6 +1542,7 @@ const VALUE_CHAIN_VERSION = 1;
 const VC_LAYOUTS = [
   { key: 'porter', label: '經典 Porter' },
   { key: 'band',   label: '橫帶式' },
+  { key: 'hex',    label: '六角鏈式' },
 ];
 const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
 
@@ -3802,6 +3836,23 @@ function buildVcNode(node, zone) {
     deleteVcNode(node.id), 'vc-act-remove'));
   el.appendChild(head);
 
+  // ── ST-35e 六角鏈：頂層序決定色相（--vc-hex-0..6 輪替），群組內葉節點序決定深淺；其他版型不寫 ──
+  if (zone === 'primary' && vcLayoutKey(valueChain.layout) === 'hex') {
+    const top = valueChain.primary.findIndex(function has(n) { return n.id === node.id || (n.children && n.children.some(has)); });
+    if (top >= 0) {
+      let j = 0;
+      if (!isGroup && valueChain.primary[top].type === 'group') {
+        let k = 0;
+        const walk = n => { if (n.id === node.id) { j = k; return true; } if (n.type !== 'group') { k++; return false; } return n.children.some(walk); };
+        walk(valueChain.primary[top]);
+      }
+      el.style.setProperty('--vc-hex-idx', top);
+      el.style.setProperty('--vc-hex-j', Math.min(j, 4));
+      el.style.setProperty('--vc-hex', 'var(--vc-hex-' + (top % 7) + ')');
+      el.style.setProperty('--vc-hex-base', (top % 7 === 5 ? 54 : 66) + '%');  // 黃色亮度高，要多混黑才夠白字對比
+    }
+  }
+
   // ── 群組內容區：子節點；拖到空白處＝放到群組最後 ──
   if (isGroup) {
     // ST-35a 橫帶式：群組寬＝葉節點數 × 單支 chevron 寬（CSS 讀 --vc-leaves）；Porter 不寫，DOM 維持原樣
@@ -3990,6 +4041,7 @@ function renderValueChainEditor() {
   zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
   const layout = vcLayoutKey(valueChain.layout);
   if (layout !== 'porter') zones.classList.add('vc-layout-' + layout);  // ST-35a：Porter 的 DOM 維持原樣
+  if (layout === 'hex') zones.classList.add('vc-layout-band');  // ST-35e：六角鏈沿用橫帶的群組結構，只覆寫葉節點外觀
 
   // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
   const supportLabel = document.createElement('div');
