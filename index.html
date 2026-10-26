@@ -587,6 +587,65 @@
   .vc-zone-primary > .vc-zone-body > .vc-group .vc-group-body > .vc-unit:hover > .vc-node-head > .vc-act {
     display: inline;
   }
+  /* ST-35a：版型下拉（樣式同範本下拉） */
+  .vc-layout-select {
+    font-size: var(--fs-sm); font-weight: 500; font-family: inherit;
+    padding: 5px 11px; border-radius: 8px; border: 1px solid var(--grid-line);
+    background: white; color: var(--ink); cursor: pointer; box-shadow: var(--shadow);
+  }
+  /* ST-35a 橫帶式（B）：主要活動的葉節點等寬一排 chevron，群組名＝上方橫帶（跨其子單元，巢狀時疊帶），
+     與矩陣「群組表頭＋細項表頭」一對一。只新增規則、不改 Porter；全部以 #valueChainEditor 起頭蓋過 Porter 規則，
+     ≤800px 不套用（回到直排）。葉節點 flex 1 1 0、群組 flex-grow＝葉節點數（JS 寫 --vc-leaves），所以每支 chevron 等寬 */
+  @media (min-width: 801px) {
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-zone-body { align-items: flex-end; column-gap: 0; row-gap: 12px; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary :is(.vc-zone-body, .vc-group-body) > .vc-unit {
+      flex: 1 1 0; min-width: 84px; min-height: 58px; box-sizing: border-box;
+      padding: 6px 0; border: none; border-radius: 0;  /* 左右內距放在 .vc-node-head 的 margin：方塊 flex-basis 0 才真的等分 */
+      justify-content: center; align-items: center; text-align: center; white-space: normal;
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit.vc-chev-first {
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head {
+      flex: 1 1 auto; min-width: 0; flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 2px;
+      margin: 0 16px 0 18px;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit.vc-chev-first > .vc-node-head { margin-left: 8px; }
+    /* 名稱佔滿第一行（蓋過 sizeVcInput 對最外層單元寫的 inline 寬度），標籤在第二行置中 */
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100% !important; width: auto !important; text-align: center;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 0; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-act { display: none; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit:hover > .vc-node-head > .vc-act { display: inline; }
+    /* 群組＝直向容器：上方名稱橫帶＋下方一排子項；本身不畫底色、不斜切 */
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group {
+      flex: var(--vc-leaves, 1) 1 0; align-self: flex-end;
+      /* 最小寬＝葉節點數 × 84px 與「橫帶名稱一行」取大者；葉節點 flex 填滿群組寬 */
+      min-width: max(calc(var(--vc-leaves, 1) * 84px), calc(var(--vc-name-len, 2) * var(--fs-sm) + 32px));
+      gap: 3px; padding: 0; border: none; border-radius: 0; background: transparent; clip-path: none; white-space: normal;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head {
+      flex-wrap: wrap; justify-content: center; align-items: center; row-gap: 0; min-height: 30px; margin: 0; padding: 2px 6px;
+      box-sizing: border-box;
+      background: var(--vc-primary-grad); border: 1px solid var(--vc-primary-border); border-radius: 4px;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea),
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head .vc-act { color: var(--vc-primary-text); }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head :is(input, textarea):focus { color: var(--ink); background: #fff; }
+    /* 橫帶名稱：一行不換行、高度由 rows=1 決定（不吃 sizeVcInput 的 inline 高度，避免在別處量到的高度把字裁掉）；
+       hover 出現的 ＋同層／＋子項／✕ 換到名稱下一行，不擠名稱 */
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap {
+      flex: 1 0 100%; width: auto; height: auto !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head > .vc-act { display: none; margin-top: 0; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head:hover > .vc-act { display: inline; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body {
+      flex-direction: row; align-items: flex-end; gap: 0; margin: 0; padding: 0; min-height: 58px; border-radius: 0;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
+  }
 
   /* ── Buttons ── */
   button {
@@ -1443,8 +1502,15 @@ let showIndustryLabels = false;
 // 價值鏈資料（ST-01a）：矩陣欄位由價值鏈「展開到策略矩陣」產生（ST-01d），展開前矩陣維持原本欄位
 // 節點：{ id, name, type: 'group'|'unit' }；group 另有 children: []，unit 另有 unitKind: 'activity'|'asset'
 //       unit 可選 unitRole: 'semi'|'lead'|'influencer'（ST-14i 特殊價值單元；沒有此欄位＝一般單元，舊存檔照常載入）
-// valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg }
+// valueChain = { v, primary: 節點樹（任意層）, support: [unit], products: [unit], links: [{ id, from, to }], showArrowBg, layout }
+//   layout（ST-35a）：主要活動列的版型 key，見 VC_LAYOUTS；舊存檔沒有 → 'porter'
 const VALUE_CHAIN_VERSION = 1;
+// ST-35a：價值鏈版型（只換主要活動列；支援活動、Margin、產品欄不動）。之後 ST-35b–e 依序加 segment／fold／circle／hex
+const VC_LAYOUTS = [
+  { key: 'porter', label: '經典 Porter' },
+  { key: 'band',   label: '橫帶式' },
+];
+const vcLayoutKey = k => (VC_LAYOUTS.some(l => l.key === k) ? k : 'porter');
 
 // 已使用的節點／連線 id（載入存檔後會重建，確保新 id 不會跟舊資料撞號）
 const vcUsedIds = new Set();
@@ -1521,7 +1587,8 @@ function columnGroupsToValueChain(groups, sepIdx) {
     if (category) primary.push(makeGroup(category, before.map(name => makeUnit(name))));
     else before.forEach(name => primary.push(makeUnit(name)));
   });
-  return { v: VALUE_CHAIN_VERSION, primary, support: [], products, links: [], showArrowBg: true };
+  return { v: VALUE_CHAIN_VERSION, primary, support: [], products, links: [], showArrowBg: true,
+    layout: 'porter' };
 }
 
 // 全新使用者的預設價值鏈：支援活動 3 項＋既有預設主要活動（資訊系統移到支援；品牌改為「品牌／商譽」資產）＋產品一～三
@@ -1532,7 +1599,8 @@ function makeDefaultValueChain() {
     .map(name => makeUnit(name));
   primary.push(makeUnit('品牌／商譽', 'asset'));
   const products = ['產品一', '產品二', '產品三'].map(name => makeUnit(name));
-  return { v: VALUE_CHAIN_VERSION, primary, support, products, links: [], showArrowBg: true };
+  return { v: VALUE_CHAIN_VERSION, primary, support, products, links: [], showArrowBg: true,
+    layout: 'porter' };
 }
 
 // 驗證／正規化存檔中的 valueChain：丟掉壞節點、補預設欄位、id 去重、清掉斷掉的連線；不丟例外
@@ -1580,7 +1648,9 @@ function normaliseValueChain(raw) {
     links.push({ id: takeId(l.id), from: l.from, to: l.to });
   });
   const showArrowBg = typeof src.showArrowBg === 'boolean' ? src.showArrowBg : true;
-  return { v: VALUE_CHAIN_VERSION, primary, support, products, links, showArrowBg };
+  const layout = vcLayoutKey(src.layout);  // ST-35a：白名單外（含舊存檔沒有）→ 'porter'
+  return { v: VALUE_CHAIN_VERSION, primary, support, products, links, showArrowBg,
+    layout };
 }
 
 let valueChain = makeDefaultValueChain();
@@ -3672,6 +3742,7 @@ function buildVcNode(node, zone) {
     inp.value = node.name;
     inp.title = node.name;
     sizeVcInput(inp);
+    if (el.style.getPropertyValue('--vc-name-len')) el.style.setProperty('--vc-name-len', Math.max(2, [...node.name].length));  // ST-35a 橫帶
     saveState();
   });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
@@ -3725,6 +3796,14 @@ function buildVcNode(node, zone) {
 
   // ── 群組內容區：子節點；拖到空白處＝放到群組最後 ──
   if (isGroup) {
+    // ST-35a 橫帶式：群組寬＝葉節點數 × 單支 chevron 寬（CSS 讀 --vc-leaves）；Porter 不寫，DOM 維持原樣
+    if (zone === 'primary' && vcLayoutKey(valueChain.layout) !== 'porter') {
+      let leaves = 0;
+      const count = n => { if (n.type === 'group') n.children.forEach(count); else leaves++; };
+      count(node);
+      el.style.setProperty('--vc-leaves', Math.max(1, leaves));
+      el.style.setProperty('--vc-name-len', Math.max(2, [...node.name].length));  // 橫帶名稱一行放得下的最小寬度
+    }
     const body = document.createElement('div');
     body.className = 'vc-group-body';
     node.children.forEach(c => body.appendChild(buildVcNode(c, zone)));
@@ -3873,6 +3952,23 @@ function renderValueChainEditor() {
   });
   toolbar.appendChild(tplSelect);
 
+  // ST-35a：價值鏈版型下拉（只換主要活動列的畫法；ST-35f 再補到專案區）
+  const layoutSelect = document.createElement('select');
+  layoutSelect.className = 'vc-layout-select';
+  layoutSelect.title = '價值鏈版型：只換主要活動列的畫法（螢幕寬度 ≤800px 時一律直排）';
+  VC_LAYOUTS.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.key;
+    opt.textContent = '版型：' + l.label;
+    layoutSelect.appendChild(opt);
+  });
+  layoutSelect.value = vcLayoutKey(valueChain.layout);
+  layoutSelect.addEventListener('change', () => {
+    valueChain.layout = vcLayoutKey(layoutSelect.value);
+    commitValueChain();
+  });
+  toolbar.appendChild(layoutSelect);
+
   toolbar.appendChild(arrowLabel);
   editor.appendChild(toolbar);
 
@@ -3884,6 +3980,8 @@ function renderValueChainEditor() {
   // ── 三區（支援活動橫條在上、主要活動在下、產品直欄在最右；版型依 ST-01h 的 Porter 價值鏈圖，ST-23a 產品移入）──
   const zones = document.createElement('div');
   zones.className = 'vc-zones' + (valueChain.showArrowBg ? ' vc-arrow-bg' : '');
+  const layout = vcLayoutKey(valueChain.layout);
+  if (layout !== 'porter') zones.classList.add('vc-layout-' + layout);  // ST-35a：Porter 的 DOM 維持原樣
 
   // 左側「支援活動」括號（純裝飾，不可互動／不參與連線與拖放）
   const supportLabel = document.createElement('div');
@@ -3919,6 +4017,11 @@ function renderValueChainEditor() {
     }
     bindVcDropArea(body, z.key, () => valueChain[z.key], null);
     zoneEl.appendChild(body);
+    // ST-35a 橫帶式：整列第一支 chevron 不切左缺口
+    if (z.key === 'primary' && layout === 'band') {
+      const firstLeaf = body.querySelector('.vc-unit');
+      if (firstLeaf) firstLeaf.classList.add('vc-chev-first');
+    }
 
     // 區尾：新增最上層單元／群組
     const footer = document.createElement('div');
@@ -8527,7 +8630,9 @@ function loadValueChainTemplate(id) {
   const t = VC_TEMPLATES.find(x => x.id === id);
   if (!t) return;
   if (!confirm(`載入範本「${t.name}」會取代目前整條價值鏈（含產品）；矩陣欄位要按「展開到策略矩陣」才會更新，確定嗎？`)) return;
+  const keepLayout = valueChain.layout;  // ST-35a：範本只換結構，版型沿用目前的
   valueChain = normaliseValueChain(JSON.parse(JSON.stringify(t.valueChain)));  // 深拷貝，避免改到範本常數
+  valueChain.layout = vcLayoutKey(keepLayout);
   resetValueChainIds(valueChain);
   commitValueChain();
 }
