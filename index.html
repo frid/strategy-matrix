@@ -1475,9 +1475,14 @@
   .vc-icon-btn.vc-icon-empty:hover { opacity: 0.8; }
   .vc-icon-picker {
     position: absolute; z-index: 9990; background: white; border: 1px solid #ccc; border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18); padding: 8px; width: 236px; color: var(--ink);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18); padding: 8px; width: 300px; color: var(--ink);
   }
-  .vc-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
+  /* ST-41：搜尋框＋可捲動分類 grid（類別小標題跨整列；hidden 的按鈕／標題不佔格） */
+  .vc-icon-search { display: block; width: 100%; box-sizing: border-box; font-size: var(--fs-sm); padding: 3px 6px; margin-bottom: 6px; }
+  .vc-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; max-height: 220px; overflow-y: auto; align-content: start; }
+  .vc-icon-grid [hidden] { display: none; }
+  .vc-icon-cat { grid-column: 1 / -1; font-size: var(--fs-sm); color: #888; padding: 4px 2px 1px; position: sticky; top: 0; background: white; z-index: 1; }
+  .vc-icon-none { grid-column: 1 / -1; font-size: var(--fs-sm); color: #888; padding: 10px 0; text-align: center; }
   .vc-icon-grid button {
     border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 2px 0;
     font-size: 17px; line-height: 1.3; cursor: pointer;
@@ -1928,11 +1933,16 @@ function makeDefaultValueChain() {
     layout: 'porter' };
 }
 
-// ST-35i：價值單元 icon 正規化：非字串／空白 → ''；去空白後超過 4 字（以 code point 計）只取前 4 字
+// ST-35i：價值單元 icon 正規化：非字串／空白 → ''；去空白後超過 4 字只取前 4 字
+// ST-41：以 grapheme 計字（Intl.Segmenter），組合 emoji 不會被切壞；瀏覽器沒有 Segmenter 才退回 code point
 function normVcIcon(v) {
   if (typeof v !== 'string') return '';
   const s = v.replace(/\s+/g, '');
-  return s ? [...s].slice(0, 4).join('') : '';
+  if (!s) return '';
+  const parts = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+    ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s), x => x.segment)
+    : [...s];
+  return parts.slice(0, 4).join('');
 }
 // ST-35i：欄名 → icon（矩陣欄頭用；欄位與價值單元以名稱對應，同名取第一個有 icon 的）
 function vcIconByName() {
@@ -4202,6 +4212,390 @@ function makeVcAction(text, title, onClick, extraClass = '') {
 // ── ST-35i：價值單元 icon 選單（常用 24 個 emoji＋自由輸入＋清除）──
 const VC_ICON_CHOICES = ['🔬','🧪','🧬','💊','🩺','🏥','⚙️','🏭','✅','📐','📦','🚚',
                          '🏬','🛒','📣','🤝','💬','💻','📊','💰','👥','🎓','⭐','📚'];
+// ST-41：icon 選單的 emoji 資料集（內嵌、不連網）。每類一段文字，每行「emoji 中文／英文關鍵字…」；
+// 「常用」= 上面原 24 個排最前；只收單一 code point（含 VS16／keycap），不收 ZWJ 組合與 Emoji 13 之後的字。
+// 同一 emoji 只在第一次出現的類別列出（解析時去重）。
+const VC_EMOJI_SET = [
+  ['常用', `🔬 顯微鏡 研究 研發 實驗 microscope research lab
+🧪 試管 實驗 化學 測試 test tube chemistry lab
+🧬 基因 DNA 生技 遺傳 gene biotech
+💊 藥 藥品 藥丸 製藥 pill drug medicine pharma
+🩺 聽診器 醫生 診斷 醫療 stethoscope doctor
+🏥 醫院 診所 hospital clinic
+⚙️ 齒輪 設定 製程 機械 gear process engineering
+🏭 工廠 製造 生產 factory manufacturing plant
+✅ 勾選 品管 確認 完成 check quality done
+📐 三角尺 設計 規格 工程 design ruler engineering
+📦 包裹 箱子 包裝 倉儲 物流 package box logistics
+🚚 卡車 貨車 運輸 配送 物流 truck delivery shipping
+🏬 百貨 商場 零售 通路 store retail mall
+🛒 購物車 電商 採購 銷售 cart shopping ecommerce
+📣 擴音器 行銷 宣傳 廣告 marketing promotion megaphone
+🤝 握手 合作 夥伴 業務 handshake partner deal
+💬 對話 客服 溝通 訊息 chat service message
+💻 電腦 筆電 資訊 IT 軟體 laptop computer software
+📊 圖表 分析 數據 報表 chart data analytics
+💰 錢 財務 資金 收入 money finance
+👥 人員 人資 團隊 人力 people team HR
+🎓 學位 教育 訓練 人才 graduation education training
+⭐ 星 品牌 重點 star brand
+📚 書 知識 出版 教材 books knowledge publishing`],
+  ['醫療生技', `🦠 細菌 病毒 微生物 感染 virus bacteria microbe
+💉 針筒 注射 疫苗 syringe vaccine injection
+🩸 血液 檢驗 抽血 blood test
+🩹 OK繃 傷口 照護 bandage care
+🧫 培養皿 細胞 培養 petri dish cell culture
+⚗️ 蒸餾 化學 製程 alembic chemistry
+🥼 實驗衣 白袍 研究員 lab coat
+🧤 手套 防護 gloves
+🥽 護目鏡 防護 goggles safety
+😷 口罩 防疫 mask
+🤒 生病 發燒 病人 sick patient
+🌡️ 溫度計 體溫 thermometer temperature
+🧠 大腦 神經 腦 brain neuro
+🦷 牙齒 牙科 tooth dental
+🦴 骨頭 骨科 bone orthopedics
+👁️ 眼睛 眼科 視覺 eye vision
+👂 耳朵 聽力 ear hearing
+🚑 救護車 急診 ambulance emergency
+⚕️ 醫療 醫學 medical
+🦽 輪椅 長照 輔具 wheelchair care
+🦼 電動輪椅 行動 輔具 mobility
+🤰 孕婦 婦產 pregnant
+🍼 奶瓶 婦幼 baby bottle
+🧴 乳液 保養 化妝品 lotion cosmetics
+🧼 肥皂 清潔 衛生 soap hygiene
+🧻 衛生紙 用品 tissue paper
+☢️ 輻射 核醫 radiation
+☣️ 生物危害 感染控制 biohazard
+🐁 老鼠 動物實驗 mouse animal
+🐒 猴子 動物 monkey
+🧘 瑜珈 健康 冥想 yoga wellness
+🏋️ 健身 運動 fitness gym
+💤 睡眠 休息 sleep`],
+  ['製造物流', `🏗️ 營建 起重機 建設 construction crane
+🔧 扳手 維修 保養 wrench maintenance
+🔩 螺絲 零件 bolt parts
+🛠️ 工具 維修 tools repair
+🔨 鎚子 加工 hammer
+⚒️ 鎚 加工 hammer pick
+🧰 工具箱 toolbox
+⛏️ 礦 採礦 原料 mining
+🧱 磚 建材 原料 brick material
+🛢️ 油桶 石油 能源 oil drum
+⛽ 加油 燃料 fuel
+🔋 電池 電力 儲能 battery
+⚡ 電 能源 電力 electricity power
+🔌 插頭 電源 plug
+🚛 聯結車 貨運 lorry truck freight
+🚢 船 海運 ship shipping
+✈️ 飛機 空運 plane air freight
+🚆 火車 鐵路 train rail
+🚐 廂型車 van
+🛵 機車 外送 scooter delivery
+🚲 腳踏車 bike
+🏍️ 摩托車 motorcycle
+🚀 火箭 上市 發射 rocket launch
+🛫 起飛 出口 departure export
+🛬 抵達 進口 arrival import
+⚓ 港口 錨 port anchor
+🏷️ 標籤 價格 label tag price
+🗃️ 檔案盒 存貨 card file box
+🧊 冷凍 冷鏈 ice cold chain
+❄️ 冷藏 雪 cold
+📥 進貨 收件 inbox inbound
+📤 出貨 寄件 outbox outbound
+📫 郵件 信箱 mailbox
+✉️ 信 郵件 envelope mail
+🗺️ 地圖 路線 map route
+🧭 指南針 方向 策略 compass direction
+🔄 循環 更新 cycle refresh
+♻️ 回收 環保 循環 recycle
+🚧 施工 工程 construction
+🏁 終點 完工 finish`],
+  ['商業金融', `💵 美元 現金 cash dollar
+💴 日圓 yen
+💶 歐元 euro
+💲 美元符號 價格 定價 dollar price
+💳 信用卡 支付 付款 credit card payment
+🏦 銀行 金融 bank
+🏧 提款機 ATM
+💹 股價 股票 成長 stock
+📈 上升 成長 營收 growth up
+📉 下降 衰退 decline down
+🧾 收據 發票 會計 receipt invoice
+💼 公事包 商務 業務 briefcase business
+🏢 辦公大樓 總部 公司 office HQ
+🏪 便利商店 門市 convenience store
+🏠 房屋 住家 房地產 house home
+🏛️ 政府 機關 法院 government
+⚖️ 法律 法規 公平 law legal
+📜 合約 證書 文件 contract scroll
+📝 筆記 紀錄 企劃 memo note
+📋 清單 剪貼板 checklist clipboard
+📑 文件 報告 documents
+🗂️ 分類 歸檔 dividers
+📁 資料夾 檔案 folder
+📅 日曆 排程 calendar schedule
+⏰ 鬧鐘 時效 alarm
+⏱️ 碼表 效率 速度 stopwatch
+⌛ 時間 期限 沙漏 hourglass
+🎯 目標 標靶 策略 target goal
+🏆 獎盃 冠軍 trophy
+🥇 第一 金牌 first gold
+🏅 獎章 medal
+💡 燈泡 創意 點子 創新 idea innovation
+🔑 鑰匙 關鍵 key
+🔒 鎖 安全 機密 lock security
+🛡️ 盾牌 保護 防禦 shield protection
+🎁 禮物 贈品 gift
+🛍️ 購物袋 零售 shopping bag
+🧧 紅包 red envelope
+💎 鑽石 高端 精品 diamond premium
+👑 皇冠 領導 crown leader
+📞 電話 客服 phone call
+☎️ 電話 telephone
+📇 名片 客戶 card index contact
+🗳️ 投票 ballot vote`],
+  ['科技通訊', `🖥️ 桌機 電腦 desktop computer
+⌨️ 鍵盤 keyboard
+🖱️ 滑鼠 mouse
+🖨️ 印表機 printer
+📱 手機 行動 App mobile phone
+📲 手機下載 app download
+📡 衛星天線 通訊 satellite antenna
+🛰️ 衛星 satellite
+🌐 網路 全球 internet web global
+🔗 連結 鏈結 link
+☁️ 雲端 cloud
+💾 磁片 儲存 save floppy
+💿 光碟 disc
+💽 硬碟 磁碟 disk
+🗄️ 檔案櫃 資料庫 database cabinet
+🔍 搜尋 放大鏡 search
+🔎 搜尋 查核 search
+🔭 望遠鏡 前瞻 遠景 telescope vision
+🤖 機器人 AI 自動化 robot automation
+🧮 算盤 計算 abacus
+⚛️ 原子 物理 atom
+🧲 磁鐵 吸引 magnet
+📷 相機 camera
+📸 拍照 photo
+🎥 攝影 影片 video
+📺 電視 媒體 tv
+📻 收音機 廣播 radio
+🎙️ 麥克風 podcast mic
+🎧 耳機 headphone
+🕹️ 搖桿 遊戲 joystick game
+🎮 遊戲 電玩 game
+🔐 加密 資安 encrypted
+📶 訊號 網路 signal
+📧 電子郵件 email
+📨 收信 incoming mail
+🔢 數字 numbers
+🔦 手電筒 flashlight`],
+  ['人物角色', `👤 個人 使用者 user person
+🧑 人 person
+👨 男 man
+👩 女 woman
+👦 男孩 boy
+👧 女孩 girl
+👶 嬰兒 兒科 baby
+👴 老人 長者 高齡 elderly senior
+👵 老婦 長者 elderly woman
+👪 家庭 family
+👫 夫妻 couple
+👮 警察 police
+👷 工人 施工 worker
+💂 衛兵 guard
+🕵️ 偵探 調查 detective
+🤵 西裝 主管 tuxedo manager
+🙋 舉手 提問 raise hand
+🚶 走路 walk
+🏃 跑步 run
+🧗 攀爬 挑戰 climb
+🤹 多工 juggle
+🗣️ 說話 發言 speaking
+👀 眼睛 觀察 look
+💪 肌肉 力量 能力 strength
+👍 讚 好 like
+👎 爛 dislike
+👏 拍手 鼓掌 clap
+🙌 歡呼 celebrate
+👌 OK 好
+✋ 停 stop hand
+✌️ 勝利 victory
+😀 笑臉 開心 smile
+😊 微笑 滿意 happy
+😐 普通 neutral
+😟 擔心 worried
+😡 生氣 angry
+🤔 思考 think
+😎 酷 cool
+🥳 慶祝 party`],
+  ['物品工具', `✏️ 鉛筆 pencil
+🖊️ 筆 pen
+🖋️ 鋼筆 簽約 fountain pen
+🖍️ 蠟筆 crayon
+🖌️ 畫筆 設計 paintbrush
+🎨 調色盤 設計 藝術 art design
+📏 尺 量測 ruler measure
+📌 圖釘 重點 pin
+📍 位置 地點 location
+📎 迴紋針 附件 clip
+✂️ 剪刀 剪 cut scissors
+🗑️ 垃圾桶 trash
+🧹 掃把 清潔 broom
+🧺 籃子 basket
+🪑 椅子 chair
+🛏️ 床 bed
+🚪 門 door
+🧳 行李箱 旅遊 luggage travel
+🎒 背包 backpack
+👔 襯衫 制服 shirt
+👕 T恤 服飾 tshirt apparel
+👗 洋裝 服裝 dress fashion
+👟 鞋 sneaker shoe
+💄 口紅 美妝 lipstick
+💍 戒指 ring
+🕶️ 墨鏡 sunglasses
+⌚ 手錶 watch
+🔔 鈴 通知 bell notification
+📖 書本 閱讀 book read
+📰 新聞 報紙 newspaper
+🔖 書籤 bookmark
+🎫 票 ticket
+🎟️ 入場券 admission ticket
+🎬 電影 影視 film movie
+🎵 音樂 music
+🎤 麥克風 唱歌 mic
+🎲 骰子 機率 dice
+🧩 拼圖 整合 puzzle
+🎈 氣球 活動 balloon
+🎉 慶祝 活動 party
+🕯️ 蠟燭 candle
+🧸 玩具 toy teddy
+🧷 別針 pin
+🧵 線 紡織 thread textile
+🧶 毛線 yarn`],
+  ['自然食物', `🌱 幼苗 成長 新創 seedling
+🌿 草本 天然 herb
+🍀 幸運草 luck clover
+🌳 樹 tree
+🌾 稻 農業 rice agriculture
+🌻 向日葵 花 sunflower
+🌸 花 櫻花 flower
+🌍 地球 全球 國際 earth world
+🌏 亞洲 地球 asia
+☀️ 太陽 sun
+🌙 月 moon
+⛅ 天氣 weather
+🌧️ 雨 rain
+🌊 海浪 海洋 wave ocean
+🔥 火 熱門 fire hot
+💧 水 水滴 water
+🌈 彩虹 rainbow
+⛰️ 山 mountain
+🏝️ 島 island
+🐟 魚 漁業 fish
+🐄 牛 畜牧 cow
+🐖 豬 pig
+🐔 雞 chicken
+🐝 蜜蜂 勤勞 bee
+🦋 蝴蝶 butterfly
+🐶 狗 寵物 dog pet
+🐱 貓 cat
+🍎 蘋果 水果 apple fruit
+🍇 葡萄 grape
+🍊 橘子 orange
+🍌 香蕉 banana
+🍓 草莓 strawberry
+🥬 蔬菜 青菜 vegetable
+🥕 紅蘿蔔 carrot
+🌽 玉米 corn
+🍚 飯 米 rice
+🍞 麵包 bread
+🍜 麵 noodle
+🍱 便當 bento
+🥛 牛奶 乳品 milk dairy
+☕ 咖啡 coffee
+🍵 茶 tea
+🍷 酒 wine
+🍺 啤酒 beer
+🥤 飲料 drink
+🍰 蛋糕 甜點 cake
+🍽️ 餐廳 餐飲 dining restaurant
+🧂 鹽 調味 salt`],
+  ['符號', `❗ 驚嘆 重要 注意 exclamation important
+❓ 問號 問題 question
+⚠️ 警告 風險 warning risk
+⛔ 禁止 no entry
+🚫 禁止 prohibited
+❌ 錯 叉 cross wrong
+⭕ 圓 對 circle
+✔️ 勾 check
+➕ 加 plus
+➖ 減 minus
+➡️ 右 箭頭 right arrow
+⬅️ 左 箭頭 left arrow
+⬆️ 上 箭頭 up arrow
+⬇️ 下 箭頭 down arrow
+↔️ 雙向 箭頭 both arrow
+🔁 重複 repeat
+🔀 交叉 shuffle
+1️⃣ 一 數字 one number
+2️⃣ 二 數字 two number
+3️⃣ 三 數字 three number
+4️⃣ 四 數字 four number
+5️⃣ 五 數字 five number
+🔴 紅 圓 red
+🟠 橙 圓 orange
+🟡 黃 圓 yellow
+🟢 綠 圓 green
+🔵 藍 圓 blue
+🟣 紫 圓 purple
+⚫ 黑 圓 black
+⚪ 白 圓 white
+🟥 紅 方塊 red square
+🟩 綠 方塊 green square
+🟦 藍 方塊 blue square
+🔺 三角 上升 triangle up
+🔻 三角 下降 triangle down
+🔶 菱形 diamond
+💯 滿分 100 perfect
+🆕 新 new
+🆗 OK
+🆓 免費 free
+🔝 頂尖 top
+🔜 即將 soon
+♾️ 無限 infinity
+☯️ 平衡 yin yang
+✨ 閃亮 特色 sparkles
+💥 衝擊 爆炸 boom impact
+🚩 紅旗 警示 flag
+❤️ 愛心 喜愛 heart love
+🧡 橙心 heart
+💛 黃心 heart
+💚 綠心 環保 heart
+💙 藍心 heart
+💜 紫心 heart
+🖤 黑心 heart
+💔 心碎 broken heart`]
+];
+// ST-41：解析成 [{ cat, items:[{ic, key}] }]，key = emoji＋關鍵字（小寫）供搜尋
+let vcEmojiCats = null;
+function getVcEmojiCats() {
+  if (vcEmojiCats) return vcEmojiCats;
+  const seen = new Set();
+  vcEmojiCats = VC_EMOJI_SET.map(([cat, txt]) => ({ cat, items: txt.split('\n').map(line => {
+    const sp = line.indexOf(' ');
+    const ic = sp < 0 ? line : line.slice(0, sp);
+    if (!ic || seen.has(ic)) return null;
+    seen.add(ic);
+    return { ic, key: (line + ' ' + cat).toLowerCase() };
+  }).filter(Boolean) }));
+  return vcEmojiCats;
+}
 function closeVcIconPicker() {
   const pop = document.getElementById('vcIconPicker');
   if (pop) pop.remove();
@@ -4220,6 +4614,18 @@ function setVcIcon(node, v) {
   commitValueChain();
   if (showUnitIcons) rebuildTable();  // 矩陣欄頭同步
 }
+// ST-41：關鍵字過濾（空白分隔多詞取 AND、大小寫不分）；有搜尋字時隱藏類別小標題，無結果顯示「無符合」
+function filterVcIconPicker(pop, q) {
+  const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  let hit = 0;
+  pop.querySelectorAll('.vc-icon-grid button').forEach(b => {
+    const show = terms.every(t => b.dataset.key.includes(t));
+    b.hidden = !show;
+    if (show) hit++;
+  });
+  pop.querySelectorAll('.vc-icon-grid .vc-icon-cat').forEach(h => { h.hidden = terms.length > 0; });
+  pop.querySelector('.vc-icon-none').hidden = hit > 0;
+}
 function openVcIconPicker(node, anchor) {
   closeVcIconPicker();
   const pop = document.createElement('div');
@@ -4227,16 +4633,36 @@ function openVcIconPicker(node, anchor) {
   pop.className = 'vc-icon-picker';
   pop.addEventListener('mousedown', e => e.stopPropagation());
   pop.addEventListener('click', e => e.stopPropagation());
+  const search = document.createElement('input');  // ST-41：頂部搜尋框
+  search.type = 'search';
+  search.className = 'vc-icon-search';
+  search.placeholder = '搜尋 emoji…（中文或英文）';
+  search.addEventListener('input', () => filterVcIconPicker(pop, search.value));
+  pop.appendChild(search);
   const grid = document.createElement('div');
   grid.className = 'vc-icon-grid';
-  VC_ICON_CHOICES.forEach(ic => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = ic;
-    if (ic === node.icon) b.classList.add('vc-icon-cur');
-    b.addEventListener('click', () => setVcIcon(node, ic));
-    grid.appendChild(b);
+  let cur = null;
+  getVcEmojiCats().forEach(({ cat, items }) => {
+    const h = document.createElement('div');
+    h.className = 'vc-icon-cat';
+    h.textContent = cat;
+    grid.appendChild(h);
+    items.forEach(({ ic, key }) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = ic;
+      b.title = key.split(' ').slice(1, 3).join(' ');
+      b.dataset.key = key;
+      if (ic === node.icon) { b.classList.add('vc-icon-cur'); cur = cur || b; }
+      b.addEventListener('click', () => setVcIcon(node, ic));
+      grid.appendChild(b);
+    });
   });
+  const none = document.createElement('div');
+  none.className = 'vc-icon-none';
+  none.textContent = '無符合';
+  none.hidden = true;
+  grid.appendChild(none);
   pop.appendChild(grid);
   const row = document.createElement('div');
   row.className = 'vc-icon-row';
@@ -4257,9 +4683,16 @@ function openVcIconPicker(node, anchor) {
   pop.appendChild(row);
   document.body.appendChild(pop);
   const r = anchor.getBoundingClientRect();
-  const left = Math.max(8, Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 8));
+  const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+  const left = Math.max(8, Math.min(r.left + window.scrollX, window.scrollX + vw - pop.offsetWidth - 8));
   pop.style.left = left + 'px';
-  pop.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  // ST-41：下方放不下 → 往上翻；上方也放不下 → 貼視窗底（面板高度有限，不會超過視窗）
+  const ph = pop.offsetHeight;
+  let top = r.bottom + 4;
+  if (top + ph > vh - 8) top = r.top - ph - 4 >= 8 ? r.top - ph - 4 : Math.max(8, vh - ph - 8);
+  pop.style.top = (top + window.scrollY) + 'px';
+  if (cur) grid.scrollTop = Math.max(0, cur.offsetTop - grid.offsetTop - 24);
+  search.focus({ preventScroll: true });
   document.addEventListener('mousedown', vcIconPickerOutside, true);
   document.addEventListener('keydown', vcIconPickerKey, true);
 }
