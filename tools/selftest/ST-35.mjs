@@ -41,7 +41,10 @@ const linkCheck = `(()=>{
   const bad=[];
   ps.forEach((p,i)=>{const d=p.getAttribute('d')||'';const n=(d.match(/-?\\d+(\\.\\d+)?/g)||[]).map(Number);
     const s={x:n[0],y:n[1]},e={x:n[n.length-2],y:n[n.length-1]},o=exp[i];
-    if(/NaN/.test(d)||!o||!good(s,o.l.from,o.a)||!good(e,o.l.to,o.b)) bad.push({i,d:d.slice(0,80)});});
+    // ST-40 起 fold 收合相鄰群組的線是 8px 短線（以交界為中心各延伸 4px），端點離邊 4px：只對「2 點、總長 ≤ 8px」放寬到 5px（比照 ST-36），其他線容差不變
+    const t=(n.length===4&&Math.hypot(e.x-s.x,e.y-s.y)<=8)?5:3;
+    const ok2=(q,id,r)=>(lay==='circle'&&isLeaf(id))?onCircle(q,r):onEdge(q,r,t);
+    if(/NaN/.test(d)||!o||!ok2(s,o.l.from,o.a)||!ok2(e,o.l.to,o.b)) bad.push({i,d:d.slice(0,80)});});
   return {n:ps.length,exp:exp.length,links:valueChain.links.length,bad};
 })()`;
 const leafProbe = `[...document.querySelectorAll('#valueChainEditor .vc-zone-primary .vc-unit:not(.vc-asset)')].filter(u=>u.offsetWidth).map(u=>{

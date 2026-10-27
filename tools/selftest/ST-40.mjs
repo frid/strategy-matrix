@@ -4,7 +4,8 @@
 //   [a] bio-aesthetic 1400 切 fold（全收合）：.vc-link-main 條數＝兩端解析後矩形不同的連線數；每條長度 ≥ 8px、正交、端點離對應矩形邊 ≤ 5px（短線以交界為中心各延伸 4px）
 //   [b] 展開「醫療服務」後連線重畫：條數＝矩形不同的連線數、長度 ≥ 8、正交
 //   [c] 兩端落在同一收合群組（自建 vc：g1 內 b1→b2）不畫，但 links 清單仍在
-//   [d] porter／band(800 寬)／band(1400) 的 path d 與基準版逐字相同（bio-aesthetic、兩範例）
+//   [d] porter（1400／800）、band(800 寬，橫帶 CSS 不生效＝bandAnc 關) 的 path d 與基準版逐字相同（bio-aesthetic、兩範例）；
+//       band(1400) 不比基準：ST-39 會刻意改 band 系進出點 x（避開橫帶文字），dev 合併前後基準會不同，改做結構檢查（正交、端點在方塊邊 ±1px）
 //   [e] 兩 fixtures 與兩範例載入無 console error
 // 預期：全部 PASS、exit 0。
 import { launch } from '../cdp-harness.mjs';
@@ -69,7 +70,20 @@ async function collect(file, width) {
   const paths = () => h.ev(`[...document.querySelectorAll('#vcLineCanvas path.vc-link-main')].map(p=>p.getAttribute('d'))`);
   for (const [k, js] of [['tpl', `loadValueChainTemplate('bio-aesthetic')`], ['bookstore', `loadExampleProject('bookstore-a')`], ['foundry', `loadExampleProject('foundry-t')`]]) {
     await h.stubDialogs(); await h.ev(js + '; 0'); await sleep(300); await h.ev(`guideGoto('chain'); 0`); await sleep(300);
-    for (const lay of ['porter', 'band']) { await setLayout(h, lay); res[k + ':' + lay] = await paths(); }
+    for (const lay of ['porter', 'band']) {
+      await setLayout(h, lay);
+      // band@1400：結構檢查（見檔頭 [d]），結果以 { struct } 存，不與基準逐字比
+      if (lay === 'band' && width > 800) res[k + ':band'] = { struct: await h.ev(`(()=>{
+        const ds=[...document.querySelectorAll('#vcLineCanvas path.vc-link-main')].map(p=>p.getAttribute('d'));
+        const L=valueChain.links.map(l=>[vcNodeRectForLayout(l.from),vcNodeRectForLayout(l.to)]).filter(([a,b])=>a&&b);
+        const onE=(p,r,t)=>p.x>=r.x-t&&p.x<=r.x+r.w+t&&p.y>=r.y-t&&p.y<=r.y+r.h+t&&(Math.abs(p.x-r.x)<=t||Math.abs(p.x-r.x-r.w)<=t||Math.abs(p.y-r.y)<=t||Math.abs(p.y-r.y-r.h)<=t);
+        const bad=ds.filter((d,i)=>{const a=(d.match(/-?[\\d.]+/g)||[]).map(Number);const qs=[...d.matchAll(/Q\\s*(-?[\\d.]+)[ ,]+(-?[\\d.]+)/g)].map(m=>({x:+m[1],y:+m[2]}));
+          const q=[{x:a[0],y:a[1]},...qs,{x:a[a.length-2],y:a[a.length-1]}];
+          const orth=q.every((v,j)=>!j||Math.abs(v.x-q[j-1].x)<=0.5||Math.abs(v.y-q[j-1].y)<=0.5);
+          return !L[i]||!orth||!onE(q[0],L[i][0],1)||!onE(q[q.length-1],L[i][1],1);});
+        return {n:ds.length,links:L.length,bad};})()`) };
+      else res[k + ':' + lay] = await paths();
+    }
     await setLayout(h, 'porter');
   }
   errs.push(...h.errors()); await h.close();
@@ -86,6 +100,7 @@ for (const width of [1400, 800]) {
   const N = await collect(html, width), B = await collect(base, width);
   ok(!N.errs.length, `[e] ${width} 範例／fixtures 無 console error ${JSON.stringify(N.errs)}`);
   for (const k of Object.keys(B.res)) {
+    if (N.res[k] && N.res[k].struct) { const t = N.res[k].struct; ok(t.n === t.links && !t.bad.length, `[d ${width}] ${k} 結構：${t.n}/${t.links} 條、正交且端點在邊 ${t.bad.length ? JSON.stringify(t.bad) : 'OK'}`); continue; }
     const n = N.res[k] || [], b = B.res[k];
     ok(n.length === b.length && n.every((d, i) => d === b[i]), `[d ${width}] ${k} path d 與基準相同（${n.length}/${b.length}）`);
   }
