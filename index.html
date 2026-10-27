@@ -5276,7 +5276,21 @@ function drawVcLinks() {
     if (a === b) return;  // ST-35c：同一個收合群組內部的連線不畫
     const toProd = product && (product.rects.has(a) || product.rects.has(b));
     const route = vcLinkRoute(a, b, toProd ? rects : actRects, routeOpts, rowUse);
+    // ST-40：兩個收合群組緊貼（間距 0）時 straight 會是零長度點 → 以交界為中心延伸成至少 8px 的短線，箭頭才看得到
+    if (route.kind === 'straight' && route.pts.length === 2) {
+      const [p0, p1] = route.pts;
+      if (Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) < 8) {
+        const cx = (p0.x + p1.x) / 2, cy = (p0.y + p1.y) / 2;
+        const horiz = Math.abs(a.x + a.w / 2 - b.x - b.w / 2) >= Math.abs(a.y + a.h / 2 - b.y - b.h / 2);
+        if (horiz) { const s = (b.x + b.w / 2 >= a.x + a.w / 2) ? 1 : -1; route.pts = [{ x: cx - 4 * s, y: cy }, { x: cx + 4 * s, y: cy }]; }
+        else { const s = (b.y + b.h / 2 >= a.y + a.h / 2) ? 1 : -1; route.pts = [{ x: cx, y: cy - 4 * s }, { x: cx, y: cy + 4 * s }]; }
+      }
+    }
     const d = vcRoundedPath(route.pts, 8);
+    // 防呆：總長 < 2px 的 path 不輸出（零長度帶 marker 會出怪箭頭）
+    let plen = 0;
+    for (let i = 1; i < route.pts.length; i++) plen += Math.abs(route.pts[i].x - route.pts[i - 1].x) + Math.abs(route.pts[i].y - route.pts[i - 1].y);
+    if (plen < 2) { console.debug('[ST-40] 略過零長度連線', link.id, d); return; }
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'vc-link');
     // 底層：底色粗描邊（比主線寬 3px），讓線在方塊邊緣與文字旁看得清楚
