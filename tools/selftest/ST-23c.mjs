@@ -11,7 +11,7 @@
 //   3) 每段 connector 的 cx 或 cy 為 0（正交）；每條 link 至少一段；lastInfo.skippedLinks === 0
 //   4) 到產品的線：最後一段水平、終點落在目標產品左緣；所有段不穿過非端點的產品方塊
 //   5) 欄頂「產品」小標存在；所有 shape 不超出 slide 高；新版無 JS 例外
-//   6) Margin 箭頭：xfrm 無 rot、prst=downArrow、ext cx＝marginW（0.34"），且整塊在 slide 內
+//   6) Margin 箭頭：xfrm 無 rot、prst=rightArrow、ext cx＝marginW（0.34"），且整塊在 slide 內
 //   ae 另比基準版：deepShrunk 仍 false、deepSz 不小於基準
 // 另看編輯器（drawVcLinks）：醫美範本 ① 的 vcLineCanvas 斜線條數只印出、不判 FAIL——「中醫門診→中醫調理」是主要活動欄
 //   在 1400 寬折成兩列後 vcCrossRoute 找不到通道而退回斜線，v1.0.0 就如此，與產品直欄無關（排除產品方塊後仍是斜線）
@@ -112,8 +112,8 @@ for (const [key] of SCEN) {
   } else {
     chk(!margin && contentR + GAP <= px + 1, `[${key}] 無 Margin；活動最右緣 ${inch(contentR)} + gap ≤ 產品 x ${inch(px)}`);
   }
-  if (vc.arrow) chk(!!margin && !/<a:xfrm[^>]*rot=/.test(margin.raw) && /prst="downArrow"/.test(margin.raw) && margin.w === Math.round(0.34 * 914400)
-    && margin.x + margin.w <= SLIDE_W && margin.y + margin.h <= SLIDE_H, `[${key}] Margin 無 rot、downArrow、cx=${margin && margin.w}（0.34"）、在 slide 內`);
+  if (vc.arrow) chk(!!margin && !/<a:xfrm[^>]*rot=/.test(margin.raw) && /prst="rightArrow"/.test(margin.raw) && margin.w === Math.round(0.34 * 914400)
+    && margin.x + margin.w <= SLIDE_W && margin.y + margin.h <= SLIDE_H, `[${key}] Margin 無 rot、rightArrow、cx=${margin && margin.w}（0.34"）、在 slide 內`);
   chk(sp.some(s => s.name === '產品' && !s.vert), `[${key}] 欄頂「產品」小標（橫排）`);
   chk(Math.max(...sp.filter(s => s !== margin).map(s => s.y + s.h)) <= SLIDE_H, `[${key}] shape 不超出 slide 高`);
   chk(cx.every(c => c.w === 0 || c.h === 0), `[${key}] ${cx.length} 段 connector 全部正交（斜線 ${cx.filter(c => c.w && c.h).length}）`);

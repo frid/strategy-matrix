@@ -34,7 +34,7 @@ const parse = xml => [...xml.matchAll(/<p:(sp|cxnSp)>[\s\S]*?<\/p:\1>/g)].map(m 
   const s = m[0];
   const o = s.match(/<a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(\d+)" cy="(\d+)"/) || [];
   return { kind: m[1], name: (s.match(/name="([^"]*)"/) || [])[1], x: +o[1], y: +o[2], w: +o[3], h: +o[4],
-    prst: (s.match(/prst="(\w+)"/) || [])[1], adj: +((s.match(/name="adj" fmla="val (\d+)"/) || [])[1] || NaN),
+    prst: (s.match(/prst="(\w+)"/) || [])[1], adj1: +((s.match(/name="adj1" fmla="val (\d+)"/) || [])[1] || NaN), adj2: +((s.match(/name="adj2" fmla="val (\d+)"/) || [])[1] || NaN), adj: +((s.match(/name="adj" fmla="val (\d+)"/) || [])[1] || NaN),
     fill: (s.match(/<\/a:prstGeom>\s*<a:solidFill><a:srgbClr val="(\w+)"/) || [])[1],
     ln: (s.match(/<a:ln w="\d+"><a:solidFill><a:srgbClr val="(\w+)"/) || [])[1], dash: s.includes('prstDash'),
     text: (s.match(/<a:t>([^<]*)<\/a:t>/) || [])[1] || '', color: (s.match(/<a:rPr[^>]*><a:solidFill><a:srgbClr val="(\w+)"/) || [])[1],
@@ -60,7 +60,7 @@ function svgOf(shapes) {
     else if (s.prst === 'homePlate') { const t = ss * (a ?? 0.5); g = `<polygon points="${pts([[x, y], [x + w - t, y], [x + w, y + h / 2], [x + w - t, y + h], [x, y + h]])}" fill="${fill}" ${st}/>`; }
     else if (s.prst === 'chevron') { const t = ss * (a ?? 0.5); g = `<polygon points="${pts([[x, y], [x + w - t, y], [x + w, y + h / 2], [x + w - t, y + h], [x, y + h], [x + t, y + h / 2]])}" fill="${fill}" ${st}/>`; }
     else if (s.prst === 'hexagon') { const t = ss * 0.25; g = `<polygon points="${pts([[x + t, y], [x + w - t, y], [x + w, y + h / 2], [x + w - t, y + h], [x + t, y + h], [x, y + h / 2]])}" fill="${fill}" ${st}/>`; }
-    else if (s.prst === 'downArrow') { g = `<polygon points="${pts([[x + w * .25, y], [x + w * .75, y], [x + w * .75, y + h - w / 2], [x + w, y + h - w / 2], [x + w / 2, y + h], [x, y + h - w / 2], [x + w * .25, y + h - w / 2]])}" fill="${fill}"/>`; }
+    else if (s.prst === 'rightArrow') { const a1 = (isNaN(s.adj1) ? 50000 : s.adj1) / 100000, hl = ss * (isNaN(s.adj2) ? 50000 : s.adj2) / 100000, t = h * (1 - a1) / 2; g = `<polygon points="${pts([[x, y + t], [x + w - hl, y + t], [x + w - hl, y], [x + w, y + h / 2], [x + w - hl, y + h], [x + w - hl, y + h - t], [x, y + h - t]])}" fill="${fill}"/>`; }
     else g = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${s.prst === 'roundRect' ? Math.min(ss * (a ?? 0.16667), ss / 2) : 0}" fill="${s.fill && s.prst ? fill : 'none'}" ${st}/>`;
     const fs = s.sz / 100 * 96 / 72;
     const tx = s.text ? (s.vert
@@ -143,7 +143,7 @@ for (const ex of ['bookstore-a', 'bio-aesthetic']) {
       const wrong = r.leaves.filter((l, i) => !leafSh[i] || unesc(leafSh[i].text) !== (l.icon || [...l.name][0]));
       ok(!wrong.length, `${tag} [6] 圓內文字＝icon 或首字（不符 ${wrong.length}${wrong.length ? '：' + wrong.slice(0, 3).map(l => l.name).join(',') : ''}；icon ${r.leaves.filter(l => l.icon).length} 個）`);
       ok(!r.hasGroup || shapes.some(s => s.dash && s.prst === 'roundRect'), `${tag} [6] 群組虛線 roundRect 底板`);
-      ok(!r.arrowBg || shapes.some(s => s.prst === 'downArrow' && s.fill === '2B2D31'), `${tag} [6] Margin 黑色`);
+      ok(!r.arrowBg || shapes.some(s => s.prst === 'rightArrow' && s.fill === '2B2D31'), `${tag} [6] Margin 黑色`);
     }
   }
   // [7] 分色配色
@@ -170,7 +170,9 @@ await h.close();
 const hb = await boot(baseHtml);
 for (const [ex, pal, xml] of porter) {
   const b = (await exportOnce(hb, ex, 'porter', pal)).xml;
-  ok(xml && xml === b, `[${ex} porter 配色${pal}] [8] slide1 與 ${baseRef} 逐 byte 相同（${xml.length}/${b.length}）`);
+  // ST-44：Margin 改 rightArrow（唯一允許的差異）；比對前把新版 Margin 幾何換回舊 downArrow
+  const xn = xml.replace(/prst="rightArrow"><a:avLst><a:gd name="adj1" fmla="val 80000"\/><a:gd name="adj2" fmla="val 28000"\/><\/a:avLst>/, 'prst="downArrow"><a:avLst/>');
+  ok(xml && xn === b, `[${ex} porter 配色${pal}] [8] slide1 與 ${baseRef} 逐 byte 相同（${xml.length}/${b.length}）`);
 }
 await hb.close();
 ok(!errNew.length, `[9] console error 0${errNew.length ? '：' + errNew.slice(0, 3).join(' | ') : ''}`);
