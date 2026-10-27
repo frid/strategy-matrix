@@ -9945,6 +9945,7 @@ function guideGoto(k, opts = {}) {
   if (!g) return;
   guideStep = k;
   guideApplyPane(k);
+  document.getElementById('modeDescBtn').hidden = (k === 'ideas');  // ST-46：③ 不顯示「描述策略點」（描述在 ② 處理）
   const mode = GUIDE_STEP_MODE[k];
   if (mode && currentMode !== mode) setMode(mode);
   const hash = `#step-${GUIDE_STEPS.indexOf(g) + 1}`;
