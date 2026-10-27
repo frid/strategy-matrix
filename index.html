@@ -957,6 +957,21 @@
       width: 100% !important; min-width: 0; white-space: normal; writing-mode: horizontal-tb;
     }
   }
+  /* ST-47：≤800px 頂層價值單元與支援活動橫條收合，document 不橫向捲動 */
+  @media (max-width: 800px) {
+    #valueChainEditor .vc-zone-primary > .vc-zone-body > .vc-unit { flex: 1 1 100%; max-width: 100%; min-width: 0; white-space: normal; }
+    #valueChainEditor .vc-zone-primary > .vc-zone-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; max-width: 100%; flex-wrap: wrap; }
+    #valueChainEditor .vc-zone-primary > .vc-zone-body > .vc-group { max-width: 100%; }
+    #valueChainEditor .vc-zone-primary > .vc-zone-body > .vc-unit > .vc-node-head > textarea.vc-name-wrap { max-width: 100%; }
+    #valueChainEditor .vc-zone-support .vc-unit { padding-right: 14px; max-width: 100%; min-width: 0; }
+    #valueChainEditor .vc-zone-support .vc-unit > .vc-node-head { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+    #valueChainEditor .vc-zone-support .vc-unit > .vc-node-head input { max-width: 100%; min-width: 0; }
+    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap { flex: 1 1 100%; white-space: normal; min-width: 0; }
+  }
+  /* ST-47：circle 801px 以上，巢狀群組不撐寬 */
+  #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group .vc-group { max-width: 100%; }
+  @media (min-width: 801px) { #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body { flex-wrap: wrap; } }
+  #valueChainEditor .vc-layout-circle .vc-zone-primary > .vc-zone-body > .vc-group { max-width: 100%; }
 
   /* ── Buttons ── */
   button {
