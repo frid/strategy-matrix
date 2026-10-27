@@ -99,7 +99,8 @@ async function readGroups(page: Page): Promise<GroupInfo[]> {
       id: el.getAttribute('data-vc-id') || '', name: ta ? ta.value : '', depth,
       band: box(band),
       leaves: Array.from(el.querySelectorAll('.vc-unit')).map(box),
-      innerBands: Array.from(el.querySelectorAll('.vc-group > .vc-node-head')).map(box),
+      // 只取「子孫群組」的直接 head（2026/10/27 修：原寫法 '.vc-group > .vc-node-head' 會把群組自己的橫帶也抓進來）
+      innerBands: Array.from(el.querySelectorAll('.vc-group')).map(g => box(g.querySelector(':scope > .vc-node-head')!)),
     };
   }));
 }
@@ -340,17 +341,20 @@ test.describe('ST-35a 橫帶式價值鏈版型（B）', () => {
     await expectLinkEndpointsOnBoxEdges(page, '初始');
   });
 
-  // (f)「≤800px 回現行直排」：375×667 下葉節點直排（top 遞增、left 相同）且不橫向捲動；
-  //     800 寬＝直排、801 寬＝橫排（media max-width:800px 邊界）
+  // (f)「≤800px 回現行直排」：375×667 與 800 寬下葉節點直排（top 嚴格遞增；left 非遞減、且每個 ≥ 第一個的 left −1，
+  //     允許現行直排的巢狀縮排）且不橫向捲動；801 寬＝橫帶版型（media max-width:800px 邊界）：不橫向捲動、
+  //     每個葉節點 clip-path 為 polygon、同一列（top 相同 ±1）內的葉節點等寬 ±2px（允許折列，見 doc/decisions.md 2026-10-27）
+  //     【2026/10/27 修正】原斷言「left 全相同」「801 全部單列」與現行直排縮排／折列設計不符，依主 session 決定改寫
   test('(f) 375 與 800 寬直排、801 寬橫排，皆不橫向捲動', async ({ page }) => {
     const vertical = async (label: string) => {
       const leaves = await readLeaves(page);
       expect(leaves.map(l => l.name)).toEqual(FIXTURE_LEAVES);
       for (let i = 1; i < leaves.length; i++) {
-        expect(leaves[i].top, `${label}：「${leaves[i].name}」應在「${leaves[i - 1].name}」下方`).toBeGreaterThanOrEqual(leaves[i - 1].bottom - 1);
+        expect(leaves[i].top, `${label}：「${leaves[i].name}」top 應嚴格大於「${leaves[i - 1].name}」top（直排）`).toBeGreaterThan(leaves[i - 1].top);
+        expect(leaves[i].left, `${label}：「${leaves[i].name}」left 應 ≥ 前一個「${leaves[i - 1].name}」left（非遞減）`).toBeGreaterThanOrEqual(leaves[i - 1].left);
       }
       const l0 = leaves[0].left;
-      for (const l of leaves) expect(Math.abs(l.left - l0), `${label}：「${l.name}」left 應與第一個相同（±1px）`).toBeLessThanOrEqual(1);
+      for (const l of leaves) expect(l.left, `${label}：「${l.name}」left 應 ≥ 第一個葉節點 left −1（允許巢狀縮排）`).toBeGreaterThanOrEqual(l0 - 1);
       const sw = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
       expect(sw.s, `${label}：不得橫向捲動`).toBeLessThanOrEqual(sw.c);
     };
@@ -363,7 +367,17 @@ test.describe('ST-35a 橫帶式價值鏈版型（B）', () => {
     await page.setViewportSize({ width: 801, height: 900 });
     await page.waitForTimeout(200);
     const leaves = await readLeaves(page);
-    expectSingleRowEqualWidth(leaves, '801');
+    expect(leaves.map(l => l.name)).toEqual(FIXTURE_LEAVES);
+    expectChevrons(leaves, '801');
+    // 同一列（top 相同 ±1）內等寬 ±2px；允許折成多列
+    const rows: LeafInfo[][] = [];
+    for (const l of leaves) {
+      const row = rows.find(r => Math.abs(r[0].top - l.top) <= 1);
+      if (row) row.push(l); else rows.push([l]);
+    }
+    for (const row of rows) {
+      for (const l of row) expect(Math.abs(l.width - row[0].width), `801：同列「${l.name}」寬 ${l.width} 應等於「${row[0].name}」寬 ${row[0].width}（±2px）`).toBeLessThanOrEqual(2);
+    }
     const sw = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
     expect(sw.s, '801：不得橫向捲動').toBeLessThanOrEqual(sw.c);
   });
