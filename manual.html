@@ -105,6 +105,8 @@
       <ul>
         <li><a href="#title">4.1 策略名稱與說明</a></li>
         <li><a href="#vc-edit">4.2 價值鏈編輯</a></li>
+        <li><a href="#vc-layout">4.2a 價值鏈版型</a></li>
+        <li><a href="#vc-icon">4.2b 價值單元 icon</a></li>
         <li><a href="#roles">4.3 價值單元角色</a></li>
         <li><a href="#template">4.4 載入範本</a></li>
         <li><a href="#links">4.5 價值鏈連線</a></li>
@@ -219,6 +221,7 @@
     <li><span class="btn">💾 存檔</span>／<span class="btn">📂 載入</span>：把整張策略矩陣存成 JSON 檔、讀回（見 3.1）。</li>
     <li><span class="btn">📊 匯出 PPTX</span>：產生可編輯的 PowerPoint（見「匯出 PPTX」）。</li>
     <li><span class="btn">🎨 配色</span>：下拉選單，切換價值鏈、策略矩陣與匯出 PPTX 的配色（見「產業矩陣切換與配色」）。</li>
+    <li><span class="btn">🧩 版型</span>：下拉選單，切換價值鏈主要活動的畫法（橫帶、分段、摺疊、圓形 icon、六角鏈；見 4.2a）。</li>
     <li><span class="btn">📚 載入範例…</span>：載入書上的完整範例（見 3.2）。</li>
     <li><span class="btn">🔄 重設</span>：清除瀏覽器裡的自動存檔，回到預設狀態。</li>
   </ul>
@@ -296,6 +299,55 @@
     <figcaption>價值鏈工具列：連線模式、展開到策略矩陣、存／載價值鏈、載入範本、大箭頭背景。</figcaption>
   </figure>
   <div class="note">價值鏈的編輯<b>不能</b>用「↩ 復原」還原，請小心刪除；若擔心改壞，可先按 <span class="btn">💾 存價值鏈</span> 備份。</div>
+
+  <h3 id="vc-layout">4.2a 價值鏈版型</h3>
+  <p>主要活動那一列可以換成六種畫法。版型<b>只改畫面與匯出 PPTX 的外觀</b>，不改價值鏈內容與矩陣欄位：改名、拖曳、群組化、活動／資產切換、連線都照常使用。切換有兩個入口，兩邊會同步：「專案」列的 <span class="btn">🧩 版型</span> 下拉，以及價值鏈工具列的版型下拉。你選的版型會記在瀏覽器，也會寫進「💾 存檔」與「💾 存價值鏈」的 JSON 檔。</p>
+  <ul>
+    <li><b>經典 Porter</b>（預設）：方塊式的價值鏈，也就是上面 4.2 的畫法。</li>
+    <li><b>橫帶式</b>：葉單元排成等寬的一排 chevron，群組名稱掛在上方的橫帶、橫跨它的子單元，巢狀群組一層疊一層；和矩陣的「群組表頭＋細項表頭」一對一。</li>
+    <li><b>同色分段式</b>：同一群組使用同一色相，子單元之間只有細縫，群組之間留明顯缺口，群組名稱用小字寫在該段底部；適合一眼看出哪些單元屬於同一大類。</li>
+    <li><b>摺疊式</b>：群組預設收成一支 chevron，右上角有「＋n」角標（n＝裡面的單元數）；點角標或標題空白處在原位展開、再點收合，工具列另有 <span class="btn">全部展開</span>／<span class="btn">全部收合</span>。收合狀態只是畫面狀態，<b>不會存進存檔</b>，重新載入後又是全部收合；被收合的單元，連線改接到收合的群組。</li>
+    <li><b>圓形 icon 式</b>：每個主要活動是一個彩色圓（圓內放 icon，沒設 icon 時放名稱首字），名稱寫在圓下，群組用虛線淡色底板框住；連線接在圓外緣。這個版型自己每顆一色，所以<b>不吃分色配色</b>。</li>
+    <li><b>六角鏈式</b>：葉單元是相咬合的六角形，一顆一個色相；群組用橫帶，同色相的深淺區分層級。</li>
+  </ul>
+  <div class="note">畫面寬度 ≤ 800px（手機、窄視窗）時，所有版型一律改回直排，方便閱讀與編輯。</div>
+  <figure>
+    <img src="manual/img/40-vc-band.png" alt="橫帶式">
+    <figcaption>橫帶式（用「連鎖醫美診所」範本，並替三個單元設了 icon）。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/41-vc-segment.png" alt="同色分段式">
+    <figcaption>同色分段式：同群組同色相，群組名稱在該段底部。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/42-vc-fold.png" alt="摺疊式">
+    <figcaption>摺疊式：每個群組收成一支 chevron，右上角的「＋7」等是裡面的單元數。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/43-vc-circle.png" alt="圓形 icon 式">
+    <figcaption>圓形 icon 式：沒設 icon 的圓顯示首字；群組以虛線底板框住。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/44-vc-hex.png" alt="六角鏈式">
+    <figcaption>六角鏈式：相咬合的六角形，一顆一個色相。</figcaption>
+  </figure>
+
+  <h3 id="vc-icon">4.2b 價值單元 icon</h3>
+  <p>每個價值單元（群組除外）名稱前面有一顆小按鈕：沒設定時是淡色的 <span class="btn">☺</span>，設定後顯示你選的 icon。</p>
+  <ol class="steps">
+    <li>點名稱前的 <span class="btn">☺</span>，跳出 icon 選單。</li>
+    <li>從 <b>24 個常用 icon</b>（顯微鏡、藥丸、醫院、貨車、握手、圖表…）中點一個；或在下方輸入框<b>自訂</b>（最多 4 字，可以是別的 emoji 或短文字），按「套用」或 Enter。</li>
+    <li>按「清除」移除 icon；按 Esc 或點選單外面關閉選單。</li>
+  </ol>
+  <ul>
+    <li>icon 在橫帶、分段、摺疊、六角等版型畫在名稱前或上方；圓形 icon 式畫在圓內。</li>
+    <li>矩陣操作列的 <span class="btn">欄頭 icon</span> 勾選框控制「展開到矩陣後，欄頭名稱前要不要帶 icon」（預設勾選，會記住）。</li>
+    <li>匯出 PPTX 時 icon 會跟著放在單元文字前面（和矩陣欄頭一致）。</li>
+  </ul>
+  <figure>
+    <img src="manual/img/45-icon-picker.png" alt="icon 選單">
+    <figcaption>icon 選單：24 個常用 icon、自訂輸入框、套用與清除。</figcaption>
+  </figure>
 
   <h3 id="roles">4.3 價值單元角色</h3>
   <p>每個價值單元方塊上，「活動／資產」旁邊有一個 <span class="btn">＋角色</span> 標籤，點一下會依序循環：一般 → <b>半成品</b> → <b>主導權責</b> → <b>影響者</b> → 一般。</p>
@@ -610,12 +662,29 @@
   </figure>
 
   <h3>配色</h3>
-  <p>配色在「專案」列的 <span class="btn">🎨 配色</span> 下拉選單，共六組：價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白、莫蘭迪柔和、森林大地。選一個即可套用。</p>
+  <p>配色在「專案」列的 <span class="btn">🎨 配色</span> 下拉選單，共九組：<b>單色六組</b>——價值鏈同調（藍橘，預設）、標準規範（黃藍）、冷色簡約、高對比黑白、莫蘭迪柔和、森林大地；以及<b>分色三組</b>——分色・鮮彩、分色・沉穩土色、分色・藍綠紫（見下）。選一個即可套用。</p>
   <ul>
     <li><b>換色範圍：</b>價值鏈、策略矩陣與匯出的 PPTX 會一起換色；策略構想（各條箭頭）的顏色不變。</li>
     <li><b>顏色對應：</b>價值鏈主要活動群組內的子項，底色與字色和矩陣的細項欄一致；矩陣上屬於支援活動的欄位，表頭使用支援活動的顏色（預設為橘色系）。</li>
     <li><b>會被記住：</b>你選的配色會記在瀏覽器裡，下次開啟仍是同一組，也會寫進「💾 存檔」的 JSON 檔。</li>
   </ul>
+  <h4>分色配色</h4>
+  <p>「分色」三組不是整排同一色，而是讓<b>主要活動依序取色</b>（一個頂層單元或群組一個顏色），像彩虹一樣區分各階段：</p>
+  <ul>
+    <li>價值鏈主要活動依序取色；群組底色取其中第一個子單元色的淡版，群組內各子項用同一色（橫帶、分段、六角版型下深淺不同）。</li>
+    <li>展開後的<b>矩陣欄頭與價值鏈同色</b>，一眼對得上；支援活動改為低彩度的灰色，不搶主要活動的色彩。</li>
+    <li>圓形 icon 式本來就一顆一色，<b>不吃分色配色</b>（圓的顏色維持原樣）。</li>
+    <li>匯出 PPTX 也跟著分色。每一色的白字對比度都經過檢查，維持可讀。</li>
+  </ul>
+  <figure>
+    <img src="manual/img/46-palette-perunit.png" alt="分色配色的價值鏈">
+    <figcaption>「分色・鮮彩」配色下的價值鏈（橫帶式）：主要活動依序取色，支援活動為灰色。</figcaption>
+  </figure>
+  <figure>
+    <img src="manual/img/47-palette-perunit-matrix.png" alt="分色配色的矩陣欄頭">
+    <figcaption>同一配色展開到矩陣後的欄頭：與價值鏈的顏色一一對應。</figcaption>
+  </figure>
+  <h4>單色配色範例</h4>
   <figure>
     <img src="manual/img/15a-palette-morandi-vc.png" alt="莫蘭迪柔和配色的價值鏈">
     <figcaption>換成「莫蘭迪柔和」配色後的價值鏈（① tab）。</figcaption>
