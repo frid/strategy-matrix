@@ -4843,7 +4843,7 @@ function vcRectEdgePoint(rect, towardX, towardY) {
 }
 
 // ST-05：決定一條連線怎麼走（畫面與 PPTX 共用，單位由 opts 決定）
-// rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距 }；rowUse：各列已用的繞行層數
+// rects：所有方塊矩形；opts：{ near: 相鄰間距上限, lift: 繞行離列頂高度, step: 多條繞行的疊高間距, bandAnc: 橫帶系版型（ST-36，選填） }；rowUse：各列已用的繞行層數
 // 回傳 { kind: 'straight'|'detour'|'cross', pts: [點...] }（最後一點是箭頭端）
 function vcLinkRoute(r1, r2, rects, opts, rowUse) {
   // ST-23b：寬螢幕產品直欄 → 產品專用路線（畫面 drawVcLinks 與 ST-23c PPTX 價值鏈頁會帶 opts.product；≤800px 橫列照舊）
@@ -4853,6 +4853,9 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
   const ovY = Math.min(r1.y + r1.h, r2.y + r2.h) - Math.max(r1.y, r2.y);
   const contains = (o, r) => o.x <= r.x && o.y <= r.y && o.x + o.w >= r.x + r.w && o.y + o.h >= r.y + r.h;
   const others = rects.filter(o => o !== r1 && o !== r2 && !contains(o, r1) && !contains(o, r2));
+  // ST-36：橫帶系版型（band／segment／hex／fold）群組名橫帶在子項上方（segment 在下方），包住端點的祖先群組也算進「列範圍」：
+  //   繞行的水平段走在祖先橫帶之外，只有進出端點的垂直段穿過祖先橫帶（祖先仍不當障礙）。opts.bandAnc 沒給（porter、circle）→ anc 空，路線不變
+  const anc = opts.bandAnc ? rects.filter(o => o !== r1 && o !== r2 && (contains(o, r1) || contains(o, r2))) : [];
   const sameRow = ovY > Math.min(r1.h, r2.h) * 0.5;
   if (sameRow) {
     const left = r1.x <= r2.x ? r1 : r2, right = left === r1 ? r2 : r1;
@@ -4867,7 +4870,7 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
       return { kind: 'straight', pts: [{ x: fromX, y: my }, { x: toX, y: my }] };
     }
     // 跨越：從來源頂邊上去，繞到同列所有方塊上方，再從目標頂邊下來
-    const rowRects = others.concat([r1, r2]).filter(o => o.y < r1.y + r1.h && o.y + o.h > r1.y);
+    const rowRects = others.concat([r1, r2], anc).filter(o => o.y < r1.y + r1.h && o.y + o.h > r1.y);
     const rowTop = Math.min.apply(null, rowRects.map(o => o.y));
     const key = Math.round(rowTop);
     const n = rowUse[key] || 0;
@@ -4891,7 +4894,7 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
   // ST-15：不同列 → 正交繞行（出來源底／頂邊中點，走列間通道，進目標頂／底邊中點）
   // ST-29：主要活動折成第二列、或端點藏在群組裡被兄弟子項擋住時，改走 vcNestedRoute（只在 vcCrossRoute 找不到路時才試，既有路線不變）
   const prevUse = Object.assign({}, rowUse);  // vcCrossRoute 失敗時也會佔用通道層數；vcNestedRoute 以呼叫前的層數排位
-  const cross = vcCrossRoute(r1, r2, others, opts, rowUse) || vcNestedRoute(r1, r2, rects, others, opts, rowUse, prevUse);
+  const cross = vcCrossRoute(r1, r2, others, opts, rowUse, anc) || vcNestedRoute(r1, r2, rects, others, opts, rowUse, prevUse);
   if (cross) return cross;
   // 繞不開 → 邊緣交點直線
   const c1 = { x: r1.x + r1.w / 2, y: r1.y + r1.h / 2 };
@@ -4900,7 +4903,8 @@ function vcLinkRoute(r1, r2, rects, opts, rowUse) {
 }
 
 // ST-15：跨列正交繞行。回傳 { kind: 'cross', pts } 或 null（繞不開，呼叫端改用直線）
-function vcCrossRoute(r1, r2, others, opts, rowUse) {
+// anc（ST-36，選填）：橫帶系版型下包住端點的祖先群組，只用來算列範圍（列間通道避開祖先橫帶），不當障礙
+function vcCrossRoute(r1, r2, others, opts, rowUse, anc) {
   const u = opts.step / 10;  // 單位換算：畫面 px = 1，PPTX EMU 同比例
   const down = r2.y + r2.h / 2 >= r1.y + r1.h / 2;
   const x1 = r1.x + r1.w / 2, x2 = r2.x + r2.w / 2;
@@ -4916,7 +4920,7 @@ function vcCrossRoute(r1, r2, others, opts, rowUse) {
     if (!hit(mx, y1, mx, y2)) return { kind: 'cross', pts: [{ x: mx, y: y1 }, { x: mx, y: y2 }] };
   }
   // 列間通道：來源列與目標列之間的中線（列範圍 = 與該方塊垂直重疊的所有方塊）
-  const rowOf = r => others.concat([r]).filter(o => o.y < r.y + r.h && o.y + o.h > r.y);
+  const rowOf = r => others.concat([r], anc || []).filter(o => o.y < r.y + r.h && o.y + o.h > r.y);
   const srcRow = rowOf(r1), tgtRow = rowOf(r2);
   const from = down ? Math.max.apply(null, srcRow.map(o => o.y + o.h)) : Math.min.apply(null, srcRow.map(o => o.y));
   const to = down ? Math.min.apply(null, tgtRow.map(o => o.y)) : Math.max.apply(null, tgtRow.map(o => o.y + o.h));
@@ -5238,6 +5242,9 @@ function drawVcLinks() {
     horizontal: isVcHorizontal(prodBody)
   } : null;
   const routeOpts = { near: 40, lift: 18, step: 10, product };
+  // ST-36：橫帶系版型（zones 掛 vc-layout-band，且 >800px 橫帶 CSS 生效）繞行避開端點祖先群組的橫帶；porter／circle 不帶
+  const zonesEl = editor.querySelector('.vc-zones');
+  if (zonesEl && zonesEl.classList.contains('vc-layout-band') && window.matchMedia('(min-width: 801px)').matches) routeOpts.bandAnc = true;
   // ST-23c：活動之間的線不把產品直欄當障礙（產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線）；與 PPTX 一致
   const actRects = product && !product.horizontal ? rects.filter(o => !product.rects.has(o)) : rects;
   valueChain.links.forEach(link => {
@@ -8700,6 +8707,7 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
     body: [0.25, 0.75]
   } : null;
   const routeOpts = { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06), product };
+  if (leafLine && lk !== 'circle') routeOpts.bandAnc = true;   // ST-36：band／segment／hex（fold 匯出走 band）同畫面，繞行避開端點祖先群組的橫帶
   // 活動之間的線不把產品直欄當障礙：產品方塊跨好幾列高，算進去會讓列間通道找不到、退回斜線
   const actRects = product ? allRects.filter(o => !product.rects.has(o)) : allRects;
   let skippedLinks = 0;                        // ST-20：兩端找不到方塊的連線不再靜默跳過，匯出後在狀態列提示
