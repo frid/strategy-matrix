@@ -73,3 +73,7 @@
 | 2026-10-27 | ST-38 | ≤800px 群組內葉節點撐滿寬、名稱 textarea 不受 inline 寬限制，porter 一併修 | porter 本就有同樣問題；circle 已有自己的 800 規則 | 易 |
 | 2026-10-27 | ST-39 | 文字範圍用實際字寬（畫面 measureText／PPTX 估算）而非 textarea 矩形；PPTX hex 單子項群組無可用 x 時退回中點 | textarea 撐滿橫帶無法用；hex 咬合後方塊內扣字寬無空間 | 中 |
 | 2026-10-27 | ST-40 | fold 收合時相鄰群組緊貼的連線畫成 8px 短箭頭（跨交界各 4px），<2px 不輸出 | 零長度 path 帶 marker 會畫出怪箭頭；短箭頭仍能標出流向 | 易 |
+| 2026-10-27 | ST-41 | emoji 資料集內嵌精選約 400 個（分類＋中英關鍵字），不 fetch 外掛、不加 CDN；保留自訂文字；截字改 grapheme | file:// 開檔 fetch 會被擋，全檔無 fetch 先例；ZWJ emoji 以 code point 截會壞 | 中：可再擴充清單 |
+| 2026-10-27 | ST-43 | 網頁與 PPTX 產品欄都改成「一產品一欄、並排、文字直書」 | 附圖是使用者在 PowerPoint 手拉的示意；ST-31 當時把「水平排」誤解成文字改水平；資料不變只改畫法 | 中：CSS／PPTX 可回退 |
+| 2026-10-27 | ST-44 | PPTX Margin 改 rightArrow 不旋轉、直長尺寸；繞線箭身比例同步 | 與網頁 clip-path 向右箭頭、Porter 慣例一致；ST-23c 改 downArrow 只是修尺寸 bug 的副作用 | 易 |
+
