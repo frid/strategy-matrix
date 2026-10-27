@@ -8,7 +8,7 @@
 //   [b] bookstore-a 範例（資料本身不含 icon，regression 才能逐張相同）：腳本動態給主要活動 5 個 icon →
 //       價值鏈方塊 .vc-icon-btn 顯示 icon（porter、band 各截圖）、矩陣欄頭 .col-icon 數 = 5；
 //       PPTX 不拋例外、slide XML 含 icon；取消勾選「欄頭 icon」→ 欄頭無 .col-icon，reload 後仍取消且勾選框未勾
-//   [c] CDP 點 icon 按鈕 → 選單出現 24 個 → 點第 3 個 → valueChain 該 unit.icon 更新、按鈕顯示；自訂輸入「AB C」→ 'ABC'；
+//   [c] CDP 點 icon 按鈕 → 選單出現 ≥ 24 個且含原 24 個（ST-41 擴充為分類資料集）→ 點第 3 個 → valueChain 該 unit.icon 更新、按鈕顯示；自訂輸入「AB C」→ 'ABC'；
 //       清除 → 欄位刪除；再設一次後 reload 仍在
 //   [p] foundry-t 範例 exportPptx：每張 ppt/slides/slide*.xml 與基準版（dev）輸出完全相同
 //   全程 console error 0。預期：全部 PASS、exit 0。
@@ -137,14 +137,15 @@ for (const id of ['bookstore-a', 'foundry-t']) {
     const btnSel = `[data-vc-id="${uid}"] > .vc-node-head > .vc-icon-btn`;
     await click(btnSel);
     const n = await h.ev(`document.querySelectorAll('#vcIconPicker .vc-icon-grid button').length`);
-    ok(n === 24, `[c] 點 icon 按鈕出現選單（${n} 個 emoji）`);
+    const hasAll = await h.ev(`(()=>{const t=new Set([...document.querySelectorAll('#vcIconPicker .vc-icon-grid button')].map(b=>b.textContent));return VC_ICON_CHOICES.every(i=>t.has(i))})()`);
+    ok(n >= 24 && hasAll, `[c] 點 icon 按鈕出現選單（${n} 個 emoji，含原 24 個=${hasAll}）`);
     await h.shot('#vcIconPicker', `${out}/c-picker.png`);
     const want = await h.ev(`document.querySelectorAll('#vcIconPicker .vc-icon-grid button')[2].textContent`);
-    await click('#vcIconPicker .vc-icon-grid button:nth-child(3)');
+    await click('#vcIconPicker .vc-icon-grid button:nth-of-type(3)');  // ST-41：grid 內有類別小標題 div，改用 nth-of-type
     const got = await h.ev(`({icon:locateVcNode(${JSON.stringify(uid)}).node.icon, btn:document.querySelector(${JSON.stringify(btnSel)}).textContent, open:!!document.getElementById('vcIconPicker')})`);
     ok(got.icon === want && got.btn === want && !got.open, `[c] 選第 3 個 → unit.icon=${got.icon}、按鈕顯示、選單關閉 ${JSON.stringify(got)}`);
     await click(btnSel);
-    await h.ev(`(()=>{const i=document.querySelector('#vcIconPicker input');i.value='AB C';i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})(); 0`); await sleep(300);
+    await h.ev(`(()=>{const i=document.querySelector('#vcIconPicker .vc-icon-row input');i.value='AB C';i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));})(); 0`); await sleep(300);
     const custom = await h.ev(`locateVcNode(${JSON.stringify(uid)}).node.icon`);
     ok(custom === 'ABC', `[c] 自訂輸入「AB C」→ ${custom}`);
     await click(btnSel);
@@ -152,7 +153,7 @@ for (const id of ['bookstore-a', 'foundry-t']) {
     const cleared = await h.ev(`'icon' in locateVcNode(${JSON.stringify(uid)}).node`);
     ok(cleared === false, `[c] 清除 → 欄位刪除`);
     await click(btnSel);
-    await h.ev(`(()=>{const i=document.querySelector('#vcIconPicker input');i.value='💊';[...document.querySelectorAll('#vcIconPicker button')].find(b=>b.textContent==='套用').click();})(); 0`); await sleep(300);
+    await h.ev(`(()=>{const i=document.querySelector('#vcIconPicker .vc-icon-row input');i.value='💊';[...document.querySelectorAll('#vcIconPicker button')].find(b=>b.textContent==='套用').click();})(); 0`); await sleep(300);
     // 點外面關選單
     await click(btnSel); await h.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 5, y: 5, button: 'left', clickCount: 1 }); await sleep(200);
     ok(!(await h.ev(`!!document.getElementById('vcIconPicker')`)), `[c] 點選單外關閉`);
