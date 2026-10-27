@@ -70,7 +70,7 @@
 - [x] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27（完成 2026-10-26：38 張全部重拍（ST-25 字級）＋新增 37-elem-card；capture-manual 改 07 目標、13／15b／16／24 切「全部構想」、32 拍 #matrixRow；手冊與 README 過時字句改完；自測 tools/selftest/ST-28.mjs）
 
 - [x] ST-38 band／fold／segment 在 ≤800px 直排時，群組內子項名稱被擠成一字一行直書（群組 body 直排後葉節點寬度過窄）；需給直排葉節點 min-width 或讓名稱橫排（ST-35c 驗證時發現；完成 2026-10-27：新增 max-width:800px 區塊，群組內葉節點撐滿、名稱 textarea 不受 inline 寬限制，porter 一併修、circle 排除；自測 tools/selftest/ST-38.mjs）
-- [~] ST-39 band 系版型下，連線進出端點的垂直段仍穿過祖先群組橫帶的文字（單一子項群組時進出點正好在字中央）；可把進出點 x 從方塊中點偏向來線那一側避開橫帶文字寬（PPTX 字寬估算）（ST-36 時發現，選項 B）
+- [x] ST-39 band 系版型下，連線進出端點的垂直段仍穿過祖先群組橫帶的文字（單一子項群組時進出點正好在字中央）；可把進出點 x 從方塊中點偏向來線那一側避開橫帶文字寬（PPTX 字寬估算）（ST-36 時發現，選項 B；完成 2026-10-27：vcEntryX 依自身／祖先橫帶文字寬（畫面 measureText、PPTX 估算）選進出 x，退回順序 6→2→文字旁→中點；hex 咬合鄰居也避；已知限制 PPTX hex 單子項群組無可用 x 退回中點；自測 tools/selftest/ST-39.mjs）
 - [x] ST-40 fold 版型預設收合時，端點都在收合群組內的連線 path 為零長度（如 `M 444 683 L 444 683`），畫面上看不到；應改接收合群組邊緣或不畫（ST-36 時發現，dev 既有；完成 2026-10-27：根因是相鄰收合群組 gapX=0 使 straight 兩點同座標；drawVcLinks 把 <8px 的 straight 延成 8px 正交短線、<2px 不輸出；自測 tools/selftest/ST-40.mjs）
 - [x] ST-36 價值鏈橫帶式（band）下，跨群組連線的繞行高度落在外層群組橫帶上，白描邊會壓到橫帶文字（如醫美範本「診斷→中醫醫療服務」）；`vcLinkRoute` 算繞行高度時不考慮包住端點的外層群組，畫面與 PPTX 共用；建議 band 版型繞行改走外層橫帶上方（ST-35a 驗證時發現；完成 2026-10-27：vcLinkRoute 加 opts.bandAnc，祖先群組矩形只算列範圍不當障礙，水平段走最外層橫帶上方；畫面 ≥801px band 系與 PPTX 非 circle 帶旗標；porter／circle 不變；進出端點垂直段仍穿橫帶→ST-39；自測 tools/selftest/ST-36.mjs）
 - [x] ST-37 band 版型滑鼠移上群組橫帶時動作鈕換到第二行，橫帶變高約 22px 使同列內容下移；可改成浮在橫帶上方（ST-35a 驗證時發現；完成 2026-10-27：band 系與 circle 的群組動作鈕改絕對定位浮在橫帶上方右側、hover／focus-within 顯示；自測 tools/selftest/ST-37.mjs）
