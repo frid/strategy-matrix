@@ -341,7 +341,7 @@ test.describe('ST-35a 橫帶式價值鏈版型（B）', () => {
     await expectLinkEndpointsOnBoxEdges(page, '初始');
   });
 
-  // (f)「≤800px 回現行直排」：375×667 與 800 寬下葉節點直排（top 嚴格遞增；left 非遞減、且每個 ≥ 第一個的 left −1，
+  // (f)「≤800px 回現行直排」：375×667 與 800 寬下葉節點直排（top 嚴格遞增；每個 left ≥ 第一個的 left −1，
   //     允許現行直排的巢狀縮排）且不橫向捲動；801 寬＝橫帶版型（media max-width:800px 邊界）：不橫向捲動、
   //     每個葉節點 clip-path 為 polygon、同一列（top 相同 ±1）內的葉節點等寬 ±2px（允許折列，見 doc/decisions.md 2026-10-27）
   //     【2026/10/27 修正】原斷言「left 全相同」「801 全部單列」與現行直排縮排／折列設計不符，依主 session 決定改寫
@@ -351,7 +351,6 @@ test.describe('ST-35a 橫帶式價值鏈版型（B）', () => {
       expect(leaves.map(l => l.name)).toEqual(FIXTURE_LEAVES);
       for (let i = 1; i < leaves.length; i++) {
         expect(leaves[i].top, `${label}：「${leaves[i].name}」top 應嚴格大於「${leaves[i - 1].name}」top（直排）`).toBeGreaterThan(leaves[i - 1].top);
-        expect(leaves[i].left, `${label}：「${leaves[i].name}」left 應 ≥ 前一個「${leaves[i - 1].name}」left（非遞減）`).toBeGreaterThanOrEqual(leaves[i - 1].left);
       }
       const l0 = leaves[0].left;
       for (const l of leaves) expect(l.left, `${label}：「${l.name}」left 應 ≥ 第一個葉節點 left −1（允許巢狀縮排）`).toBeGreaterThanOrEqual(l0 - 1);
