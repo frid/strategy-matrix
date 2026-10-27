@@ -18,7 +18,7 @@
   - 已定（2026-10-26 使用者）：F、G 納入，H 環狀不做（與矩陣欄不對位）；ST-35g、h 都做；配色除彩虹分色外，再從 SlideEgg 範本列表截圖挑色（doc/reference/slideegg-supply-chain-templates-20261026.png，候選 1～5 色票見範例頁「配色與 icon 參考」）
   - [x] ST-35a 橫帶式（B）：葉節點等寬一排 chevron（CSS clip-path），群組名掛上方橫帶跨其子單元，巢狀疊帶；與矩陣「群組表頭＋細項表頭」一對一；改名、拖曳、群組化、活動／資產切換、連線端點全部保留；≤800px 回現行直排（完成 2026-10-26：`valueChain.layout`＝porter|band，舊檔預設 porter；工具列加版型下拉；群組橫帶依名稱長度撐寬、hover 動作鈕換行；自測 tools/selftest/ST-35a.mjs）
   - [x] ST-35b 同色分段式（C）：同群組同色相、子單元間細縫、群組間完整缺口；群組名小字寫在該段底部；4 色循環並在 `COLOR_PALETTES` 各配色下可讀；依賴 ST-35a（完成 2026-10-26：layout=segment 沿用 band 幾何、四色 #3b6fb6/#2a7f73/#b5532f/#6b7a2c 白字對比 ≥4.5、chevron 頂線對齊、群組名小字在底；自測 tools/selftest/ST-35b.mjs）
-  - [ ] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a
+  - [x] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a（完成 2026-10-27：layout=fold 沿用 band；群組與子群組預設收合＋n 角標、點角標／標題空白展開、空群組不收合；vcFoldState 不進存檔；收合群組內端點改接群組、內部連線不畫；工具列全部展開／收合；自測 tools/selftest/ST-35c.mjs）
   - [x] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i（完成 2026-10-27：layout=circle，葉節點依序 8 色、無 icon 顯示首字、群組虛線底板取首葉色、分色配色在 circle 下不生效；vcNodeRectForLayout 讓連線接圓；自測 tools/selftest/ST-35d.mjs）
   - [x] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a（完成 2026-10-27：layout=hex 沿用 band 橫帶結構，六角 clip-path Q=18px、相鄰 −16px 咬合、七色相依頂層序、群組內往黑混深淺；clip-path 下無法白描邊；自測 tools/selftest/ST-35e.mjs）
   - [x] ST-35f 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／F／G／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–e（完成 2026-10-27：專案區 #vcLayoutSelect 由 VC_LAYOUTS 產生、與工具列 .vc-layout-select 雙向同步 syncVcLayoutSelects；版型存 valueChain.layout 隨 localStorage／匯出 JSON／價值鏈檔；自測 tools/selftest/ST-35f.mjs）
@@ -69,6 +69,7 @@
 第 6 階段：文件
 - [x] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27（完成 2026-10-26：38 張全部重拍（ST-25 字級）＋新增 37-elem-card；capture-manual 改 07 目標、13／15b／16／24 切「全部構想」、32 拍 #matrixRow；手冊與 README 過時字句改完；自測 tools/selftest/ST-28.mjs）
 
+- [ ] ST-38 band／fold／segment 在 ≤800px 直排時，群組內子項名稱被擠成一字一行直書（群組 body 直排後葉節點寬度過窄）；需給直排葉節點 min-width 或讓名稱橫排（ST-35c 驗證時發現）
 - [ ] ST-36 價值鏈橫帶式（band）下，跨群組連線的繞行高度落在外層群組橫帶上，白描邊會壓到橫帶文字（如醫美範本「診斷→中醫醫療服務」）；`vcLinkRoute` 算繞行高度時不考慮包住端點的外層群組，畫面與 PPTX 共用；建議 band 版型繞行改走外層橫帶上方（ST-35a 驗證時發現）
 - [ ] ST-37 band 版型滑鼠移上群組橫帶時動作鈕換到第二行，橫帶變高約 22px 使同列內容下移；可改成浮在橫帶上方（ST-35a 驗證時發現）
 - [x] ST-29 價值鏈編輯器：主要活動欄太多折成第二列時，跨列連線（如醫美範本「中醫門診→中醫調理」，1400px 寬）`vcCrossRoute` 找不到通道退回斜直線（v1.0.0 即如此；ST-23c 驗證時確認）；需在折列情況補「列間水平通道」規則（完成 2026-10-26：新增 vcNestedRoute，vcCrossRoute 失敗才試；用頂層方塊判列、走 row-gap／祖先群組 padding／欄間縫；醫美、bio-dental-agent 斜線歸零，其他範例 path 不變；PPTX 共用；自測 tools/selftest/ST-29.mjs）
