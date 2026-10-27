@@ -5832,10 +5832,11 @@ function drawVcLinks() {
     const toProd = product && (product.rects.has(a) || product.rects.has(b));
     const route = vcLinkRoute(a, b, toProd ? rects : actRects, routeOpts, rowUse);
     // ST-40：兩個收合群組緊貼（間距 0）時 straight 會是零長度點 → 以交界為中心延伸成至少 8px 的短線，箭頭才看得到
-    //   ST-49～51：只有 fold 收合群組維持 8px；其他版型（橫帶的葉節點彼此緊貼）只延伸到 ±1.5px（offset 座標取整還有約 0.5px 誤差），兩端仍貼在各自方塊邊上
+    //   ST-49～51：葉節點彼此緊貼的版型（band／segment／hex）只延伸到 ±1.5px（offset 座標取整還有約 0.5px 誤差），兩端仍貼在各自方塊邊上；
+    //   porter／circle／fold 維持 ST-40 的 8px
     if (route.kind === 'straight' && route.pts.length === 2) {
       const [p0, p1] = route.pts;
-      const half = vcLayoutKey(valueChain.layout) === 'fold' ? 4 : 1.5;
+      const half = ['band', 'segment', 'hex'].includes(vcLayoutKey(valueChain.layout)) ? 1.5 : 4;
       if (Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) < half * 2) {
         const cx = (p0.x + p1.x) / 2, cy = (p0.y + p1.y) / 2;
         const horiz = Math.abs(a.x + a.w / 2 - b.x - b.w / 2) >= Math.abs(a.y + a.h / 2 - b.y - b.h / 2);
