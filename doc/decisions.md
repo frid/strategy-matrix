@@ -80,3 +80,5 @@
 | 2026-10-27 | ST-43 | 產品長條並排後，到產品的連線改從長條底邊中點垂直進入，走區底下方通道；相鄰產品互連用水平線 | 左緣水平進入必穿過前面的長條；底邊進入與矩陣欄頭由上進入同邏輯 | 中：改 vcProductRoute 終點規則 |
 | 2026-10-27 | ST-35a spec | band 版型 ≤800px 直排允許巢狀縮排（left 非遞減）；801px 不要求全部單列，只驗不橫向捲動、chevron、同列等寬 | 現行 porter 直排本就縮排；801 折列是配合 ST-29 跨列連線的刻意設計（row-gap） | 易：改 spec (f) 斷言 |
 | 2026-10-27 | 流程 | task-next 改測試先行：planner 寫 spec 先紅 → worker ≤6 輪做到全套綠且不改 spec → verifier 乾淨 checkout 重跑 → 只 ff 併 dev | 使用者 2026-10-26 指示；plugin task-workflow 1.7.0 | 中：plugin 版本回退 |
+| 2026-10-27 | ST-49 | 連線短線（ST-40 的 8px）只在 band／segment／hex 縮為交界兩側各 1.5px；porter／circle／fold 維持 | band 系葉節點緊貼，8px 會伸進來源方塊，ST-35a spec 端點 ±2px 不過 | 易：drawVcLinks 一個常數 |
+| 2026-10-27 | ST-49 | band／fold／segment／hex 葉節點名稱 textarea 非編輯時不接滑鼠，點名稱列才聚焦 | 名稱撐滿 chevron，按在 textarea 上只選字不會 dragstart，拖不進群組 | 中：改回需另找拖曳把手 |
