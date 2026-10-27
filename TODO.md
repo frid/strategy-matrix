@@ -4,7 +4,7 @@
 3. 每次變更前，先掃瞄有無新增沒編碼的，自動編碼。
 
 # 新增功能
-- [~] ST-41 價值鏈 Icon 從emoji 選，也可以搜尋 ![](assets/20261027_200113.png)
+- [x] ST-41 價值鏈 Icon 從emoji 選，也可以搜尋 ![](assets/20261027_200113.png)（完成 2026-10-27：內嵌 VC_EMOJI_SET 365 個 emoji 分 9 類（中英關鍵字），選擇器加搜尋框即時過濾（多詞 AND、比對類別名）、分類小標題、可捲動、放不下往上翻；normVcIcon 改 grapheme 截字；自測 tools/selftest/ST-41.mjs，ST-35i 同步）
 - [x] ST-42 經典Porter 版型會不好看 ![](assets/20261027_200313.png)（完成 2026-10-27：Porter（無 layout class）≥801px 群組內單元與巢狀子群組標題 head 改 flex-wrap，名稱佔整行、徽章掉第二行；純 CSS +10 行；其他五版型 rect 不變；自測 tools/selftest/ST-42.mjs）
 - [ ] ST-43 價值鏈的產品，用這樣版面 ![](assets/20261027_200516.png)
 - [ ] ST-44 PPTX 輸出的價值鏈，利潤的箭頭不對 ![](assets/20261027_200550.png)

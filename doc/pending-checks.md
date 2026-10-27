@@ -99,4 +99,5 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 
 ## 2026-10-27 ST-41～44（第六波）
 - [ ] ST-42 真實瀏覽器開經典 Porter 用自己資料看名稱／徽章換行；801–1000px 窄視窗下的換行觀感
+- [ ] ST-41 真實 Chrome（Windows／Mac）看各類 emoji 是否彩色不缺字；手機 300px 選單觸控；注音組字時搜尋過濾
 
