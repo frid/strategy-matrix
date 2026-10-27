@@ -3,6 +3,7 @@
 //   --sig：只輸出各版型群組內 textarea 的 rect 簽章 JSON（用 ST42_HTML=<改前 index.html 路徑> 跑基準，再跑現版 diff）
 // 測了什麼：bio-aesthetic 展開，Porter＋分色藍綠紫，群組內每個 textarea.vc-name-wrap clientWidth ≥ 3em 且高度 ≤ 2 行；
 //   band／segment／hex／fold／circle 群組內 textarea rect 與改前一致（比對 ST42_HTML 基準；未提供基準則只印簽章）。
+//   另斷言 Porter 巢狀子群組標題 clientWidth ≥ 3 字寬。
 // 預期：全部 PASS、exit 0。
 import { launch } from '../cdp-harness.mjs';
 import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
@@ -16,7 +17,7 @@ let fail = 0;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++; };
 const setLayout = async (h, v) => { await h.ev(`(()=>{const s=document.querySelector('.vc-layout-select');s.value=${JSON.stringify(v)};s.dispatchEvent(new Event('change'));})(); 0`); await sleep(500); };
 const setPalette = async (h, label) => { await h.ev(`(()=>{const s=document.getElementById('paletteSelect');const o=[...s.options].find(o=>o.textContent.includes(${JSON.stringify(label)}));s.value=o.value;s.dispatchEvent(new Event('change'));})(); 0`); await sleep(400); };
-const sigJs = `JSON.stringify([...document.querySelectorAll('.vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head > textarea.vc-name-wrap')].map(t=>{const r=t.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]}))`;
+const sigJs = `JSON.stringify([...document.querySelectorAll('.vc-zone-primary .vc-group-body > :is(.vc-unit, .vc-group) > .vc-node-head > textarea.vc-name-wrap')].map(t=>{const r=t.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]}))`;
 const h = await launch({ width: 1400, height: 1000 });
 try {
   await h.open(html); await h.ev('localStorage.clear(); 0'); await h.open(html);
@@ -34,6 +35,10 @@ try {
       ok(!bad.length, `名稱 clientWidth ≥ 3 字寬 ${JSON.stringify(bad)}`);
       const tall = m.filter(x => x.h > 2.2 * x.lh);
       ok(!tall.length, `名稱高度 ≤ 2 行 ${JSON.stringify(tall)}`);
+      const g = await h.ev(`(()=>[...document.querySelectorAll('.vc-zone-primary .vc-group-body > .vc-group > .vc-node-head > textarea.vc-name-wrap')].map(t=>({v:t.value,w:t.clientWidth,fs:parseFloat(getComputedStyle(t).fontSize)})))()`);
+      ok(g.length >= 3, `Porter 巢狀子群組標題 ${g.length} 個`);
+      const gb = g.filter(x => x.w < 3 * x.fs);
+      ok(!gb.length, `巢狀子群組標題 clientWidth ≥ 3 字寬 ${JSON.stringify(gb)}`);
       await h.shot('#valueChainEditor .vc-zones', outDir + '/ST-42-porter.png');
     }
   }

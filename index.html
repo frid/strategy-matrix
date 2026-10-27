@@ -599,6 +599,9 @@
     #valueChainEditor .vc-zones:not([class*="vc-layout-"]) .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head { flex-wrap: wrap; row-gap: 2px; }
     #valueChainEditor .vc-zones:not([class*="vc-layout-"]) .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head > textarea.vc-name-wrap { flex: 1 0 100%; width: auto; }
     #valueChainEditor .vc-zones:not([class*="vc-layout-"]) .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head > .vc-kind { margin-left: 0; }
+    /* 巢狀子群組標題（.vc-group-body 內的 .vc-group）同款：名稱整行、動作鈕掉到第二行 */
+    #valueChainEditor .vc-zones:not([class*="vc-layout-"]) .vc-zone-primary .vc-group-body > .vc-group > .vc-node-head { flex-wrap: wrap; row-gap: 2px; }
+    #valueChainEditor .vc-zones:not([class*="vc-layout-"]) .vc-zone-primary .vc-group-body > .vc-group > .vc-node-head > textarea.vc-name-wrap { flex: 1 0 100%; width: auto; }
   }
   /* ST-35a 橫帶式（B）：主要活動的葉節點等寬一排 chevron，群組名＝上方橫帶（跨其子單元，巢狀時疊帶），
      與矩陣「群組表頭＋細項表頭」一對一。只新增規則、不改 Porter；全部以 #valueChainEditor 起頭蓋過 Porter 規則，
