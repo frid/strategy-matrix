@@ -914,6 +914,14 @@
     }
     #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 51px; }
   }
+  /* ST-38：≤800px 直排時，群組內葉節點撐滿群組寬、名稱橫排（band／segment／fold／hex 共用；circle 的 800 規則在上一區塊，不覆蓋其名稱 flex） */
+  @media (max-width: 800px) {
+    #valueChainEditor .vc-zone-primary .vc-group-body > .vc-unit { flex: 1 1 100%; min-width: 100%; max-width: 100%; }
+    #valueChainEditor .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; }
+    #valueChainEditor .vc-zones:not(.vc-layout-circle) .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      width: 100% !important; min-width: 0; white-space: normal; writing-mode: horizontal-tb;
+    }
+  }
 
   /* ── Buttons ── */
   button {
