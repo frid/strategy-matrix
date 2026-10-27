@@ -640,6 +640,8 @@
       flex: 1 0 100% !important; width: auto !important; text-align: center;
     }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 0; }
+    /* ST-49：沒在編輯的名稱不接滑鼠，按在名稱上也能拖曳（textarea 的 mousedown 只會選字）；點名稱列由 JS 聚焦進入編輯 */
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap:not(:focus) { pointer-events: none; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-act { display: none; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit:hover > .vc-node-head > .vc-act { display: inline; }
     /* ST-50：hover 才出現的 ＋同層／✕ 改浮在 chevron 右上角（絕對定位），不佔 .vc-node-head 的行，
@@ -4810,6 +4812,14 @@ function buildVcNode(node, zone) {
     saveState();
   });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+  // ST-49：橫帶系版型（band／fold／segment／hex）葉節點的名稱 textarea 撐滿 chevron 中央，從名稱上按下去拖只會選字、不起拖曳
+  // （拖不進群組）。沒在編輯時 CSS 讓名稱不接滑鼠（pointer-events: none），按下去落在節點本身＝可拖；點一下名稱列仍進入編輯
+  if (!isGroup && zone === 'primary' && ['band', 'fold', 'segment', 'hex'].includes(vcLayoutKey(valueChain.layout))) {
+    head.addEventListener('click', e => {
+      if (vcLinkMode || e.target.closest('input, textarea, .vc-act, .vc-kind, .vc-role, .vc-icon-btn')) return;
+      inp.focus();
+    });
+  }
   head.appendChild(inp);
 
   if (!isGroup) {
@@ -5822,13 +5832,15 @@ function drawVcLinks() {
     const toProd = product && (product.rects.has(a) || product.rects.has(b));
     const route = vcLinkRoute(a, b, toProd ? rects : actRects, routeOpts, rowUse);
     // ST-40：兩個收合群組緊貼（間距 0）時 straight 會是零長度點 → 以交界為中心延伸成至少 8px 的短線，箭頭才看得到
+    //   ST-49～51：只有 fold 收合群組維持 8px；其他版型（橫帶的葉節點彼此緊貼）只延伸到 ±1.5px（offset 座標取整還有約 0.5px 誤差），兩端仍貼在各自方塊邊上
     if (route.kind === 'straight' && route.pts.length === 2) {
       const [p0, p1] = route.pts;
-      if (Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) < 8) {
+      const half = vcLayoutKey(valueChain.layout) === 'fold' ? 4 : 1.5;
+      if (Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) < half * 2) {
         const cx = (p0.x + p1.x) / 2, cy = (p0.y + p1.y) / 2;
         const horiz = Math.abs(a.x + a.w / 2 - b.x - b.w / 2) >= Math.abs(a.y + a.h / 2 - b.y - b.h / 2);
-        if (horiz) { const s = (b.x + b.w / 2 >= a.x + a.w / 2) ? 1 : -1; route.pts = [{ x: cx - 4 * s, y: cy }, { x: cx + 4 * s, y: cy }]; }
-        else { const s = (b.y + b.h / 2 >= a.y + a.h / 2) ? 1 : -1; route.pts = [{ x: cx, y: cy - 4 * s }, { x: cx, y: cy + 4 * s }]; }
+        if (horiz) { const s = (b.x + b.w / 2 >= a.x + a.w / 2) ? 1 : -1; route.pts = [{ x: cx - half * s, y: cy }, { x: cx + half * s, y: cy }]; }
+        else { const s = (b.y + b.h / 2 >= a.y + a.h / 2) ? 1 : -1; route.pts = [{ x: cx, y: cy - half * s }, { x: cx, y: cy + half * s }]; }
       }
     }
     const d = vcRoundedPath(route.pts, 8);
