@@ -342,19 +342,17 @@
   .vc-zones {
     position: relative; display: grid; gap: 10px;
     grid-template-columns: 22px minmax(0, 1fr) 76px auto;
-    grid-template-rows: auto 1fr auto;  /* 產品直欄比圖高時，多出的高度只給主要活動列（不撐大上方支援活動與下方括號） */
+    grid-template-rows: auto 1fr;  /* 產品直欄比圖高時，多出的高度只給主要活動列（不撐大上方支援活動） */
     grid-template-areas:
       "supportlabel support    margin products"
-      ".            activities margin products"
-      ".            pbracket   .      products";
+      "primarylabel activities margin products";
     align-items: stretch;
   }
   .vc-zones:not(.vc-arrow-bg) {
     grid-template-columns: 22px minmax(0, 1fr) auto;
     grid-template-areas:
       "supportlabel support    products"
-      ".            activities products"
-      ".            pbracket   products";
+      "primarylabel activities products";
   }
   @media (max-width: 800px) {
     .vc-zones, .vc-zones:not(.vc-arrow-bg) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "support" "activities" "products"; }
@@ -409,19 +407,15 @@
     clip-path: polygon(0 10%, 72% 10%, 72% 0, 100% 50%, 72% 100%, 72% 90%, 0 90%);
     pointer-events: none; user-select: none;
   }
-  /* 左側「支援活動」括號、下方「主要活動」括號：純裝飾標示，不可互動 */
-  .vc-support-label {
-    grid-area: supportlabel; writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
+  /* 左側「支援活動」與「主要活動」括號（ST-45 起兩者同樣式，皆在列左側直書）：純裝飾標示，不可互動 */
+  .vc-support-label, .vc-primary-label {
+    writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
     font-size: var(--fs-xs); font-weight: 700; color: var(--ink-light);
     border-top: 2px solid var(--grid-line); border-bottom: 2px solid var(--grid-line); border-left: 2px solid var(--grid-line);
     border-radius: 6px 0 0 6px; pointer-events: none; user-select: none;
   }
-  .vc-primary-label {
-    grid-area: pbracket; display: flex; align-items: center; justify-content: center;
-    font-size: var(--fs-xs); font-weight: 700; color: var(--ink-light);
-    border-left: 2px solid var(--grid-line); border-right: 2px solid var(--grid-line); border-bottom: 2px solid var(--grid-line);
-    border-radius: 0 0 6px 6px; padding: 2px 4px; margin-top: -4px; pointer-events: none; user-select: none;
-  }
+  .vc-support-label { grid-area: supportlabel; }
+  .vc-primary-label { grid-area: primarylabel; }
 
   /* 斜切效果（Porter 箭頭樣式），隨「大箭頭背景」開關顯示 */
   .vc-zones.vc-arrow-bg .vc-zone-support .vc-unit,
