@@ -247,5 +247,34 @@ await ev(`loadValueChainTemplate('theory-semi'); true`);
 await sleep(200);
 await shot('21-vc-roles', vcPanel);
 
+// ── ST-35j：價值鏈版型、icon 選單、分色配色（用「連鎖醫美診所」範本 bio-aesthetic，給 3 個 icon）──
+await tab('chain');
+await ev(`loadValueChainTemplate('bio-aesthetic'); true`);
+await ev(`(() => { const L = []; const w = l => l.forEach(x => { if (x.type === 'group') w(x.children); else if (x.type !== 'asset') L.push(x); });
+ w(valueChain.primary); ['🩺', '💉', '✨'].forEach((ic, i) => { if (L[i * 2]) L[i * 2].icon = ic; }); commitValueChain(); return true; })()`);
+await sleep(300);
+const setVcLayout = async k => { await ev(`(() => { const s = document.getElementById('vcLayoutSelect'); s.value = ${JSON.stringify(k)}; s.dispatchEvent(new Event('change')); return true; })()`); await sleep(500); };
+const vcZones = `document.querySelector('#valueChainEditor .vc-zones')`;
+// 40–44 五種新版型（經典 Porter 就是 02）
+for (const [name, k] of [['40-vc-band', 'band'], ['41-vc-segment', 'segment'], ['42-vc-fold', 'fold'], ['43-vc-circle', 'circle'], ['44-vc-hex', 'hex']]) {
+  await setVcLayout(k);
+  await shot(name, vcZones);
+}
+// 45 icon 選單（band 版型，點第一個有 icon 的按鈕）
+await setVcLayout('band');
+await ev(`document.querySelector('#valueChainEditor .vc-zone-primary .vc-icon-btn:not(.vc-icon-empty)').click(); true`);
+await sleep(200);
+await shot('45-icon-picker', `[document.getElementById('vcIconPicker'), document.querySelector('#valueChainEditor .vc-zone-primary .vc-icon-btn:not(.vc-icon-empty)')]`, 40);
+await ev(`closeVcIconPicker(); true`);
+// 46 分色配色：價值鏈（band）＋矩陣欄頭
+await ev(`applyPalette(COLOR_PALETTES.findIndex(p => p.name === '分色・鮮彩')); true`);
+await shot('46-palette-perunit', vcZones);
+await ev(`expandValueChainToMatrix(false); true`);
+await tab('ideas');
+await shot('47-palette-perunit-matrix', `document.querySelector('#matrixTable thead')`);
+await ev(`applyPalette(0); true`);
+await tab('chain');
+await setVcLayout('porter');
+
 ws.close(); chrome.kill(); await sleep(1500);
 try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 400 }); } catch {}
