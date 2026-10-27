@@ -642,6 +642,14 @@
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 0; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-act { display: none; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit:hover > .vc-node-head > .vc-act { display: inline; }
+    /* ST-50：hover 才出現的 ＋同層／✕ 改浮在 chevron 右上角（絕對定位），不佔 .vc-node-head 的行，
+       否則滑鼠停著的那支（例如剛點完 .vc-kind）會多折一行、比同列高 28px */
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit { position: relative; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-act {
+      position: absolute; top: 2px; right: 18px; z-index: 2; margin: 0; padding: 0 3px; line-height: 1.4;
+      background: rgba(255,255,255,0.92); border-radius: 3px; color: var(--ink) !important;
+    }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-unit > .vc-node-head > .vc-act:not(.vc-act-remove) { right: calc(18px + 1.7em); }
     /* 群組＝直向容器：上方名稱橫帶＋下方一排子項；本身不畫底色、不斜切 */
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group {
       flex: var(--vc-leaves, 1) 1 0; align-self: flex-end;
