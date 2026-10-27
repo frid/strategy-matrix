@@ -111,3 +111,4 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [ ] ST-49 band 系葉節點要點名稱列才進入編輯：手點確認改名、雙擊選字；群組橫帶名稱上仍拖不動群組（已知，未登記）
 - [ ] ST-50 hover 時 ＋同層／✕ 浮在 chevron 右上角蓋住一小塊，目視確認
 - [ ] ST-49 band／segment／hex 連線短線改 ±1.5px（porter／circle／fold 維持 8px）的觀感
+- [ ] ST-48 實機 375／414 看 ③ 長 chip（如「競爭優勢：資訊系統與採購（圖 9.11）」）右緣是否貼邊被裁；縮排 36→18px 觀感；點前提 chip 開編輯框後的版面

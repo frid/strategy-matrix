@@ -11,7 +11,7 @@
 - [x] ST-49 band 版型：拖曳葉節點進群組 body（含空「新群組」）沒有反應，資料不變、無 pageerror；porter 版型同操作正常（ST-35a spec (e-3) 發現，dev cc11d02）（完成 2026-10-27，測試先行：以 ST-35a spec (e-3) 驗收，與 ST-50／51 同一 worker 共 4 輪，verifier 乾淨 checkout 62 passed／ST-21 ALL PASS；band 系葉節點名稱非編輯時 pointer-events none、點名稱列 JS 聚焦；band／segment／hex 連線短線改 ±1.5px；自測 tools/selftest/ST-49-51.mjs）
 - [x] ST-50 band 版型：點 `.vc-kind` 切換活動／資產後，該 chevron 的 `.vc-node-head` 高度多 28px（109 vs 81），列底對齊而 top 差 29px；初始載入的資產節點高度正常，是切換後重繪的 sizing 問題（ST-35a spec (e-4) 發現）（完成 2026-10-27，測試先行：以 ST-35a spec (e-4) 驗收；根因是 hover 的 ＋同層／✕ 折行，改絕對定位右上）
 - [x] ST-51 band 版型：巢狀群組每層葉節點少約 1px（1440 寬：頂層 161.4、一層內 160.4、兩層內 159.8），群組邊框／內距沒扣進 flex 等分；驗收為同列葉節點寬 ±1px（ST-35a spec (a) 發現）（完成 2026-10-27，測試先行：以 ST-35a spec (a)(d)(e-1)(e-2)(g) 驗收；band `.vc-group-body` border 0，空群組保留虛線框）
-- [ ] ST-48 ③ 策略構想在 375px 寬會橫向捲動：箭頭清單的前提 chip（`.arrow-premises`／`.premise-chip` right 425、`.arrow-elems` right 386）超出 viewport（ST-46 spec 發現，dev ef8fe9e；②④⑤⑥ 不會）；應讓 chip 換行或容器內捲動
+- [x] ST-48 ③ 策略構想在 375px 寬會橫向捲動：箭頭清單的前提 chip（`.arrow-premises`／`.premise-chip` right 425、`.arrow-elems` right 386）超出 viewport（ST-46 spec 發現，dev ef8fe9e；②④⑤⑥ 不會）；應讓 chip 換行或容器內捲動（完成 2026-10-28，測試先行：spec tests/tasks/ST-48.spec.ts 13 個 test，worker 1 輪，verifier 乾淨 checkout 75 passed／ST-21 ALL PASS；≤800px chip 換行、縮排 18px、編輯框限寬；自測 tools/selftest/ST-48.mjs）
 - [x] ST-47 價值鏈編輯器在 375px 寬（手機）會橫向捲動：ST-29 spec 的 375×667 斷言量到 document scrollWidth 667 > 375（v1.2.0 於 dev b01349d），支援活動欄表頭與主要活動列未在窄螢幕收合；應讓 document 層級不橫向捲動（容器內捲動可接受）；2026-10-27 擴充：800px 寬也橫向捲動（scrollWidth 848，ST-35a spec 量到），一併處理（完成 2026-10-27，測試先行：spec tests/tasks/ST-47.spec.ts 13 個 test，worker 3 輪，verifier 乾淨 checkout 46 passed／ST-21 ALL PASS；只改 CSS：≤800 頂層單元與支援活動橫條收合、801 circle 巢狀群組限寬；自測 tools/selftest/ST-47.mjs）
 
 ## Complete
