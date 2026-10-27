@@ -78,3 +78,5 @@
 | 2026-10-27 | ST-44 | PPTX Margin 改 rightArrow 不旋轉、直長尺寸；繞線箭身比例同步 | 與網頁 clip-path 向右箭頭、Porter 慣例一致；ST-23c 改 downArrow 只是修尺寸 bug 的副作用 | 易 |
 
 | 2026-10-27 | ST-43 | 產品長條並排後，到產品的連線改從長條底邊中點垂直進入，走區底下方通道；相鄰產品互連用水平線 | 左緣水平進入必穿過前面的長條；底邊進入與矩陣欄頭由上進入同邏輯 | 中：改 vcProductRoute 終點規則 |
+| 2026-10-27 | ST-35a spec | band 版型 ≤800px 直排允許巢狀縮排（left 非遞減）；801px 不要求全部單列，只驗不橫向捲動、chevron、同列等寬 | 現行 porter 直排本就縮排；801 折列是配合 ST-29 跨列連線的刻意設計（row-gap） | 易：改 spec (f) 斷言 |
+| 2026-10-27 | 流程 | task-next 改測試先行：planner 寫 spec 先紅 → worker ≤6 輪做到全套綠且不改 spec → verifier 乾淨 checkout 重跑 → 只 ff 併 dev | 使用者 2026-10-26 指示；plugin task-workflow 1.7.0 | 中：plugin 版本回退 |

@@ -8,8 +8,11 @@
 - [~] ST-46 在第三步策略構想下，不用出現"描述策略點" ![](assets/20261027_221530.png)
 
 # Bug
+- [ ] ST-49 band 版型：拖曳葉節點進群組 body（含空「新群組」）沒有反應，資料不變、無 pageerror；porter 版型同操作正常（ST-35a spec (e-3) 發現，dev cc11d02）
+- [ ] ST-50 band 版型：點 `.vc-kind` 切換活動／資產後，該 chevron 的 `.vc-node-head` 高度多 28px（109 vs 81），列底對齊而 top 差 29px；初始載入的資產節點高度正常，是切換後重繪的 sizing 問題（ST-35a spec (e-4) 發現）
+- [ ] ST-51 band 版型：巢狀群組每層葉節點少約 1px（1440 寬：頂層 161.4、一層內 160.4、兩層內 159.8），群組邊框／內距沒扣進 flex 等分；驗收為同列葉節點寬 ±1px（ST-35a spec (a) 發現）
 - [ ] ST-48 ③ 策略構想在 375px 寬會橫向捲動：箭頭清單的前提 chip（`.arrow-premises`／`.premise-chip` right 425、`.arrow-elems` right 386）超出 viewport（ST-46 spec 發現，dev ef8fe9e；②④⑤⑥ 不會）；應讓 chip 換行或容器內捲動
-- [ ] ST-47 價值鏈編輯器在 375px 寬（手機）會橫向捲動：ST-29 spec 的 375×667 斷言量到 document scrollWidth 667 > 375（v1.2.0 於 dev b01349d），支援活動欄表頭與主要活動列未在窄螢幕收合；應讓 document 層級不橫向捲動（容器內捲動可接受）
+- [ ] ST-47 價值鏈編輯器在 375px 寬（手機）會橫向捲動：ST-29 spec 的 375×667 斷言量到 document scrollWidth 667 > 375（v1.2.0 於 dev b01349d），支援活動欄表頭與主要活動列未在窄螢幕收合；應讓 document 層級不橫向捲動（容器內捲動可接受）；2026-10-27 擴充：800px 寬也橫向捲動（scrollWidth 848，ST-35a spec 量到），一併處理
 
 ## Complete
 ### v1.2.0（2026-10-27 release）
