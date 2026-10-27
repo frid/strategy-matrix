@@ -73,7 +73,8 @@ const setLayout = async (h, lk) => { await h.ev(`valueChain.layout=${JSON.string
         const y = p[k].y, lo = Math.min(p[k - 1].x, p[k].x), hi = Math.max(p[k - 1].x, p[k].x);
         r.heads.forEach(hd => { if (hd.r.x < hi && hd.r.x + hd.r.w > lo && y > hd.r.y - 4 && y < hd.r.y + hd.r.h + 4) bad.push(`${hd.name}@段${k} y=${y} head ${hd.r.y}–${hd.r.y + hd.r.h}`); });
       }
-      const edge = onEdge(p[0], L.r1, 1) && onEdge(p[p.length - 1], L.r2, 1);
+      const tol = p.length === 2 && Math.abs(p[1].x - p[0].x) + Math.abs(p[1].y - p[0].y) <= 8 ? 5 : 1;  // ST-40：相鄰收合群組的短線以交界為中心各延伸 4px
+      const edge = onEdge(p[0], L.r1, tol) && onEdge(p[p.length - 1], L.r2, tol);
       ok(ortho(p) && edge && !bad.length, `[A ${lk}] ${L.f}→${L.t}：正交 ${ortho(p)}、端點在方塊邊 ${edge}、壓到橫帶 ${bad.length ? bad.join(',') : '無'}`);
       console.log('     ' + d);
     });
