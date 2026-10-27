@@ -1420,6 +1420,14 @@
   .premise-seg button + button { border-left: 1px solid var(--grid-line); }
   .premise-seg button.on.ok { background: #2ca05a; color: white; } .premise-seg button.on.unsure { background: #9e9e9e; color: white; } .premise-seg button.on.no { background: #d64545; color: white; }
   .premise-act { cursor: pointer; opacity: 0.6; } .premise-act:hover { opacity: 1; color: var(--col-header); } .premise-act.del:hover { color: #d64545; }
+  /* ST-48：窄螢幕 ③ 前提／要素 chip 換行，不撐寬 flex 容器 */
+  @media (max-width: 800px) {
+    .arrow-item, .arrow-premises, .arrow-elems, .arrow-elems-line { min-width: 0; max-width: 100%; }
+    .arrow-premises, .arrow-elems { padding-left: 18px; }
+    .premise-chip, .elem-chip { white-space: normal; max-width: 100%; overflow-wrap: anywhere; }
+    .premise-edit { min-width: 0; max-width: 100%; }
+    .premise-edit input[type=text] { min-width: 0; flex-basis: 100%; }
+  }
   .arrow-item.premise-flash { outline: 2px solid #e0a020; outline-offset: -2px; background: #fff6dc; }
   .premise-swot-stats { font-size: var(--fs-xs); color: var(--ink-light); margin: 6px 0; }
   .premise-swot-hint { font-size: var(--fs-xs); color: var(--cell-text); margin: 0 0 6px; }
