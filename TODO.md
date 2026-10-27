@@ -4,6 +4,12 @@
 3. 每次變更前，先掃瞄有無新增沒編碼的，自動編碼。
 
 # 新增功能
+
+# Bug
+
+## Complete
+### v1.2.0（2026-10-27 release）
+#### 新增功能
 - [x] ST-41 價值鏈 Icon 從emoji 選，也可以搜尋 ![](assets/20261027_200113.png)（完成 2026-10-27：內嵌 VC_EMOJI_SET 365 個 emoji 分 9 類（中英關鍵字），選擇器加搜尋框即時過濾（多詞 AND、比對類別名）、分類小標題、可捲動、放不下往上翻；normVcIcon 改 grapheme 截字；自測 tools/selftest/ST-41.mjs，ST-35i 同步）
 - [x] ST-42 經典Porter 版型會不好看 ![](assets/20261027_200313.png)（完成 2026-10-27：Porter（無 layout class）≥801px 群組內單元與巢狀子群組標題 head 改 flex-wrap，名稱佔整行、徽章掉第二行；純 CSS +10 行；其他五版型 rect 不變；自測 tools/selftest/ST-42.mjs）
 - [x] ST-43 價值鏈的產品，用這樣版面 ![](assets/20261027_200516.png)（完成 2026-10-27：產品改「一產品一條直立長條、左右並排、名稱直書」，網頁 >800px 與 PPTX（0.42" 寬 eaVert）同款；徽章直列在長條底；到產品的連線改從長條底邊中點垂直進入、走區底通道，相鄰產品水平互連；≤800px 維持橫排方塊；grid 產品欄 auto；自測 tools/selftest/ST-43.mjs，ST-23c／31／35g／st-21 回歸同步；manual 4.6 文字已改、圖 07-vc-products.png 待重拍）
@@ -31,8 +37,7 @@
   - [x] ST-35i 價值單元 icon：unit 新欄位 `icon`（emoji 字串），價值鏈編輯器名稱旁加「選 icon」小按鈕（常用 24 個＋自由輸入）；B／C／E／G 畫在方塊左側、F 畫在圓內；矩陣欄頭可選顯示；舊檔無此欄位不畫；PPTX 輸出 emoji 文字；`normaliseValueChain` 只留字串（完成 2026-10-26：unit.icon ≤4 字、24 個常用 emoji 選單＋自訂＋清除、操作列「欄頭 icon」勾選存 showUnitIcons、PPTX 文字前置 icon；範例資料不加 icon 以保 regression；band 下 icon 在名稱上方待統一；自測 tools/selftest/ST-35i.mjs）
   - [x] ST-35j 手冊／README 補五種版型與分色配色截圖、icon 選法；自測 tools/selftest/ST-35.mjs（五版型各截圖、切換後 drawLines 連線端點仍對齊、三套分色配色下白字可讀）；依賴 ST-35g–i（完成 2026-10-27：manual 4.2a 版型／4.2b icon／第 10 章分色配色，新圖 40–47、重拍 01b／03；README 補功能；總自測 tools/selftest/ST-35.mjs）
 
-
-# Bug
+#### Bug
 規劃（2026-10-26）：建議順序 ST-22 → 26 → 24 → 23 → 25 → 27 → 28；ST-22 是 v1.1.0 迴歸，修完建議先 release v1.1.1。
 
 第 1 階段：修迴歸
@@ -81,7 +86,7 @@
 - [x] ST-29 價值鏈編輯器：主要活動欄太多折成第二列時，跨列連線（如醫美範本「中醫門診→中醫調理」，1400px 寬）`vcCrossRoute` 找不到通道退回斜直線（v1.0.0 即如此；ST-23c 驗證時確認）；需在折列情況補「列間水平通道」規則（完成 2026-10-26：新增 vcNestedRoute，vcCrossRoute 失敗才試；用頂層方塊判列、走 row-gap／祖先群組 padding／欄間縫；醫美、bio-dental-agent 斜線歸零，其他範例 path 不變；PPTX 共用；自測 tools/selftest/ST-29.mjs）
 - [x] ST-30 tools/selftest/ST-20.mjs 的 [A]「連線條數 新＝基準＋1」需要 ST-20 之前的基準版，用 v1.0.0 之後當基準必 FAIL；改為固定比對數字或移除（ST-23c 驗證時確認；完成 2026-10-26：[A] 改比對頁面範本 valueChain.links 數，基準版條數只印參考）
 
-## Complete
+### v1.1.0 之前
 - [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）（release v1.1.0）
   - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
   - 第 1 階段：文案
