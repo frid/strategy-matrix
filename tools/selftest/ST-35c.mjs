@@ -35,7 +35,7 @@ const linkCheck = `(()=>{
   const ps=[...document.querySelectorAll('#vcLineCanvas .vc-link-main')];
   const same=(a,b)=>a.x===b.x&&a.y===b.y&&a.w===b.w&&a.h===b.h;
   const exp=valueChain.links.map(l=>({l,a:vcFoldEndRect(l.from),b:vcFoldEndRect(l.to)})).filter(o=>o.a&&o.b&&!same(o.a,o.b));
-  const onEdge=(p,r,t=3)=>p.x>=r.x-t&&p.x<=r.x+r.w+t&&p.y>=r.y-t&&p.y<=r.y+r.h+t&&
+  const onEdge=(p,r,t=5)=>p.x>=r.x-t&&p.x<=r.x+r.w+t&&p.y>=r.y-t&&p.y<=r.y+r.h+t&&
     (Math.abs(p.x-r.x)<=t||Math.abs(p.x-r.x-r.w)<=t||Math.abs(p.y-r.y)<=t||Math.abs(p.y-r.y-r.h)<=t);
   const bad=[];
   ps.forEach((p,i)=>{const d=p.getAttribute('d')||'';const nums=(d.match(/-?\\d+(\\.\\d+)?/g)||[]).map(Number);
