@@ -679,8 +679,10 @@
     #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act.vc-act-remove:hover { color: #d64545 !important; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body {
       flex-direction: row; align-items: flex-end; gap: 0; margin: 0; padding: 0; min-height: 58px; border-radius: 0;
+      border-width: 0;  /* ST-51：虛線框（平時透明）左右會吃掉子葉的 flex 等分寬、上下會把巢狀葉節點墊高，每層 1px；拖曳中改用 outline 不佔位 */
     }
-    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-color: var(--grid-line); border-radius: 4px; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body.drag-over { outline: 1px dashed var(--col-header); outline-offset: -1px; }
+    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body:empty { border-width: 1px; border-color: var(--grid-line); border-radius: 4px; }
   }
   /* ST-35c fold 摺疊式（E）：zones 同時掛 vc-layout-band＋vc-layout-fold，沿用橫帶幾何；收合的群組＝一支 chevron＋右上「＋n」角標，
      展開後在原位以橫帶撐開、角標變「▾」。收合狀態只在 JS 的 vcFoldState（不存檔）。≤800px 不套用（直排、全部展開、無角標） */
