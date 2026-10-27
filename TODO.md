@@ -6,7 +6,7 @@
 # 新增功能
 - [x] ST-41 價值鏈 Icon 從emoji 選，也可以搜尋 ![](assets/20261027_200113.png)（完成 2026-10-27：內嵌 VC_EMOJI_SET 365 個 emoji 分 9 類（中英關鍵字），選擇器加搜尋框即時過濾（多詞 AND、比對類別名）、分類小標題、可捲動、放不下往上翻；normVcIcon 改 grapheme 截字；自測 tools/selftest/ST-41.mjs，ST-35i 同步）
 - [x] ST-42 經典Porter 版型會不好看 ![](assets/20261027_200313.png)（完成 2026-10-27：Porter（無 layout class）≥801px 群組內單元與巢狀子群組標題 head 改 flex-wrap，名稱佔整行、徽章掉第二行；純 CSS +10 行；其他五版型 rect 不變；自測 tools/selftest/ST-42.mjs）
-- [~] ST-43 價值鏈的產品，用這樣版面 ![](assets/20261027_200516.png)
+- [x] ST-43 價值鏈的產品，用這樣版面 ![](assets/20261027_200516.png)（完成 2026-10-27：產品改「一產品一條直立長條、左右並排、名稱直書」，網頁 >800px 與 PPTX（0.42" 寬 eaVert）同款；徽章直列在長條底；到產品的連線改從長條底邊中點垂直進入、走區底通道，相鄰產品水平互連；≤800px 維持橫排方塊；grid 產品欄 auto；自測 tools/selftest/ST-43.mjs，ST-23c／31／35g／st-21 回歸同步；manual 4.6 文字已改、圖 07-vc-products.png 待重拍）
 - [x] ST-44 PPTX 輸出的價值鏈，利潤的箭頭不對 ![](assets/20261027_200550.png)（完成 2026-10-27：原因是 ST-23c 修尺寸時把 rightArrow＋rot 改成 downArrow；改 rightArrow 不旋轉、adj1=80000／adj2=28000 對應網頁 clip-path，六版型共用；產品繞線箭身比例改 [0,0.72]；其他 slide XML 不變；自測 tools/selftest/ST-44.mjs，ST-23c／35g 同步）
 - [x] ST-31 ![](assets/20261026_191323.png) 價值鏈的產品，改成水平排 (目前是垂直上下)（2026-10-26 使用者對 ST-23a 直排產品的回饋：產品欄位置維持最右，方塊內文字改水平；PPTX 同步；完成 2026-10-26：產品欄維持最右，方塊文字改水平（兩行版型、200px 欄）；PPTX 產品欄 1.0–1.2" 橫排；手冊 10 張圖重拍；自測 tools/selftest/ST-31.mjs）
 - [x] ST-32 ![](assets/20261026_191804.png) 自動隱藏無箭頭欄，無法回復全部顯示的。 藏在下面 ![](assets/20261026_191911.png)移到 Matrix 上方（完成 2026-10-26：#hiddenColsBar 移到操作列下、矩陣上；「全部顯示」同時關短版；無箭頭時自動隱藏不動作並提示；自測 tools/selftest/ST-32.mjs）

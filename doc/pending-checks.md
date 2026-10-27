@@ -101,4 +101,6 @@ verifier 在 headless 環境驗不到、需要真實瀏覽器或 PowerPoint 才�
 - [ ] ST-42 真實瀏覽器開經典 Porter 用自己資料看名稱／徽章換行；801–1000px 窄視窗下的換行觀感
 - [ ] ST-41 真實 Chrome（Windows／Mac）看各類 emoji 是否彩色不缺字；手機 300px 選單觸控；注音組字時搜尋過濾
 - [ ] ST-44 PowerPoint 開匯出檔看 Margin 直長向右箭頭、直排文字不溢出；用有產品連線的檔（bookstore-a）看連線不穿過箭頭
+- [ ] ST-43 PowerPoint 看直書產品長條字型／換行與底邊進入的連線；網頁拖曳排序產品長條、直書 textarea 中文輸入；800px 邊界切換手感；長條內徽章折兩行是否可接受
+- [ ] ST-43 manual/img/07-vc-products.png 仍是舊版面，待重拍
 
