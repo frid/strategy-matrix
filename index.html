@@ -5114,7 +5114,7 @@ function vcNestedRoute(r1, r2, rects, others, opts, rowUse, prevUse, tx) {
 }
 
 // ST-23b：產品直欄的接入規則。opts.product = { rects: 產品欄內方塊（Set，與 rects 同一批物件）, margin: Margin 箭頭矩形|null, zone: 產品欄矩形,
-//   body: Margin 箭身在 x 方向佔寬的 [起, 迄] 比例（選填，預設 [0, 0.72]＝畫面 CSS 右尖箭頭；PPTX downArrow 傳 [0.25, 0.75]） }
+//   body: Margin 箭身在 x 方向佔寬的 [起, 迄] 比例（選填，預設 [0, 0.72]＝畫面 CSS 右尖箭頭；PPTX rightArrow 同為 [0, 0.72]） }
 // 活動→產品：來源右緣出 → 產品欄左側的直通道 → 產品垂直中點 → 進產品左緣；右邊被同列方塊擋住時，先鑽方塊間縫隙到列間通道再過去
 // 產品→活動：同路線反向；產品→產品：欄內直線（中間隔著別的產品就繞欄右側）。每段都是水平或垂直，回傳 { kind: 'product', pts }
 // 通道 x 依序取「主要活動右緣～Margin 左緣」→「Margin 右緣～產品方塊」→「Margin 箭身內」（沒有 Margin 就是活動右緣～產品方塊），多條線依序錯開
@@ -5158,7 +5158,7 @@ function vcProductRoute(r1, r2, rects, opts, rowUse) {
     band(lo, M.x - u * 2);
     band(Math.max(lo, M.x + M.w + u * 2), hi);
     const body = P.body || [0, 0.72];
-    band(Math.max(lo, M.x + M.w * body[0] + u * 4), Math.min(hi, M.x + M.w * body[1] - u * 4));  // 箭身（不含箭頭尖；畫面 CSS 左 72%，PPTX downArrow 中間 50%）
+    band(Math.max(lo, M.x + M.w * body[0] + u * 4), Math.min(hi, M.x + M.w * body[1] - u * 4));  // 箭身（不含箭頭尖；畫面 CSS 與 PPTX rightArrow 都是左 72%）
   } else band(lo, hi);
   if (!slots.length) slots.push(Math.max(lo, Math.min(hi, (P.zone.x + lo) / 2)));
   const k = rowUse['prod:corr'] || 0;
@@ -8772,13 +8772,14 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   const mh = Math.max(unitH, areaY + areaH - supportTop);
 
   // ── 右側 Margin／利潤 綠色大箭頭（隨「大箭頭背景」開關顯示，純裝飾）──
-  // ST-23c：原本 rightArrow＋rot=90° 在 OOXML 是「旋轉前尺寸繞中心轉」，會畫成 mh 寬的橫向箭頭；改不旋轉的 downArrow
-  //   downArrow 預設 adj：箭身佔寬中間 50%（x 0.25～0.75）、箭頭尖高＝寬×50%（在底端）
+  // ST-23c：原本 rightArrow＋rot=90° 在 OOXML 是「旋轉前尺寸繞中心轉」，尺寸會錯；ST-44：不旋轉，直接給直長 ext 的 rightArrow（尖朝右，同畫面 CSS clip-path）
+  //   rightArrow：adj1＝箭身厚度佔高度比例（CSS 上下各縮 10% → 80000）；adj2＝箭頭長度＝ss×adj2/100000，ss＝min(寬,高)＝寬
+  //   CSS 箭頭尖從 72% 寬起 → 長度 28% 寬 → adj2 = 28000
   if (arrowBg) {
     xml += `
       <p:sp>
         <p:nvSpPr><p:cNvPr id="${id++}" name="Margin／利潤"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="downArrow"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${lk === 'circle' ? '2B2D31' : P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
+        <p:spPr><a:xfrm><a:off x="${mx}" y="${my}"/><a:ext cx="${marginW}" cy="${mh}"/></a:xfrm><a:prstGeom prst="rightArrow"><a:avLst><a:gd name="adj1" fmla="val 80000"/><a:gd name="adj2" fmla="val 28000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="${lk === 'circle' ? '2B2D31' : P.vcMarginBg}"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr>
         <p:txBody><a:bodyPr vert="eaVert" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/><a:r><a:rPr lang="zh-TW" sz="900" b="1" dirty="0"><a:solidFill><a:srgbClr val="${lk === 'circle' ? 'FFFFFF' : P.vcMarginText}"/></a:solidFill><a:latin typeface="Microsoft JhengHei"/><a:ea typeface="Microsoft JhengHei"/></a:rPr><a:t>Margin／利潤</a:t></a:r></a:p></p:txBody>
       </p:sp>`;
   }
@@ -8802,13 +8803,13 @@ function buildValueChainShapesXml(areaX, areaY, areaW, areaH, startId, deepExtra
   // 相鄰→一條直線；跨越→上去、橫走、下來三條（前兩條無箭頭，最後一條帶箭頭）
   const allRects = Object.values(rectById);
   const rowUse = {};
-  // ST-23c：到產品的線走 vcProductRoute（與編輯器同規則）；Margin 是 downArrow，箭身在 x 0.25～0.75
+  // ST-23c：到產品的線走 vcProductRoute（與編輯器同規則）；Margin 是 rightArrow，箭身在 x 0～0.72
   const product = products.length ? {
     rects: new Set(products.map(n => rectById[n.id]).filter(Boolean)),
     margin: arrowBg ? { x: mx, y: my, w: marginW, h: mh } : null,
     zone: { x: prodX, y: supportTop, w: prodColW, h: mh },
     horizontal: false,
-    body: [0.25, 0.75]
+    body: [0, 0.72]
   } : null;
   const routeOpts = { near: in2emu(0.25), lift: in2emu(0.1), step: in2emu(0.06), product };
   if (leafLine && lk !== 'circle') { routeOpts.bandAnc = true; routeOpts.bandText = bandText; }   // ST-36：band／segment／hex（fold 匯出走 band）同畫面，繞行避開端點祖先群組的橫帶；ST-39 垂直進出段避開橫帶名稱文字
