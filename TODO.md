@@ -5,7 +5,7 @@
 
 # 新增功能
 - [x] ST-45 價值鏈下方的主要活動 ![](assets/20261027_220149.png) 的框線，移到左側，跟支援活動依樣方式 ![](assets/20261027_220235.png)（完成 2026-10-27，測試先行：spec tests/tasks/ST-45.spec.ts 12 個 test，worker 1 輪，verifier 乾淨 checkout 26 passed／ST-21 ALL PASS；括號改左側直書、與支援活動同樣式、六版型適用；自測 tools/selftest/ST-45.mjs）
-- [~] ST-46 在第三步策略構想下，不用出現"描述策略點" ![](assets/20261027_221530.png)
+- [x] ST-46 在第三步策略構想下，不用出現"描述策略點" ![](assets/20261027_221530.png)（完成 2026-10-27，測試先行：spec tests/tasks/ST-46.spec.ts 7 個 test，worker 1 輪，verifier 乾淨 checkout 33 passed／ST-21 ALL PASS；guideGoto 進 ③ 隱藏 #modeDescBtn，manual／README 同步；自測 tools/selftest/ST-46.mjs）
 
 # Bug
 - [ ] ST-49 band 版型：拖曳葉節點進群組 body（含空「新群組」）沒有反應，資料不變、無 pageerror；porter 版型同操作正常（ST-35a spec (e-3) 發現，dev cc11d02）
