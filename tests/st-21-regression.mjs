@@ -4,7 +4,7 @@
 //   --out  預設：$CLAUDE_JOB_DIR/tmp/st21e，無則 os.tmpdir()/st21e
 // 測：a 兩份 fixtures 載入無 console error、六 tab 截圖、③ lineCanvas 連線／①vcLineCanvas 連線、往返重畫；
 //     b 兩範例六步 pct 與基準版相同；c 兩範例 PPTX 的 slide*.xml 與基準版逐張相同（ST-23c 起 slide1＝價值鏈頁改產品直欄，
-//     預設不比 slide1、改驗產品方塊數（ST-31 起橫排、無 eaVert）／產品在 Margin 右側／連接器正交／每條連線至少一段／skippedLinks 0；--strict-slide1 恢復逐張全比）；
+//     預設不比 slide1、改驗產品方塊數（ST-31 起橫排、無 eaVert；ST-43 起改並排直立長條、eaVert 直書）／產品在 Margin 右側／連接器正交／每條連線至少一段／skippedLinks 0；--strict-slide1 恢復逐張全比）；
 //     d 六張說明卡、#step-3 直連；
 //     e ST-22 重新整理／他 tab 套用價值鏈後切回 ①，主要活動名稱高度 >10；主「載入」價值鏈檔不取代專案。
 // 預期：全 PASS、exit 0。FAIL 時印出差異，exit 1。
@@ -121,12 +121,12 @@ for (const id of EXAMPLES) {
       const s = m[0], o = s.match(/<a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(\d+)" cy="(\d+)"/) || [];
       return { kind: m[1], name: (s.match(/name="([^"]*)"/) || [])[1], x: +o[1], w: +o[3], h: +o[4], vert: /<a:bodyPr vert="eaVert"/.test(s) };
     });
-    // ST-31：產品方塊改橫排（無 vert）→ 同名 roundRect 中取最右邊那個
-    const prods = nw.vc.products.map(n => sps.filter(s => s.kind === 'sp' && s.name === n && !s.vert).sort((a, b) => b.x - a.x)[0]);
+    // ST-43：產品方塊改並排直立長條（vert="eaVert"）→ 同名直書 shape 中取最右邊那個
+    const prods = nw.vc.products.map(n => sps.filter(s => s.kind === 'sp' && s.name === n && s.vert).sort((a, b) => b.x - a.x)[0]);
     const margin = sps.find(s => s.name === 'Margin／利潤');
     const cx = sps.filter(s => s.kind === 'cxnSp');
     const nLinks = new Set(cx.map(c => (c.name.match(/^價值鏈連線 (\d+)/) || [])[1]).filter(Boolean)).size;
-    ok(prods.length > 0 && prods.every(Boolean), `[c ${id}] slide1 產品橫排方塊 ${prods.filter(Boolean).length}/${prods.length}`);
+    ok(prods.length > 0 && prods.every(Boolean), `[c ${id}] slide1 產品直書長條 ${prods.filter(Boolean).length}/${prods.length}`);
     ok(!nw.vc.arrow || (margin && prods.every(p => p && p.x > margin.x + margin.w)), `[c ${id}] slide1 產品在 Margin 右側（Margin x ${margin && margin.x}、產品 x ${prods[0] && prods[0].x}）`);
     ok(cx.length >= nw.vc.links && nLinks === nw.vc.links, `[c ${id}] slide1 連接器 ${cx.length} 段、涵蓋 ${nLinks}/${nw.vc.links} 條連線`);
     ok(cx.every(c => c.w === 0 || c.h === 0), `[c ${id}] slide1 連接器全部正交（斜線 ${cx.filter(c => c.w && c.h).length}）`);

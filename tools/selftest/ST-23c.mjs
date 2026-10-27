@@ -1,15 +1,16 @@
 // ST-23c 自測：PPTX 價值鏈頁（slide1）產品改在 Margin 右側直欄，到產品的連線走 vcProductRoute（全程正交）
 // ST-31 更新：產品方塊文字改橫排（不再有 vert="eaVert"）、寬 1.0～1.2"、高 ≤ 0.6"
+// ST-43 更新：產品改成並排直立長條（vert="eaVert"、寬 ≤ 0.42"、高＝Margin 高 − 0.14" 通道），到產品的線從長條底邊中點垂直向上進入
 // 跑法（Node 24+、/usr/bin/google-chrome）：  node tools/selftest/ST-23c.mjs [基準版 index.html，預設 git show HEAD:index.html]
 //   基準版只用來比 ST-20 lastInfo（字級／壓縮）與連線條數，不比座標（產品列移位後 slide1 本來就會不同）
 // 情境（新版逐一匯出、攔 JSZip.generateAsync 取 slide1.xml 與 buildValueChainShapesXml.lastInfo）：
 //   book＝範例「網路書店 A 公司」、foundry＝範例「晶圓代工 T 公司」、pharma＝範本 bio-pharma-tw、
 //   ae＝範本 bio-aesthetic（第三層，ST-20）、book-noarrow＝書店關掉大箭頭背景
 // 每個情境測：
-//   1) 產品方塊數＝valueChain.products 單元數，每塊橫排（bodyPr 無 vert，ST-31）、寬 1.0～1.2"（扣通道 0.06"）、高 ≤ 0.6"、同一 x、由上往下不重疊
+//   1) 產品方塊數＝valueChain.products 單元數，每塊直書（vert="eaVert"，ST-43）、寬 ≤ 0.42"、高 > 0.6"、同一 y、由左至右不重疊
 //   2) 有 Margin 時：Margin 右緣 + gap ≤ 產品 x；主要／支援活動最右緣 ≤ Margin x（沒 Margin 就 ≤ 產品 x）；產品右緣 ≤ slide 寬
 //   3) 每段 connector 的 cx 或 cy 為 0（正交）；每條 link 至少一段；lastInfo.skippedLinks === 0
-//   4) 到產品的線：最後一段水平、終點落在目標產品左緣；所有段不穿過非端點的產品方塊
+//   4) 到產品的線（ST-43）：最後一段垂直向上、終點在目標長條底邊中點 ±4px；所有段不穿過非端點的產品長條與活動方塊
 //   5) 欄頂「產品」小標存在；所有 shape 不超出 slide 高；新版無 JS 例外
 //   6) Margin 箭頭：xfrm 無 rot、prst=rightArrow、ext cx＝marginW（0.34"），且整塊在 slide 內
 //   ae 另比基準版：deepShrunk 仍 false、deepSz 不小於基準
@@ -98,14 +99,14 @@ for (const [key] of SCEN) {
   if (margin) row(margin, '[M] ');
   prods.filter(Boolean).forEach(s => row(s, '[產品] '));
 
-  chk(prods.every(Boolean) && prods.length === vc.products.length && prods.every(p => p && !p.vert && !/vert="eaVert"/.test(p.raw)),
-    `[${key}] 產品方塊 ${prods.filter(Boolean).length}/${vc.products.length}，皆橫排（無 eaVert）`);
-  const LANE = Math.round(0.06 * 914400);
-  chk(prods.every(p => p && p.w >= 914400 - LANE - 2 && p.w <= Math.round(1.2 * 914400) + 2 && p.h <= Math.round(0.6 * 914400) + 2),
-    `[${key}] 產品寬 1.0～1.2"、高 ≤ 0.6"（${prods.filter(Boolean).map(p => inch(p.w) + '×' + inch(p.h)).join(' ')}）`);
+  chk(prods.every(Boolean) && prods.length === vc.products.length && prods.every(p => p && /vert="eaVert"/.test(p.raw)),
+    `[${key}] 產品方塊 ${prods.filter(Boolean).length}/${vc.products.length}，皆直書（eaVert，ST-43）`);
+  chk(prods.every(p => p && p.w <= Math.round(0.42 * 914400) + 2 && p.h > Math.round(0.6 * 914400)),
+    `[${key}] 產品長條寬 ≤ 0.42"、高 > 0.6"（${prods.filter(Boolean).map(p => inch(p.w) + '×' + inch(p.h)).join(' ')}）`);
   const px = prods[0] ? prods[0].x : NaN;
-  chk(prods.every(p => p && p.x === px) && prods.every((p, i) => !i || p.y >= prods[i - 1].y + prods[i - 1].h), `[${key}] 產品同一 x、由上往下不重疊`);
-  chk(prods.every(p => p && p.x + p.w <= SLIDE_W), `[${key}] 產品右緣 ${inch(px + (prods[0] || {}).w)}in ≤ slide 寬`);
+  const pLast = prods[prods.length - 1] || {};
+  chk(prods.every(p => p && p.y === prods[0].y) && prods.every((p, i) => !i || p.x >= prods[i - 1].x + prods[i - 1].w), `[${key}] 產品同一 y、由左至右不重疊`);
+  chk(prods.every(p => p && p.x + p.w <= SLIDE_W), `[${key}] 產品右緣 ${inch(pLast.x + pLast.w)}in ≤ slide 寬`);
   if (vc.arrow) {
     chk(!!margin && margin.x + margin.w + GAP <= px + 1, `[${key}] Margin 右緣 ${margin && inch(margin.x + margin.w)} + gap ≤ 產品 x ${inch(px)}`);
     chk(!!margin && contentR <= margin.x, `[${key}] 活動最右緣 ${inch(contentR)} ≤ Margin x ${margin && inch(margin.x)}`);
@@ -120,7 +121,7 @@ for (const [key] of SCEN) {
   const byLink = {};
   cx.forEach(c => { const m = c.name.match(/^價值鏈連線 (\d+)/); if (m) (byLink[m[1]] = byLink[m[1]] || []).push(c); });
   chk(Object.keys(byLink).length === vc.links.length && info.skippedLinks === 0, `[${key}] 每條 link 至少一段（${Object.keys(byLink).length}/${vc.links.length}）、skippedLinks ${info.skippedLinks}`);
-  // 到產品的線：最後一段水平、終點＝目標產品左緣；所有段不穿過非端點的產品
+  // 到產品的線（ST-43）：最後一段垂直向上、終點＝目標長條底邊中點；所有段不穿過非端點的產品
   const end = c => ({ x: c.flipH ? c.x : c.x + c.w, y: c.flipV ? c.y : c.y + c.h });
   let badEnd = [], badCross = [], boxHits = [];
   const inside = (c, p) => c.x >= p.x && c.y >= p.y && c.x + c.w <= p.x + p.w && c.y + c.h <= p.y + p.h;
@@ -130,7 +131,8 @@ for (const [key] of SCEN) {
     const tgt = sp.find(s => s.name === l.to && prodSet.has(s)), src = sp.find(s => s.name === l.from && prodSet.has(s));
     if (l.toProd && !l.fromProd) {
       const last = segs[segs.length - 1], e = last && end(last);
-      if (!last || last.h !== 0 || !tgt || Math.abs(e.x - tgt.x) > 2 || e.y < tgt.y || e.y > tgt.y + tgt.h) badEnd.push(`${l.from}→${l.to}`);
+      const up = last && last.w === 0 && last.h > 0 && last.flipV;   // 由下往上畫的垂直段：終點在上端
+      if (!last || !up || !tgt || Math.abs(e.x - (tgt.x + tgt.w / 2)) > 4 * 9525 || Math.abs(e.y - (tgt.y + tgt.h)) > 4 * 9525) badEnd.push(`${l.from}→${l.to}`);
     }
     const s1 = sp.find(s => s.name === l.from && boxes.includes(s)), s2 = sp.find(s => s.name === l.to && boxes.includes(s));
     segs.forEach(c => boxes.forEach(b => {
@@ -142,7 +144,7 @@ for (const [key] of SCEN) {
       if (c.x + c.w > p.x + 2 && c.x < p.x + p.w - 2 && c.y + c.h > p.y + 2 && c.y < p.y + p.h - 2) badCross.push(`${c.name}×${p.name}`);
     }));
   });
-  chk(!badEnd.length, `[${key}] 到產品的線最後一段水平、停在產品左緣（不符：${badEnd.join(',') || '無'}）`);
+  chk(!badEnd.length, `[${key}] 到產品的線最後一段垂直向上、停在長條底邊中點 ±4px（不符：${badEnd.join(',') || '無'}）`);
   chk(!badCross.length, `[${key}] 連線不穿過非端點產品（${badCross.join(',') || '無'}）`);
   chk(!boxHits.length, `[${key}] 連線不穿過任何非端點（及其外框）的活動／產品方塊（${boxHits.join(',') || '無'}）`);
 }
