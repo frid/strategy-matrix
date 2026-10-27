@@ -122,7 +122,7 @@ await ev(`__L('產品設計','試產'); __L('通路','銷售'); __L('品牌','�
 // 06 連線完成
 await shot('06-vc-links', vcPanel);
 // 07 產品面板＋連線清單
-await shot('07-vc-products', `[document.querySelector('.vc-products-panel'), document.getElementById('valueChainEditor').lastElementChild]`);
+await shot('07-vc-products', `[document.querySelector('.vc-margin-arrow') || document.querySelector('.vc-zone-products'), document.querySelector('.vc-zone-products')]`, 14);
 // 08／09 展開對話框
 await ev(`openExpandDialog(); true`);
 await shot('08-expand-dialog', `document.getElementById('expandModalBox')`, 14);
@@ -148,8 +148,10 @@ await shot('15a-palette-morandi-vc', vcPanel);
 
 // ── ③ 策略構想 ──
 await tab('ideas');
-// 15b 同一組配色下的矩陣，截完切回預設配色
+// 15b 同一組配色下的矩陣（檢視切「全部構想」好看出各構想顏色），截完切回預設配色與「目前策略」
+await ev(`setMatrixView('all'); true`);
 await shot('15b-palette-morandi-matrix', `document.querySelector('.matrix-wrapper')`);
+await ev(`setMatrixView('current'); true`);
 await ev(`applyPalette(0); true`);
 await tab('ideas');
 // 10 策略構想列
@@ -158,20 +160,28 @@ await shot('10-competitors', `document.getElementById('competitorBar').closest('
 await shot('11-arrow-list', `document.getElementById('arrowListPanel')`);
 // 12 操作列
 await shot('12-action-bar', `document.querySelector('.action-bar')`);
-// 13 矩陣（目前策略）＋圖例
+// 13 矩陣＋圖例（檢視切「全部構想」，圖說提到彩色箭頭是各構想）
+await ev(`setMatrixView('all'); true`);
 await shot('13-matrix', `[document.getElementById('legendContainer').closest('.panel'), document.querySelector('.matrix-wrapper')]`);
+await ev(`setMatrixView('current'); true`);
 // 14 繪製中：黃色起點格
 await ev(`setMode('draw'); onCellClick('A', __colIdx('倉儲'), document.getElementById('cell-A-' + __colIdx('倉儲'))); true`);
 await shot('14-draw-pending', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
 await ev(`cancelPending(); true`);
 // 16 產業矩陣（截完切回）
 await ev(`if (!showIndustryLabels) toggleIndustryMatrix(); true`);
+await ev(`setMatrixView('all'); true`);
 await shot('16-industry-matrix', `[document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
-await ev(`if (showIndustryLabels) toggleIndustryMatrix(); true`);
+await ev(`setMatrixView('current'); if (showIndustryLabels) toggleIndustryMatrix(); true`);
 // 17 策略要素：第一條箭頭展開要素選擇面板
 await ev(`openElemPanelKey = '0-0'; renderArrowList(); true`);
 await shot('17-elements', `document.getElementById('arrowList')`);
 await ev(`openElemPanelKey = null; renderArrowList(); true`);
+// 37 要素說明卡（ⓘ 點開：迷你矩陣簡圖、簡易說明、書上範例、頁碼）
+await ev(`openElementCard('1-2'); true`);
+await sleep(200);
+await shot('37-elem-card', `document.getElementById('elemCardBox')`, 14);
+await ev(`closeElementCard(); true`);
 // 18 策略句型：展開句型框
 await ev(`document.getElementById('sentenceBox').open = true; true`);
 await shot('18-sentences', `document.getElementById('sentenceBox')`);
@@ -186,7 +196,7 @@ await shot('19-example', `[document.querySelector('.project-panel').previousElem
 // 31–36 六個 tab 的全貌（tab 列＋收合的說明卡＋工作區開頭；高度上限 1250）
 const overview = [
   ['31-step-chain', 'chain', vcPanel],
-  ['32-step-cells', 'cells', `document.getElementById('cellPanel')`],
+  ['32-step-cells', 'cells', `document.getElementById('matrixRow')`],
   ['33-step-ideas', 'ideas', `document.querySelector('.matrix-wrapper')`],
   ['34-step-premise', 'premise', `document.getElementById('clashBox')`],
   ['35-step-action', 'action', `document.getElementById('actionBox')`],
@@ -212,7 +222,9 @@ await ev(`currentCell = null; renderCellPanel(); true`);
 // ── ③ 策略構想（範例）──
 await tab('ideas');
 // 24 策略構想分型＋疊圖對陣點
+await ev(`setMatrixView('all'); true`);
 await shot('24-kinds', `[document.getElementById('competitorBar').closest('.panel'), document.querySelector('.action-bar'), document.querySelector('.matrix-wrapper')]`);
+await ev(`setMatrixView('current'); true`);
 // 26 策略模組 chip 列＋箭頭清單
 await shot('26-modules', `[document.getElementById('moduleBox'), ...[...document.getElementById('arrowList').children].slice(0, 4)]`);
 
@@ -234,6 +246,35 @@ await tab('chain');
 await ev(`loadValueChainTemplate('theory-semi'); true`);
 await sleep(200);
 await shot('21-vc-roles', vcPanel);
+
+// ── ST-35j：價值鏈版型、icon 選單、分色配色（用「連鎖醫美診所」範本 bio-aesthetic，給 3 個 icon）──
+await tab('chain');
+await ev(`loadValueChainTemplate('bio-aesthetic'); true`);
+await ev(`(() => { const L = []; const w = l => l.forEach(x => { if (x.type === 'group') w(x.children); else if (x.type !== 'asset') L.push(x); });
+ w(valueChain.primary); ['🩺', '💉', '✨'].forEach((ic, i) => { if (L[i * 2]) L[i * 2].icon = ic; }); commitValueChain(); return true; })()`);
+await sleep(300);
+const setVcLayout = async k => { await ev(`(() => { const s = document.getElementById('vcLayoutSelect'); s.value = ${JSON.stringify(k)}; s.dispatchEvent(new Event('change')); return true; })()`); await sleep(500); };
+const vcZones = `document.querySelector('#valueChainEditor .vc-zones')`;
+// 40–44 五種新版型（經典 Porter 就是 02）
+for (const [name, k] of [['40-vc-band', 'band'], ['41-vc-segment', 'segment'], ['42-vc-fold', 'fold'], ['43-vc-circle', 'circle'], ['44-vc-hex', 'hex']]) {
+  await setVcLayout(k);
+  await shot(name, vcZones);
+}
+// 45 icon 選單（band 版型，點第一個有 icon 的按鈕）
+await setVcLayout('band');
+await ev(`document.querySelector('#valueChainEditor .vc-zone-primary .vc-icon-btn:not(.vc-icon-empty)').click(); true`);
+await sleep(200);
+await shot('45-icon-picker', `[document.getElementById('vcIconPicker'), document.querySelector('#valueChainEditor .vc-zone-primary .vc-icon-btn:not(.vc-icon-empty)')]`, 40);
+await ev(`closeVcIconPicker(); true`);
+// 46 分色配色：價值鏈（band）＋矩陣欄頭
+await ev(`applyPalette(COLOR_PALETTES.findIndex(p => p.name === '分色・鮮彩')); true`);
+await shot('46-palette-perunit', vcZones);
+await ev(`expandValueChainToMatrix(false); true`);
+await tab('ideas');
+await shot('47-palette-perunit-matrix', `document.querySelector('#matrixTable thead')`);
+await ev(`applyPalette(0); true`);
+await tab('chain');
+await setVcLayout('porter');
 
 ws.close(); chrome.kill(); await sleep(1500);
 try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 400 }); } catch {}

@@ -1,0 +1,428 @@
+<title>Chevron 群組畫法</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版面：單欄長卷，每個畫法一張 SVG 卡＋優缺點兩欄 */
+:root{
+  --bg:#f6f5f1; --fg:#23262b; --mute:#6b6f76; --line:#d8d6cf; --card:#ffffff;
+  --pri:#3b6fb6; --pri2:#6f98cf; --pri3:#a9c3e5; --pri-fg:#ffffff;
+  --sup:#d9833a; --sup2:#f1b784; --asset:#8a7bb5;
+  --grp:#e8eef7; --grp-line:#3b6fb6;
+  --font-body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17191d; --fg:#e7e6e1; --mute:#9a9ea6; --line:#33373e; --card:#1f2227;
+  --pri:#4f84cc; --pri2:#3c6499; --pri3:#2b4668; --pri-fg:#ffffff;
+  --sup:#d98a46; --sup2:#8a5426; --asset:#9a8bc9; --grp:#232c3a; --grp-line:#6f98cf; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17191d; --fg:#e7e6e1; --mute:#9a9ea6; --line:#33373e; --card:#1f2227;
+  --pri:#4f84cc; --pri2:#3c6499; --pri3:#2b4668; --pri-fg:#ffffff;
+  --sup:#d98a46; --sup2:#8a5426; --asset:#9a8bc9; --grp:#232c3a; --grp-line:#6f98cf; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+main{max-width:960px;margin:0 auto;display:grid;gap:40px}
+h1{font-size:1.6rem;margin:0 0 6px;text-wrap:balance}
+.lede{color:var(--mute);margin:0;max-width:40em}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--mute);margin-top:12px}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+section{display:grid;gap:14px}
+section h2{font-size:1.1rem;margin:0;display:flex;align-items:baseline;gap:10px}
+section h2 small{font-family:var(--font-mono);font-size:.75rem;color:var(--mute);font-weight:500}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto;min-width:640px;font-family:var(--font-body)}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:.92rem}
+.notes>div{min-width:0}
+.notes b{display:block;font-size:.75rem;letter-spacing:.08em;color:var(--mute);margin-bottom:4px}
+.notes ul{margin:0;padding-left:1.2em}
+@media (max-width:640px){.notes{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-size:.75rem;letter-spacing:.08em;color:var(--mute);font-weight:500}
+.wrap{overflow-x:auto}
+</style>
+
+<main>
+<header>
+  <h1>價值鏈版型與群組畫法</h1>
+  <p class="lede">同一條示範價值鏈，主要活動含兩個群組（「生產」三項、「通路」兩項）與一個資產單元。A～E 是 Chevron 箭頭式的五種群組畫法；F～H 參考 SlideEgg 範本再加三種版型，最後一節是配色與 icon 的參考。</p>
+  <div class="legend">
+    <span style="--c:var(--pri)">主要活動（葉節點）</span>
+    <span style="--c:var(--grp)">群組範圍</span>
+    <span style="--c:var(--sup)">支援活動</span>
+    <span style="--c:var(--asset)">資產單元</span>
+  </div>
+</header>
+
+<section>
+  <h2>A．大箭頭套小箭頭 <small>nested chevron</small></h2>
+  <div class="fig"><svg id="figA" viewBox="0 0 900 230"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>群組畫成一支較高的淡色大箭頭，子單元是嵌在裡面的小箭頭。</li><li>巢狀群組就再套一層，高度往外長。</li></ul></div>
+    <div><b>取捨</b><ul><li>最直覺，「流程裡的一段子流程」一眼可辨。</li><li>箭頭數多時外框很擠；群組名稱只能放大箭頭上緣。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>B．葉節點一排、群組名掛上方橫帶 <small>label band</small></h2>
+  <div class="fig"><svg id="figB" viewBox="0 0 900 230"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>所有葉節點等高等寬排成一列箭頭，與下方矩陣欄一對一。</li><li>群組名稱在上方做一條橫帶，跨越它所有子單元；巢狀就多疊一層帶。</li></ul></div>
+    <div><b>取捨</b><ul><li>與策略矩陣「群組表頭＋細項表頭」的結構完全一致，最容易對位。</li><li>群組感較弱，靠橫帶與底色連成一體。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>C．同色分段、箭頭互相咬合 <small>color segments</small></h2>
+  <div class="fig"><svg id="figC" viewBox="0 0 900 230"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>一個群組用同一色相，子單元之間只用細白縫隔開；群組與群組之間才用完整的箭頭缺口。</li><li>群組名稱寫在該段第一支箭頭的底部小字。</li></ul></div>
+    <div><b>取捨</b><ul><li>視覺最乾淨，整條鏈像一支連續的箭。</li><li>色相有限，群組超過四個就難分；對色弱使用者不友善。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>D．兩層箭頭：群組一列、細項一列 <small>two-tier</small></h2>
+  <div class="fig"><svg id="figD" viewBox="0 0 900 260"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>上層箭頭是「群組層級」：沒群組的單元自己佔一格。</li><li>下層箭頭是葉節點，對齊在所屬群組正下方；三層巢狀就再加一列。</li></ul></div>
+    <div><b>取捨</b><ul><li>層級最清楚，也最接近 PPTX 既有「價值鏈頁最多三層」的攤平邏輯。</li><li>佔高度；沒群組的單元上下重複出現同一個名字。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>E．摺疊箭頭：群組收成一支，點開才展開 <small>collapsible</small></h2>
+  <div class="fig"><svg id="figE" viewBox="0 0 900 250"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>預設群組只畫一支箭頭，角標寫「＋3」表示內含幾項；展開時用畫法 A 或 B 在原位撐開。</li><li>適合先看全貌再細看。</li></ul></div>
+    <div><b>取捨</b><ul><li>螢幕最省，手機上尤其好用。</li><li>收合時與矩陣欄對不上，需要「展開全部」才能看對應；PPTX 只能固定輸出展開狀態。</li></ul></div>
+  </div>
+</section>
+
+
+<section>
+  <h2>F．圓形 icon 節點＋膠囊支援列 <small>SlideEgg 主範本</small></h2>
+  <div class="fig"><svg id="figF" viewBox="0 0 900 250"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>支援活動改成白底細框的膠囊列（不再是實色橫條）。</li><li>主要活動每項一個彩色圓形 icon，名稱寫在圓下方；群組用淡色圓角底板把幾個圓框在一起，群組名寫底板上緣。</li><li>右側一支黑色大 chevron 當 Margin。</li></ul></div>
+    <div><b>取捨</b><ul><li>簡報感最強，icon 讓每個活動一眼可辨；每活動一色也方便和矩陣欄頭配色呼應。</li><li>icon 要有一套可挑的圖庫（或讓使用者自選 emoji）；文字在圓下方，長名稱會換行；PPTX 要畫圓＋icon＋文字三件。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>G．六角鏈 <small>SlideEgg Linear Value Chain</small></h2>
+  <div class="fig"><svg id="figG" viewBox="0 0 900 230"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>每個葉節點一顆六角形，左右相咬成一條鏈，每顆不同色相。</li><li>群組用上方橫帶（同畫法 B）或同色相（同畫法 C）表示，這裡示範同色相＋橫帶並用。</li></ul></div>
+    <div><b>取捨</b><ul><li>比 chevron 圓潤，視覺上「鏈」的意象最強。</li><li>六角形內可放的文字寬度比矩形少約三成；相咬排列時欄寬與矩陣欄不等寬，對位要靠連線。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>H．環狀分段 <small>SlideEgg Industry Value Chain</small></h2>
+  <div class="fig"><svg id="figH" viewBox="0 0 900 300"></svg></div>
+  <div class="notes">
+    <div><b>做法</b><ul><li>主要活動繞成一圈弧段，順時針為流程方向，圓心放產品或 Margin；群組是相鄰弧段共用一個外環弧。</li><li>支援活動放外圈或圓心旁的小列。</li></ul></div>
+    <div><b>取捨</b><ul><li>適合封面與總覽，強調「循環」與整體。</li><li>與下方矩陣欄完全對不上，連線也難畫；只建議當簡報頁或「總覽模式」，不當編輯主版型。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>配色與 icon 參考</h2>
+  <div class="fig"><svg id="figP" viewBox="0 0 900 400"></svg></div>
+  <div class="notes">
+    <div><b>SlideEgg 三套範本的共通手法</b><ul><li>主要活動「一活動一色相」，五到六個高彩度色輪均分（藍、青、紫、橘、紅、黃），支援活動則用低彩度或白底，讓視線先落在主要活動。</li><li>icon 一律線條單色白色、放在實色圓裡；文字在 icon 下方或右方，不壓在色塊上。</li><li>Margin 用黑或深灰，與彩色活動形成對比。</li></ul></div>
+    <div><b>套到本工具的建議</b><ul><li>現行 <code>COLOR_PALETTES</code> 是「整條價值鏈一色系」；新增「彩虹分色」模式，每個主要活動依序取色，矩陣欄頭同色，PPTX 跟著走。色序候選 1～5 取自 SlideEgg 範本列表（見下圖），實作時以對比度檢查後微調。</li><li>icon 不做圖庫，讓每個價值單元可選一個 emoji（存在 unit 新欄位 <code>icon</code>，舊檔無此欄位即不畫）；PPTX 直接輸出 emoji 文字。</li><li>群組底色固定用該群組第一個子單元色相的 15% 透明版，避免再多一套顏色。</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>對照</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>畫法</th><th>與矩陣欄對位</th><th>巢狀群組</th><th>佔高度</th><th>PPTX 實作</th><th>建議用途</th></tr></thead>
+    <tbody>
+      <tr><td>A 套疊</td><td>可（葉節點在最內層）</td><td>可，每層外擴</td><td>中</td><td>中：多邊形疊加</td><td>群組少、想強調「子流程」</td></tr>
+      <tr><td>B 橫帶</td><td>最好，結構同矩陣表頭</td><td>可，疊帶</td><td>低</td><td>易：矩形＋箭頭</td><td>當作預設主版型</td></tr>
+      <tr><td>C 同色分段</td><td>可</td><td>弱，靠深淺</td><td>最低</td><td>易</td><td>簡報封面式總覽</td></tr>
+      <tr><td>D 兩層</td><td>好</td><td>可，加列</td><td>高</td><td>中：對齊要算</td><td>群組多、層級是重點</td></tr>
+      <tr><td>E 摺疊</td><td>收合時對不上</td><td>可</td><td>最低</td><td>只輸出展開態</td><td>手機、窄螢幕</td></tr>
+      <tr><td>F 圓形 icon</td><td>可（圓心對欄中）</td><td>可，底板套底板</td><td>中</td><td>中：圓＋icon＋文字</td><td>對外簡報、首頁總覽</td></tr>
+      <tr><td>G 六角鏈</td><td>可，欄寬不等</td><td>靠橫帶或同色</td><td>低</td><td>易：hexagon 形狀</td><td>想要「鏈」意象</td></tr>
+      <tr><td>H 環狀</td><td>不對位</td><td>可，外環弧</td><td>高</td><td>中：弧段</td><td>僅簡報總覽頁</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+
+<script>
+// 示範資料：與工具的 valueChain 結構相同（primary 允許 group）
+const CHAIN = {
+  support: ['人力資源','資訊系統','財務管理'],
+  primary: [
+    {name:'研發'},
+    {name:'生產', children:[{name:'採購'},{name:'製造'},{name:'品管'}]},
+    {name:'行銷'},
+    {name:'通路', children:[{name:'直營'},{name:'經銷'}]},
+    {name:'品牌／商譽', kind:'asset'}
+  ],
+  products: ['產品一','產品二']
+};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const leaves = n => n.children ? n.children.flatMap(leaves) : [n];
+const ALL = CHAIN.primary.flatMap(leaves);
+
+// chevron 路徑：x,y,w,h，notch = 箭頭缺口深度；first=左邊平直
+function chev(x,y,w,h,notch,first=false){
+  const n = notch;
+  const left = first ? `M${x},${y} L${x+w-n},${y}` : `M${x},${y} L${x+w-n},${y}`;
+  const back = first ? `L${x},${y+h} Z` : `L${x},${y+h} L${x+n},${y+h/2} Z`;
+  return `${left} L${x+w},${y+h/2} L${x+w-n},${y+h} ${back}`;
+}
+const el = (tag,attrs,txt) => { const e=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; return e; };
+function text(svg,x,y,s,opt={}){ svg.appendChild(el('text',{x,y,'text-anchor':opt.anchor||'middle','dominant-baseline':'middle','font-size':opt.size||13,'font-weight':opt.weight||500,fill:opt.fill||css('--fg')},s)); }
+function box(svg,x,y,w,h,s,fill,fg){ svg.appendChild(el('rect',{x,y,width:w,height:h,rx:3,fill})); text(svg,x+w/2,y+h/2,s,{fill:fg||css('--pri-fg'),size:12}); }
+
+// 共同外框：上方支援活動橫條、右側產品欄
+function frame(svg, H, rowY, rowH){
+  const fg=css('--fg'), sup=css('--sup'), sup2=css('--sup2'), pri=css('--pri'), asset=css('--asset');
+  CHAIN.support.forEach((s,i)=> box(svg,40,14+i*22,700,18,s, i%2?sup2:sup, i%2?fg:'#fff'));
+  text(svg,20,47,'支援活動',{size:11,fill:css('--mute'),weight:400});
+  svg.appendChild(el('path',{d:`M760,14 L760,${H-14}`,stroke:css('--line'),'stroke-dasharray':'3 3'}));
+  CHAIN.products.forEach((p,i)=> box(svg,780,rowY+i*(rowH/2+4),100,rowH/2-2,p,pri));
+  text(svg,830,rowY-12,'產品',{size:11,fill:css('--mute'),weight:400});
+  text(svg,20,rowY+rowH/2,'主要活動',{size:11,fill:css('--mute'),weight:400});
+}
+
+const N=14; // 缺口深度
+
+// A：套疊
+(function(){
+  const svg=document.getElementById('figA'); const y0=118, h=56, big=92; let x=40; const cellW=78;
+  frame(svg,230,y0-10,big);
+  CHAIN.primary.forEach((n,i)=>{
+    const first=i===0;
+    if(n.children){
+      const w=n.children.length*cellW+22;
+      svg.appendChild(el('path',{d:chev(x,y0-18,w,big,N+4,first),fill:css('--grp'),stroke:css('--grp-line'),'stroke-width':1.5}));
+      text(svg,x+w/2,y0-6,n.name,{size:12,fill:css('--grp-line'),weight:700});
+      n.children.forEach((c,j)=>{
+        const cx=x+12+j*cellW;
+        svg.appendChild(el('path',{d:chev(cx,y0+8,cellW-2,h-8,N,first&&j===0),fill:css('--pri')}));
+        text(svg,cx+cellW/2,y0+8+(h-8)/2,c.name,{fill:'#fff',size:12});
+      });
+      x+=w+4;
+    } else {
+      svg.appendChild(el('path',{d:chev(x,y0,cellW+8,h,N,first),fill:n.kind==='asset'?css('--asset'):css('--pri')}));
+      text(svg,x+(cellW+8)/2+4,y0+h/2,n.name,{fill:'#fff',size:12});
+      x+=cellW+12;
+    }
+  });
+})();
+
+// B：橫帶
+(function(){
+  const svg=document.getElementById('figB'); const y0=136, h=56, bandY=104, bandH=22; const cellW=84; let x=40;
+  frame(svg,230,y0-24,h+24);
+  CHAIN.primary.forEach((n,i)=>{
+    const first=i===0;
+    if(n.children){
+      const w=n.children.length*cellW;
+      svg.appendChild(el('rect',{x:x+2,y:bandY,width:w-4,height:bandH,rx:3,fill:css('--grp'),stroke:css('--grp-line')}));
+      text(svg,x+w/2,bandY+bandH/2,n.name,{size:12,fill:css('--grp-line'),weight:700});
+      n.children.forEach((c,j)=>{
+        svg.appendChild(el('path',{d:chev(x+j*cellW,y0,cellW-2,h,N,first&&j===0),fill:css('--pri2')}));
+        text(svg,x+j*cellW+cellW/2+4,y0+h/2,c.name,{fill:'#fff',size:12});
+      });
+      x+=w;
+    } else {
+      svg.appendChild(el('path',{d:chev(x,y0,cellW-2,h,N,first),fill:n.kind==='asset'?css('--asset'):css('--pri')}));
+      text(svg,x+cellW/2+4,y0+h/2,n.name,{fill:'#fff',size:12});
+      x+=cellW;
+    }
+  });
+})();
+
+// C：同色分段
+(function(){
+  const svg=document.getElementById('figC'); const y0=118, h=64; const cellW=84; let x=40;
+  const hues=[css('--pri'),'#2f9e8f','#c0603f','#7d8a3a'];
+  frame(svg,230,y0-10,h+10);
+  let g=0;
+  CHAIN.primary.forEach((n,i)=>{
+    const first=i===0;
+    if(n.children){
+      const col=hues[++g%hues.length]; const w=n.children.length*cellW;
+      // 一支長箭頭，子單元用白縫切開
+      svg.appendChild(el('path',{d:chev(x,y0,w-4,h,N,first),fill:col}));
+      n.children.forEach((c,j)=>{
+        if(j>0) svg.appendChild(el('path',{d:`M${x+j*cellW},${y0} L${x+j*cellW+N},${y0+h/2} L${x+j*cellW},${y0+h}`,stroke:css('--card'),'stroke-width':2.5,fill:'none'}));
+        text(svg,x+j*cellW+cellW/2+4,y0+h/2-6,c.name,{fill:'#fff',size:12});
+      });
+      text(svg,x+w/2,y0+h-12,'〔'+n.name+'〕',{fill:'#fff',size:10,weight:400});
+      x+=w;
+    } else {
+      svg.appendChild(el('path',{d:chev(x,y0,cellW-4,h,N,first),fill:n.kind==='asset'?css('--asset'):css('--pri')}));
+      text(svg,x+cellW/2+2,y0+h/2,n.name,{fill:'#fff',size:12});
+      x+=cellW;
+    }
+  });
+})();
+
+// D：兩層
+(function(){
+  const svg=document.getElementById('figD'); const y1=104, y2=172, h=48; const cellW=78; let x=40;
+  frame(svg,260,y1-8,h*2+20);
+  CHAIN.primary.forEach((n,i)=>{
+    const first=i===0; const w=(n.children?n.children.length:1)*cellW;
+    const isAsset=n.kind==='asset';
+    svg.appendChild(el('path',{d:chev(x,y1,w-2,h,N,first),fill:n.children?css('--grp'):(isAsset?css('--asset'):css('--pri')),stroke:n.children?css('--grp-line'):'none','stroke-width':1.5}));
+    text(svg,x+w/2+4,y1+h/2,n.name,{fill:n.children?css('--grp-line'):'#fff',size:12,weight:700});
+    const kids=n.children||[n];
+    kids.forEach((c,j)=>{
+      svg.appendChild(el('path',{d:chev(x+j*cellW,y2,cellW-2,h,N,first&&j===0),fill:isAsset?css('--asset'):css('--pri2')}));
+      text(svg,x+j*cellW+cellW/2+4,y2+h/2,c.name,{fill:'#fff',size:12});
+    });
+    x+=w;
+  });
+  text(svg,24,y1+h/2,'群組層',{size:10,fill:css('--mute'),weight:400});
+  text(svg,24,y2+h/2,'細項層',{size:10,fill:css('--mute'),weight:400});
+})();
+
+// E：摺疊（左：全收合；右下：其中一個展開）
+(function(){
+  const svg=document.getElementById('figE'); const h=52; const cellW=96;
+  frame(svg,250,100,h*2+30);
+  const row=(y,openIdx)=>{ let x=40;
+    CHAIN.primary.forEach((n,i)=>{
+      const first=i===0;
+      if(n.children && i!==openIdx){
+        svg.appendChild(el('path',{d:chev(x,y,cellW-2,h,N,first),fill:css('--grp'),stroke:css('--grp-line'),'stroke-width':1.5}));
+        text(svg,x+cellW/2,y+h/2,n.name,{fill:css('--grp-line'),size:12,weight:700});
+        svg.appendChild(el('circle',{cx:x+cellW-22,cy:y+12,r:9,fill:css('--grp-line')}));
+        text(svg,x+cellW-22,y+12.5,'+'+n.children.length,{fill:'#fff',size:9});
+        x+=cellW;
+      } else if(n.children){
+        const sub=70, w=n.children.length*sub;
+        svg.appendChild(el('rect',{x:x+2,y:y-16,width:w-4,height:14,rx:2,fill:css('--grp'),stroke:css('--grp-line')}));
+        text(svg,x+w/2,y-9,n.name+' ▾',{size:10,fill:css('--grp-line'),weight:700});
+        n.children.forEach((c,j)=>{
+          svg.appendChild(el('path',{d:chev(x+j*sub,y,sub-2,h,N,first&&j===0),fill:css('--pri2')}));
+          text(svg,x+j*sub+sub/2+4,y+h/2,c.name,{fill:'#fff',size:11});
+        });
+        x+=w;
+      } else {
+        svg.appendChild(el('path',{d:chev(x,y,cellW-2,h,N,first),fill:n.kind==='asset'?css('--asset'):css('--pri')}));
+        text(svg,x+cellW/2+4,y+h/2,n.name,{fill:'#fff',size:12});
+        x+=cellW;
+      }
+    });
+  };
+  text(svg,40,96,'全部收合',{size:10,fill:css('--mute'),weight:400,anchor:'start'});
+  row(104,-1);
+  text(svg,40,182,'點開「生產」',{size:10,fill:css('--mute'),weight:400,anchor:'start'});
+  row(194,1);
+})();
+
+// F：圓形 icon 節點
+(function(){
+  const svg=document.getElementById('figF'); const cy=150, r=24; const cellW=80; let x=40;
+  const hues=['#2aa7b8','#3b6fb6','#7b5cc4','#e3832c','#d64a4a','#e0b531','#4a9d5c','#8a7bb5'];
+  const icons={'研發':'🔬','採購':'📦','製造':'⚙️','品管':'✅','行銷':'📣','直營':'🏬','經銷':'🚚','品牌／商譽':'★'};
+  // 支援活動：白底膠囊
+  CHAIN.support.forEach((s,i)=>{ svg.appendChild(el('rect',{x:40,y:14+i*22,width:700,height:17,rx:9,fill:css('--card'),stroke:css('--line')})); text(svg,390,22.5+i*22,s,{size:11,weight:400}); });
+  text(svg,20,47,'支援活動',{size:11,fill:css('--mute'),weight:400});
+  // 黑色大箭頭 Margin
+  svg.appendChild(el('path',{d:chev(748,90,40,120,16,true),fill:'#2b2d31'}));
+  text(svg,764,150,'利潤',{fill:'#fff',size:11,weight:700});
+  CHAIN.products.forEach((p,i)=> box(svg,800,110+i*42,90,36,p,css('--pri')));
+  let k=0;
+  CHAIN.primary.forEach((n,i)=>{
+    if(n.children){
+      const w=n.children.length*cellW; const col=hues[k%hues.length];
+      svg.appendChild(el('rect',{x:x+2,y:cy-r-26,width:w-4,height:2*r+62,rx:10,fill:col,'fill-opacity':.12,stroke:col,'stroke-dasharray':'4 3'}));
+      text(svg,x+w/2,cy-r-14,n.name,{size:11,fill:col,weight:700});
+      n.children.forEach((c,j)=>{ const cx=x+j*cellW+cellW/2; const cc=hues[k++%hues.length];
+        svg.appendChild(el('circle',{cx,cy,r,fill:cc})); text(svg,cx,cy+1,icons[c.name]||'•',{size:18,fill:'#fff'}); text(svg,cx,cy+r+16,c.name,{size:12}); });
+      x+=w;
+    } else {
+      const cx=x+cellW/2; const cc=n.kind==='asset'?css('--asset'):hues[k++%hues.length];
+      svg.appendChild(el('circle',{cx,cy,r,fill:cc})); text(svg,cx,cy+1,icons[n.name]||'•',{size:18,fill:'#fff'}); text(svg,cx,cy+r+16,n.name,{size:12});
+      x+=cellW;
+    }
+  });
+  // 節點間連線
+  svg.appendChild(el('path',{d:`M64,${cy} L${x-16},${cy}`,stroke:css('--line'),'stroke-width':2}));
+  svg.querySelectorAll('circle').forEach(c=>svg.appendChild(c));
+  svg.querySelectorAll('text').forEach(t=>svg.appendChild(t));
+})();
+
+// G：六角鏈
+(function(){
+  const svg=document.getElementById('figG'); const y0=130, h=60; const cellW=82; let x=40;
+  const hues=['#2aa7b8','#3b6fb6','#7b5cc4','#e3832c','#d64a4a','#e0b531','#4a9d5c'];
+  frame(svg,230,y0-20,h+20);
+  const hex=(x,y,w,h)=>`M${x+h/4},${y} L${x+w-h/4},${y} L${x+w},${y+h/2} L${x+w-h/4},${y+h} L${x+h/4},${y+h} L${x},${y+h/2} Z`;
+  let k=0;
+  CHAIN.primary.forEach((n,i)=>{
+    if(n.children){
+      const w=n.children.length*cellW; const col=hues[k%hues.length];
+      svg.appendChild(el('rect',{x:x+6,y:y0-22,width:w-12,height:16,rx:3,fill:col,'fill-opacity':.15,stroke:col}));
+      text(svg,x+w/2,y0-14,n.name,{size:11,fill:col,weight:700});
+      n.children.forEach((c,j)=>{ svg.appendChild(el('path',{d:hex(x+j*cellW-(j?h/4-2:0),y0,cellW,h),fill:col,'fill-opacity':1-j*.22,stroke:css('--card'),'stroke-width':2}));
+        text(svg,x+j*cellW+cellW/2-(j?h/4-2:0),y0+h/2,c.name,{fill:'#fff',size:12}); });
+      k++; x+=w-(n.children.length-1)*(h/4-2);
+    } else {
+      const col=n.kind==='asset'?css('--asset'):hues[k++%hues.length];
+      svg.appendChild(el('path',{d:hex(x,y0,cellW,h),fill:col,stroke:css('--card'),'stroke-width':2}));
+      text(svg,x+cellW/2,y0+h/2,n.name,{fill:'#fff',size:12}); x+=cellW-(h/4-2);
+    }
+  });
+})();
+
+// H：環狀分段
+(function(){
+  const svg=document.getElementById('figH'); const cx=300, cy=160, R=110, r=70;
+  const hues=['#2aa7b8','#3b6fb6','#7b5cc4','#e3832c','#d64a4a','#e0b531','#4a9d5c'];
+  const n=ALL.length, gap=0.04, span=(Math.PI*2)/n;
+  const pol=(rad,a)=>[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];
+  const arc=(r1,r2,a1,a2)=>{const [x1,y1]=pol(r2,a1),[x2,y2]=pol(r2,a2),[x3,y3]=pol(r1,a2),[x4,y4]=pol(r1,a1);const lg=a2-a1>Math.PI?1:0;return `M${x1},${y1} A${r2},${r2} 0 ${lg} 1 ${x2},${y2} L${x3},${y3} A${r1},${r1} 0 ${lg} 0 ${x4},${y4} Z`;};
+  let k=0, idx=0;
+  CHAIN.primary.forEach(node=>{
+    const kids=node.children||[node]; const col=hues[k++%hues.length]; const a0=-Math.PI/2+idx*span;
+    if(node.children){ const a1=a0+kids.length*span; svg.appendChild(el('path',{d:arc(R+6,R+16,a0+gap/2,a1-gap/2),fill:col,'fill-opacity':.35}));
+      const [lx,ly]=pol(R+30,(a0+a1)/2); text(svg,lx,ly,node.name,{size:11,fill:col,weight:700}); }
+    kids.forEach((c,j)=>{ const a1=a0+j*span, a2=a1+span; const fill=node.kind==='asset'?css('--asset'):col;
+      svg.appendChild(el('path',{d:arc(r,R,a1+gap/2,a2-gap/2),fill,'fill-opacity':node.children?1-j*.2:1}));
+      const [tx,ty]=pol((R+r)/2,(a1+a2)/2); text(svg,tx,ty,c.name,{size:11,fill:'#fff'}); });
+    idx+=kids.length;
+  });
+  svg.appendChild(el('circle',{cx,cy,r:r-12,fill:'#2b2d31'})); text(svg,cx,cy-8,'產品',{fill:'#fff',size:12,weight:700}); text(svg,cx,cy+10,'產品一・產品二',{fill:'#fff',size:10,weight:400});
+  // 支援活動放右側小列
+  text(svg,560,60,'支援活動',{size:11,fill:css('--mute'),weight:400,anchor:'start'});
+  CHAIN.support.forEach((s,i)=> box(svg,560,76+i*30,200,24,s, i%2?css('--sup2'):css('--sup'), i%2?css('--fg'):'#fff'));
+  text(svg,560,190,'順時針＝流程方向；圓心＝產品',{size:11,fill:css('--mute'),weight:400,anchor:'start'});
+})();
+
+// 配色與 icon 參考
+(function(){
+  const svg=document.getElementById('figP');
+  const rows=[
+    {name:'SlideEgg 主範本（圓形 icon）',cols:['#2aa7b8','#3b6fb6','#7b5cc4','#1f3a93','#d64a4a']},
+    {name:'SlideEgg Linear（六角鏈）',cols:['#d64a4a','#e3832c','#e0b531','#4a9d5c','#2aa7b8']},
+    {name:'SlideEgg Industry（支援列）',cols:['#7b5cc4','#d64a4a','#e3832c','#2aa7b8','#3b6fb6']},
+    {name:'本工具現行預設（價值鏈同調）',cols:[css('--pri'),css('--pri2'),css('--pri3'),css('--sup'),css('--sup2')]},
+    {name:'候選 1 鮮彩六色（Linear 列）',cols:['#F2A33A','#E05A47','#2E86DE','#8E44AD','#27AE60','#17A2B8']},
+    {name:'候選 2 粉彩膠囊（Download Our SCM）',cols:['#8E6BBE','#E4705A','#4BB3A6','#F2A541','#5B8DEF']},
+    {name:'候選 3 沉穩土色（Download SC Slides）',cols:['#2D3E66','#8B2E3C','#2A7F8C','#7A8A3A','#C9A227','#8A8F99']},
+    {name:'候選 4 藍綠紫（Creative chevron）',cols:['#3A7FA8','#5FA64B','#7A2E8E','#8BC34A','#2B6CB0']},
+    {name:'候選 5 深底霓虹（dark 版）',cols:['#1E2235','#4F7BEA','#9B5DE5','#F15BB5','#00BB9F','#FEE440']},
+  ];
+  rows.forEach((r,i)=>{ const y=16+i*40; text(svg,20,y+12,r.name,{size:12,anchor:'start'}); r.cols.forEach((c,j)=>svg.appendChild(el('rect',{x:250+j*44,y,width:40,height:24,rx:4,fill:c}))); });
+  // icon 樣式三種
+  const ix=560, iy=16;
+  text(svg,ix,iy+12,'icon 放法',{size:12,anchor:'start'});
+  const demo=[['實色圓＋白 icon','#3b6fb6','#fff'],['淡底圓＋彩 icon','#dce7f5','#3b6fb6'],['無圓，icon 在名稱前','none','#3b6fb6']];
+  demo.forEach((d,i)=>{ const y=iy+40+i*40; if(d[1]!=='none') svg.appendChild(el('circle',{cx:ix+16,cy:y+12,r:14,fill:d[1]})); text(svg,ix+16,y+13,'⚙',{size:14,fill:d[2]}); text(svg,ix+40,y+12,d[0],{size:12,anchor:'start'}); });
+  text(svg,20,386,'色票取自縮圖目視近似值，非官方色碼；候選 1～5 取自 SlideEgg 供應鏈範本列表截圖（doc/reference/slideegg-supply-chain-templates-20261026.png）。',{size:10,fill:css('--mute'),weight:400,anchor:'start'});
+})();
+</script>

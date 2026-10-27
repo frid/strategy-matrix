@@ -1,9 +1,12 @@
 // ST-21 回歸腳本：舊存檔 fixtures、範例完成度、PPTX 與 v1.0.0 基準比對、說明卡。零 npm 依賴。
-// 跑法：node tests/st-21-regression.mjs [--base <舊版 index.html>] [--out <截圖目錄>]
+// 跑法：node tests/st-21-regression.mjs [--base <舊版 index.html>] [--out <截圖目錄>] [--strict-slide1]
 //   --base 預設：git show v1.0.0:index.html 到暫存檔
 //   --out  預設：$CLAUDE_JOB_DIR/tmp/st21e，無則 os.tmpdir()/st21e
 // 測：a 兩份 fixtures 載入無 console error、六 tab 截圖、③ lineCanvas 連線／①vcLineCanvas 連線、往返重畫；
-//     b 兩範例六步 pct 與基準版相同；c 兩範例 PPTX 的 slide*.xml 與基準版逐張相同；d 六張說明卡、#step-3 直連。
+//     b 兩範例六步 pct 與基準版相同；c 兩範例 PPTX 的 slide*.xml 與基準版逐張相同（ST-23c 起 slide1＝價值鏈頁改產品直欄，
+//     預設不比 slide1、改驗產品方塊數（ST-31 起橫排、無 eaVert；ST-43 起改並排直立長條、eaVert 直書）／產品在 Margin 右側／連接器正交／每條連線至少一段／skippedLinks 0；--strict-slide1 恢復逐張全比）；
+//     d 六張說明卡、#step-3 直連；
+//     e ST-22 重新整理／他 tab 套用價值鏈後切回 ①，主要活動名稱高度 >10；主「載入」價值鏈檔不取代專案。
 // 預期：全 PASS、exit 0。FAIL 時印出差異，exit 1。
 import { launch } from '../tools/cdp-harness.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -24,8 +27,18 @@ if (!base) {
   base = out + '/v100-index.html';
   writeFileSync(base, execFileSync('git', ['show', 'v1.0.0:index.html'], { cwd: root, maxBuffer: 1 << 28 }));
 }
+const strictSlide1 = argv.includes('--strict-slide1');
 const KEYS = ['chain', 'cells', 'ideas', 'premise', 'action', 'control'];
 const EXAMPLES = ['bookstore-a', 'foundry-t'];
+// ST-34b：專有名詞對齊課本後，基準版（v1.0.0）XML 的舊字改成新字再逐張比對（順序有意義：先長後短）
+const KNOWN_RENAMES = [
+  ["的KSF's", '的優勢'], ["的KSF&apos;s", '的優勢'], ['的關聯', '的貢獻'],
+  ["KSF's", 'KSF'], ['KSF&apos;s', 'KSF'], ['〔主導〕', '〔主導權責〕'], ['須轉移', '轉移陣地'],
+  ['○ 自製', '○ 自行負責'], ['策略前提控制（監測）', '策略前提控制表'], ['產品品質之確保', '產品品質之保證'],
+  // ST-34c 優勢基礎改書上名稱（只在「、」或標籤邊界之間的整個詞才替換，避免誤改「資訊能力」等文字）
+  [/(?<=>|、)資訊科技(?=、|<)/g, '資訊科技之運用'], [/(?<=>|、)能力(?=、|<)/g, '獨特能力'], [/(?<=>|、)獨佔(?=、|<)/g, '獨佔力'],
+];
+const applyRenames = x => KNOWN_RENAMES.reduce((t, [a, b]) => a instanceof RegExp ? t.replace(a, b) : t.split(a).join(b), x);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let fail = 0;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fail++; };
@@ -46,7 +59,9 @@ async function exampleInfo(file, id) {
       const z = await h.zipEntries(idx);
       for (const n of z.names.filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)).sort()) slides[n] = await z.read(n);
     }
-    return { pct, slides };
+    const vc = await h.ev(`({products:valueChain.products.filter(n=>n.type==='unit').map(n=>n.name),links:valueChain.links.length,arrow:!!valueChain.showArrowBg,
+      info:(typeof buildValueChainShapesXml==='function'&&buildValueChainShapesXml.lastInfo)||{}})`);
+    return { pct, slides, vc };
   } finally { await h.close(); }
 }
 
@@ -91,12 +106,32 @@ for (const id of EXAMPLES) {
 const rows = [];
 for (const id of EXAMPLES) {
   const [nw, old] = [await exampleInfo(html, id), await exampleInfo(base, id)];
+  for (const k of Object.keys(old.slides)) old.slides[k] = applyRenames(old.slides[k]);
   for (const k of KEYS) { rows.push(`${id.padEnd(12)} ${k.padEnd(8)} 新 ${String(nw.pct[k]).padStart(3)}%  舊 ${String(old.pct[k]).padStart(3)}%`);
     ok(nw.pct[k] === old.pct[k] && typeof nw.pct[k] === 'number', `[b ${id}] ${k} pct 新=${nw.pct[k]} 舊=${old.pct[k]}`); }
   const nn = Object.keys(nw.slides), on = Object.keys(old.slides);
   ok(nn.length > 0 && nn.length === on.length, `[c ${id}] PPTX 張數 新 ${nn.length} 舊 ${on.length}`);
-  const diff = on.filter(n => nw.slides[n] !== old.slides[n]);
-  ok(diff.length === 0, `[c ${id}] slide*.xml 逐張相同${diff.length ? '；不同：' + diff.join(',') : ''}`);
+  const S1 = 'ppt/slides/slide1.xml';
+  const diff = on.filter(n => (strictSlide1 || n !== S1) && nw.slides[n] !== old.slides[n]);
+  ok(diff.length === 0, `[c ${id}] slide*.xml 逐張相同${strictSlide1 ? '' : '（slide1 除外）'}${diff.length ? '；不同：' + diff.join(',') : ''}`);
+  if (!strictSlide1) {
+    // ST-23c：slide1（價值鏈頁）產品改在 Margin 右側直欄 → 改驗版面性質
+    const x1 = nw.slides[S1] || '';
+    const sps = [...x1.matchAll(/<p:(sp|cxnSp)>[\s\S]*?<\/p:\1>/g)].map(m => {
+      const s = m[0], o = s.match(/<a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(\d+)" cy="(\d+)"/) || [];
+      return { kind: m[1], name: (s.match(/name="([^"]*)"/) || [])[1], x: +o[1], w: +o[3], h: +o[4], vert: /<a:bodyPr vert="eaVert"/.test(s) };
+    });
+    // ST-43：產品方塊改並排直立長條（vert="eaVert"）→ 同名直書 shape 中取最右邊那個
+    const prods = nw.vc.products.map(n => sps.filter(s => s.kind === 'sp' && s.name === n && s.vert).sort((a, b) => b.x - a.x)[0]);
+    const margin = sps.find(s => s.name === 'Margin／利潤');
+    const cx = sps.filter(s => s.kind === 'cxnSp');
+    const nLinks = new Set(cx.map(c => (c.name.match(/^價值鏈連線 (\d+)/) || [])[1]).filter(Boolean)).size;
+    ok(prods.length > 0 && prods.every(Boolean), `[c ${id}] slide1 產品直書長條 ${prods.filter(Boolean).length}/${prods.length}`);
+    ok(!nw.vc.arrow || (margin && prods.every(p => p && p.x > margin.x + margin.w)), `[c ${id}] slide1 產品在 Margin 右側（Margin x ${margin && margin.x}、產品 x ${prods[0] && prods[0].x}）`);
+    ok(cx.length >= nw.vc.links && nLinks === nw.vc.links, `[c ${id}] slide1 連接器 ${cx.length} 段、涵蓋 ${nLinks}/${nw.vc.links} 條連線`);
+    ok(cx.every(c => c.w === 0 || c.h === 0), `[c ${id}] slide1 連接器全部正交（斜線 ${cx.filter(c => c.w && c.h).length}）`);
+    ok(nw.vc.info.skippedLinks === 0, `[c ${id}] slide1 lastInfo.skippedLinks ${nw.vc.info.skippedLinks}`);
+  }
 }
 console.log('\n完成度表\n' + rows.join('\n') + '\n');
 
@@ -111,6 +146,47 @@ console.log('\n完成度表\n' + rows.join('\n') + '\n');
     await h.stubDialogs();
     ok(await h.ev('guideStep') === 'ideas', `[d] #step-3 直連開在 ideas（實際 ${await h.ev('guideStep')}）`);
     ok(h.errors().length === 0, `[d] 無 console error ${JSON.stringify(h.errors())}`);
+  } finally { await h.close(); }
+}
+// e ST-22 價值鏈名稱高度：隱藏的 ① 頁籤渲染後切回，textarea 不可為 0 高；主「載入」價值鏈檔不取代專案
+{
+  const nameH = `(()=>{const t=[...document.querySelectorAll('#valueChainEditor textarea.vc-name-wrap')];return {n:t.length,min:t.length?Math.min(...t.map(e=>e.offsetHeight)):0}})()`;
+  const tpl = `JSON.parse(JSON.stringify(VC_TEMPLATES.find(x=>x.id==='bio-pharma-tw').valueChain))`;
+  const h = await launch();
+  try {
+    await fresh(h, html);
+    await h.ev(`(()=>{valueChain=normaliseValueChain(${tpl});resetValueChainIds(valueChain);commitValueChain();guideGoto('ideas');})(); 0`); await sleep(600);
+    await h.open(html); await sleep(800);  // 存檔 guideStep=ideas，① 隱藏狀態下渲染
+    await h.ev(`guideGoto('chain'); 0`); await sleep(600);
+    let r = await h.ev(nameH);
+    ok(r.n > 0 && r.min > 10, `[e] 重新整理後切回 ① 主要活動名稱 offsetHeight 最小 ${r.min}（共 ${r.n}）`);
+    await h.shot(null, `${out}/e-reload-chain.png`);
+
+    await fresh(h, html); await h.loadExample('bookstore-a');
+    await h.ev(`guideGoto('ideas'); 0`); await sleep(500);
+    const a0 = await h.ev('arrows.length');
+    let applied = true;
+    try { await h.ev(`applyImportedValueChain({kind:'strategyMatrix.valueChain',valueChain:${tpl}}); 0`); } catch (e) { applied = false; }
+    await sleep(300);
+    await h.ev(`guideGoto('chain'); 0`); await sleep(600);
+    r = await h.ev(nameH);
+    ok(applied && r.n > 0 && r.min > 10, `[e] 他 tab 套用價值鏈後切回 ① 名稱 offsetHeight 最小 ${r.min}（共 ${r.n}）`);
+    ok(applied && await h.ev('arrows.length') === a0 && a0 > 0, `[e] 套用價值鏈後 arrows 數量不變（${a0}）`);
+
+    // 主「載入」流程：模擬選檔，kind 為價值鏈 → 不 reload、不取代專案
+    await h.ev(`window.__noReload=1; window.__vcFile=JSON.stringify({kind:'strategyMatrix.valueChain',v:1,title:'x',valueChain:${tpl}}); 0`);
+    const title0 = await h.ev(`document.getElementById('strategyTitle').value`);
+    const res = await h.ev(`(async()=>{
+      const orig=document.createElement; let inp=null;
+      document.createElement=function(t){const e=orig.call(document,t); if(t==='input'){inp=e; e.click=()=>{};} return e;};
+      importStateJSON(); document.createElement=orig;
+      Object.defineProperty(inp,'files',{value:[{text:async()=>window.__vcFile}]});
+      await inp.onchange();
+      const st=JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return {marker:window.__noReload===1, arrows:arrows.length, title:document.getElementById('strategyTitle').value, hasVc:Array.isArray(st.arrows)&&st.arrows.length===arrows.length};
+    })()`);
+    ok(res.marker && res.arrows === a0 && res.title === title0 && res.hasVc, `[e] 主載入價值鏈檔：未 reload、arrows 仍 ${res.arrows}、標題不變 ${JSON.stringify(res)}`);
+    ok(h.errors().length === 0, `[e] 無 console error ${JSON.stringify(h.errors())}`);
   } finally { await h.close(); }
 }
 console.log(`截圖：${out}`);

@@ -5,7 +5,88 @@
 
 # 新增功能
 
+# Bug
+
 ## Complete
+### v1.2.0（2026-10-27 release）
+#### 新增功能
+- [x] ST-41 價值鏈 Icon 從emoji 選，也可以搜尋 ![](assets/20261027_200113.png)（完成 2026-10-27：內嵌 VC_EMOJI_SET 365 個 emoji 分 9 類（中英關鍵字），選擇器加搜尋框即時過濾（多詞 AND、比對類別名）、分類小標題、可捲動、放不下往上翻；normVcIcon 改 grapheme 截字；自測 tools/selftest/ST-41.mjs，ST-35i 同步）
+- [x] ST-42 經典Porter 版型會不好看 ![](assets/20261027_200313.png)（完成 2026-10-27：Porter（無 layout class）≥801px 群組內單元與巢狀子群組標題 head 改 flex-wrap，名稱佔整行、徽章掉第二行；純 CSS +10 行；其他五版型 rect 不變；自測 tools/selftest/ST-42.mjs）
+- [x] ST-43 價值鏈的產品，用這樣版面 ![](assets/20261027_200516.png)（完成 2026-10-27：產品改「一產品一條直立長條、左右並排、名稱直書」，網頁 >800px 與 PPTX（0.42" 寬 eaVert）同款；徽章直列在長條底；到產品的連線改從長條底邊中點垂直進入、走區底通道，相鄰產品水平互連；≤800px 維持橫排方塊；grid 產品欄 auto；自測 tools/selftest/ST-43.mjs，ST-23c／31／35g／st-21 回歸同步；manual 4.6 文字已改、圖 07-vc-products.png 待重拍）
+- [x] ST-44 PPTX 輸出的價值鏈，利潤的箭頭不對 ![](assets/20261027_200550.png)（完成 2026-10-27：原因是 ST-23c 修尺寸時把 rightArrow＋rot 改成 downArrow；改 rightArrow 不旋轉、adj1=80000／adj2=28000 對應網頁 clip-path，六版型共用；產品繞線箭身比例改 [0,0.72]；其他 slide XML 不變；自測 tools/selftest/ST-44.mjs，ST-23c／35g 同步）
+- [x] ST-31 ![](assets/20261026_191323.png) 價值鏈的產品，改成水平排 (目前是垂直上下)（2026-10-26 使用者對 ST-23a 直排產品的回饋：產品欄位置維持最右，方塊內文字改水平；PPTX 同步；完成 2026-10-26：產品欄維持最右，方塊文字改水平（兩行版型、200px 欄）；PPTX 產品欄 1.0–1.2" 橫排；手冊 10 張圖重拍；自測 tools/selftest/ST-31.mjs）
+- [x] ST-32 ![](assets/20261026_191804.png) 自動隱藏無箭頭欄，無法回復全部顯示的。 藏在下面 ![](assets/20261026_191911.png)移到 Matrix 上方（完成 2026-10-26：#hiddenColsBar 移到操作列下、矩陣上；「全部顯示」同時關短版；無箭頭時自動隱藏不動作並提示；自測 tools/selftest/ST-32.mjs）
+- [x] ST-33 策略點描述，不顯示策略構想(專有名稱應為: 策略要素) 的箭頭，或是編輯。保留到第三步驟才處理（完成 2026-10-26：describe 模式 drawLines 不畫箭頭不標 ⚔、setMode 補重畫；② 隱藏繪製／檢視下拉／自動隱藏／清除按鈕；註解中「策略要素」依課本應仍為「策略構想」，見 doc/reference/專有名詞對照.md；自測 tools/selftest/ST-33.mjs）
+- [x] ST-34 檢查與修改網頁的專有名詞，要跟教科書的一致（a、b、c 完成 2026-10-26）
+  - 規劃依據：doc/reference/專有名詞對照.md（2026-10-26 盤點 35 處差異，分文字層／PPTX 文字／舊檔遷移三級）
+  - 已定：「策略構想」不改成「策略要素」（Ch9 章名即「策略構想之描述」[S 343]；要素是 51 項元件）；真正寫錯的是 ③ 要點「用箭頭表達策略要素之間的因果」→ 策略點。使用者 2026-10-26 確認：依課本維持「策略構想」
+  - [x] ST-34a 文字層（不碰存檔與 PPTX）：③ 要點改「策略點之間」；「新增策略名稱／清除目前策略／最多 8 個策略」改「策略構想」；「主活動」→「主要活動」；h2「策略矩陣展開」→「策略矩陣」、h2「價值鏈」→「經營流程（價值鏈）」；統一「投入欄（價值單元）／產出欄（產品）」；「單元」補「價值單元」；列頭 tooltip 加六大構面全名＋頁碼；支援／主要活動、Margin、產業矩陣、短版加出處 tooltip；因果認知前提 desc 補 [S 378]；manual／README 同步（對照表 #5–7、11–12、14、16–18、21–23、26；完成 2026-10-26：文字層對齊課本：③ 要點改策略點之間、策略構想用語統一、h2 改名、投入欄（價值單元）／產出欄（產品）、價值單元補全、列頭與 Porter／講義出處 tooltip；不碰 PPTX 與存檔常數；自測 tools/selftest/ST-34a.mjs）
+  - [x] ST-34b 會改 PPTX 文字（需更新 regression 基準並記 decisions）：`cellDefaultText` 誤用 leftLabel（「製造的關聯(A07)」）改 rightLabel／貢獻／優勢；B 列全名「目標市場之區隔方式與選擇」（先對原書 S 276–281）；要素 1-4 name 改「保證」；「策略前提控制表」與 PPTX 頁名統一；角色「主導」→「主導權責」；「KSF's」→「KSF」；選做：「未來方向」→「新策略方向」、「自製」→「自行負責」、「須轉移」→「轉移陣地」（#2–4、8、10、19、30、32–33；完成 2026-10-26：B 列 label 經 S 279 圖 8.07 核對維持不改；其餘含三項選做全改，key 不變；regression 加 KNOWN_RENAMES 對基準版正規化；自測 tools/selftest/ST-34b.mjs）
+  - [x] ST-34c 需舊檔遷移：`ADV_BASES` 改書上名稱與順序並加舊值對照（#31）；`SUPPORT_COLUMN_GROUP`「支援活動」建議不改常數只加註（#13；完成 2026-10-26：ADV_BASES 改書上七項名稱與順序，舊值經 ADV_BASE_ALIASES 在載入／範例／undo 三處遷移；SUPPORT_COLUMN_GROUP 只加註；regression 對照用邊界 regex；自測 tools/selftest/ST-34c.mjs）
+- [x] ST-35 價值鏈版型可切換：Chevron 群組畫法 B 橫帶／C 同色分段／E 摺疊＋ SlideEgg 式 F 圓形 icon／G 六角鏈，五選一；另做彩虹分色配色與價值單元 icon（a–j 全部完成 2026-10-27；2026-10-26 網搜七種排版＋ SlideEgg 三套範本後規劃；示範與取捨對照見 doc/reference/價值鏈-版型與群組畫法範例.html，來源登記在 doc/reference/README.md「網路版型參考」）
+  - 已定：支援活動橫條、Margin 箭頭、最右產品欄（ST-31）不動，只換主要活動列；預設 B；PPTX 只輸出 B／C（E 收合態不輸出）；版型存專案存檔新欄位 `vcLayout`，舊存檔沒有時視為 B；「經典 Porter」保留為可回退選項
+  - 已定（2026-10-26 使用者）：F、G 納入，H 環狀不做（與矩陣欄不對位）；ST-35g、h 都做；配色除彩虹分色外，再從 SlideEgg 範本列表截圖挑色（doc/reference/slideegg-supply-chain-templates-20261026.png，候選 1～5 色票見範例頁「配色與 icon 參考」）
+  - [x] ST-35a 橫帶式（B）：葉節點等寬一排 chevron（CSS clip-path），群組名掛上方橫帶跨其子單元，巢狀疊帶；與矩陣「群組表頭＋細項表頭」一對一；改名、拖曳、群組化、活動／資產切換、連線端點全部保留；≤800px 回現行直排（完成 2026-10-26：`valueChain.layout`＝porter|band，舊檔預設 porter；工具列加版型下拉；群組橫帶依名稱長度撐寬、hover 動作鈕換行；自測 tools/selftest/ST-35a.mjs）
+  - [x] ST-35b 同色分段式（C）：同群組同色相、子單元間細縫、群組間完整缺口；群組名小字寫在該段底部；4 色循環並在 `COLOR_PALETTES` 各配色下可讀；依賴 ST-35a（完成 2026-10-26：layout=segment 沿用 band 幾何、四色 #3b6fb6/#2a7f73/#b5532f/#6b7a2c 白字對比 ≥4.5、chevron 頂線對齊、群組名小字在底；自測 tools/selftest/ST-35b.mjs）
+  - [x] ST-35c 摺疊式（E）：群組預設收成一支 chevron 加「＋n」角標，點開在原位以 B 撐開；「全部展開／收合」按鈕；收合狀態只存 UI 不進存檔；依賴 ST-35a（完成 2026-10-27：layout=fold 沿用 band；群組與子群組預設收合＋n 角標、點角標／標題空白展開、空群組不收合；vcFoldState 不進存檔；收合群組內端點改接群組、內部連線不畫；工具列全部展開／收合；自測 tools/selftest/ST-35c.mjs）
+  - [x] ST-35d 圓形 icon 式（F）：支援活動改白底膠囊列、主要活動每項一個彩色圓（內放 ST-35i 的 icon，沒 icon 放首字）、名稱在圓下、群組用虛線淡色底板框住；Margin 改黑色大 chevron；連線端點改接圓心；依賴 ST-35a、ST-35i（完成 2026-10-27：layout=circle，葉節點依序 8 色、無 icon 顯示首字、群組虛線底板取首葉色、分色配色在 circle 下不生效；vcNodeRectForLayout 讓連線接圓；自測 tools/selftest/ST-35d.mjs）
+  - [x] ST-35e 六角鏈式（G）：葉節點六角形相咬成鏈（clip-path polygon）、一顆一色相；群組用橫帶（同 B）＋同色相深淺；欄寬不等時連線以中心對位；依賴 ST-35a（完成 2026-10-27：layout=hex 沿用 band 橫帶結構，六角 clip-path Q=18px、相鄰 −16px 咬合、七色相依頂層序、群組內往黑混深淺；clip-path 下無法白描邊；自測 tools/selftest/ST-35e.mjs）
+  - [x] ST-35f 切換入口與存檔：「專案」區加「價值鏈版型」下拉（B／C／E／F／G／經典 Porter）；`vcLayout` 進 localStorage 與匯出 JSON；fixtures 載入無 error；依賴 ST-35a–e（完成 2026-10-27：專案區 #vcLayoutSelect 由 VC_LAYOUTS 產生、與工具列 .vc-layout-select 雙向同步 syncVcLayoutSelects；版型存 valueChain.layout 隨 localStorage／匯出 JSON／價值鏈檔；自測 tools/selftest/ST-35f.mjs）
+  - [x] ST-35g PPTX 價值鏈頁：`buildValueChainShapesXml` 依 `vcLayout` 畫 B（矩形橫帶＋chevron）、C（同色長箭頭＋白縫）、F（ellipse＋文字）、G（hexagon）；E 走 B、Porter 走原邏輯；更新 regression slide1 基準並記 decisions；依賴 ST-35f（完成 2026-10-27：band=homePlate＋橫帶 rect、segment=chevron 四色、hex=hexagon 七色咬合、circle=ellipse＋虛線底板＋白底支援＋黑 Margin，fold 走 band；葉節點 <0.5" 時折列、字級 9→6pt 並在狀態列提示；porter XML 逐 byte 不變故 regression 基準不動；自測 tools/selftest/ST-35g.mjs）
+  - [x] ST-35h 彩虹分色配色：`COLOR_PALETTES` 新增「分色模式」欄位（`perUnit: [...]` 色序），主要活動依序取色、矩陣欄頭同色、支援活動低彩度、群組底色取第一個子單元色的淡版；至少加候選 1 鮮彩六色、3 沉穩土色、4 藍綠紫三套（色票見範例頁，實作時以白字對比度 ≥ 4.5 微調）；PPTX 跟著走；依賴 ST-35a（完成 2026-10-27：COLOR_PALETTES 末尾加「分色・鮮彩／沉穩土色／藍綠紫」三套含 perUnit；applyPerUnitColors 在 applyPalette／renderValueChainEditor／buildTable 結尾套 --vc-unit-color；矩陣欄頭 data-vc-top 對應頂層序；pptxPalette().perUnit；單色六套 XML 不變；自測 tools/selftest/ST-35h.mjs）
+  - [x] ST-35i 價值單元 icon：unit 新欄位 `icon`（emoji 字串），價值鏈編輯器名稱旁加「選 icon」小按鈕（常用 24 個＋自由輸入）；B／C／E／G 畫在方塊左側、F 畫在圓內；矩陣欄頭可選顯示；舊檔無此欄位不畫；PPTX 輸出 emoji 文字；`normaliseValueChain` 只留字串（完成 2026-10-26：unit.icon ≤4 字、24 個常用 emoji 選單＋自訂＋清除、操作列「欄頭 icon」勾選存 showUnitIcons、PPTX 文字前置 icon；範例資料不加 icon 以保 regression；band 下 icon 在名稱上方待統一；自測 tools/selftest/ST-35i.mjs）
+  - [x] ST-35j 手冊／README 補五種版型與分色配色截圖、icon 選法；自測 tools/selftest/ST-35.mjs（五版型各截圖、切換後 drawLines 連線端點仍對齊、三套分色配色下白字可讀）；依賴 ST-35g–i（完成 2026-10-27：manual 4.2a 版型／4.2b icon／第 10 章分色配色，新圖 40–47、重拍 01b／03；README 補功能；總自測 tools/selftest/ST-35.mjs）
+
+#### Bug
+規劃（2026-10-26）：建議順序 ST-22 → 26 → 24 → 23 → 25 → 27 → 28；ST-22 是 v1.1.0 迴歸，修完建議先 release v1.1.1。
+
+第 1 階段：修迴歸
+- [x] ST-22 策略矩陣存檔載入失敗 ![](assets/20261026_144114.png), 檔案為 "策略矩陣_價值鏈.json"（完成 2026-10-26：sizeVcInput 遇隱藏不寫 0px、切回 ① 重量名稱高度；主載入辨識價值鏈檔改走價值鏈匯入；回歸腳本加 e 區段 5 項與 tools/selftest/ST-22.mjs）
+  - 原因（2026-10-26 headless 重現）：存檔格式正常、名稱都在；ST-21b 的 `.step-pane:not(.active){display:none}` 讓 `renderValueChainEditor()` 在 ① 頁籤隱藏時先渲染，主要活動名稱 `textarea.vc-name-wrap` 經 `sizeVcInput()` 量到 `scrollHeight=0` → `height:0px` 看不見；`guideGoto()` 切 tab 只重畫連線不重量高度。重新整理、主「載入」、在其他 tab 載範例都會中，v1.0.0 無此問題
+  - 已定：測試不放使用者作業檔（HW2），改由測試腳本自產有群組＋多層的去名價值鏈
+  - [x] ST-22a 切到 ① 頁籤（`guideGoto`／`guideRedrawLines` 的 rAF）時對 `#valueChainEditor textarea.vc-name-wrap` 重跑 `sizeVcInput`；`sizeVcInput` 遇 `scrollHeight===0` 清空 style.height 而非寫 0px（完成 2026-10-26）
+  - [x] ST-22b 主「📂 載入」（`importStateJSON`）偵測 `kind==='strategyMatrix.valueChain'`：改走 `importValueChainJSON` 匯入價值鏈並提示，不再整份取代專案（完成 2026-10-26）
+  - [x] ST-22c 回歸：`tests/st-21-regression.mjs` 加「重新整理後／他 tab 載入後切回 ①，主要活動名稱 offsetHeight > 10」與「主載入價值鏈檔」兩項；依賴 ST-22a、ST-22b（完成 2026-10-26）
+
+第 2 階段：矩陣操作
+- [x] ST-26 ![](assets/20261026_145546.png) 不同策略的箭頭，不要混在一起。用切換的（完成 2026-10-26：箭頭檢視改三段切換（只看目前／目前＋競爭者／全部），不再疊在一起；舊存檔 overlayAll 一律改只看目前）
+  - [x] ST-26a `#overlayChk` 改為檢視切換 `matrixView`：只看目前（預設）／目前＋競爭者／全部；`drawLines()` 依視圖過濾構想；⚔ 對陣點標記只在含雙方的視圖顯示（`collectClashPoints` 與 PPTX 對陣點頁不變）；圖例只列畫出的構想；舊存檔 `overlayAll` 載入後一律用預設「只看目前」；更新 `doc/decisions.md`（推翻 2026-10-25 ST-14h「疊圖預設開」）（完成 2026-10-26：👁 檢視下拉 #matrixViewSel、matrixView 取代 overlayAll、visibleIdeaIdxs()、圖例只列畫出的構想；自測 tools/selftest/ST-26a.mjs）
+- [x] ST-24 ![](assets/20261026_145153.png) 策略矩陣站的板面太大，把下方的輸入欄，調整到更方便的輸入地方（完成 2026-10-26：策略點描述面板改矩陣右側 sticky 側欄（窄螢幕維持上下排），不必往下捲即可輸入）
+  - [x] ST-24a 步驟 ②／④：`#cellPanel` 改為矩陣右側 sticky 側欄（top 讓出 `.project-panel`、max-height 視窗高、內捲），矩陣保留自己的橫向捲動；`selectCell` 拿掉 `scrollIntoView`（窄螢幕保留）；側欄改變矩陣寬度後重跑 `drawLines()`；≤800px 維持上下排（完成 2026-10-26：.matrix-row flex、側欄 360px sticky top 82、cellPanelReveal() 窄螢幕才捲、ResizeObserver 重畫；自測 tools/selftest/ST-24a.mjs）
+
+第 3 階段：價值鏈版面
+- [x] ST-23 產出的產品改放價值鏈最右邊，利潤的右側 ![](assets/20261026_144914.png)，用垂直的整條（完成 2026-10-26：產品改放價值鏈最右邊 Margin 右側直條（編輯器＋PPTX），連線正交接入；修 PPTX Margin 箭頭旋轉錯誤）
+  - 已定：編輯器與 PPTX 價值鏈頁都改
+  - [x] ST-23a 編輯器：`.vc-zones` grid 加第 4 欄 products（三列全高），產品改直條（`writing-mode: vertical-rl`），上下拖曳排序，「＋ 產品」放欄底；不依賴 `showArrowBg`；≤800px 回到橫列（完成 2026-10-26：產品改為 .vc-zones 第 4 欄直排全高、上下拖曳、＋產品在欄底；大箭頭關閉三欄版型；≤800px 回橫列；自測 tools/selftest/ST-23a.mjs）
+  - [x] ST-23b 連線：直條產品的接入規則（從右緣出、接直條左緣，繞過 Margin 箭頭），在 `vcLinkRoute`／`vcCrossRoute` 用 opts 旗標區分，不影響 23c 以外的呼叫；依賴 ST-23a（完成 2026-10-26：vcProductRoute：到產品的線右緣出→三段槽位通道→產品左緣，全程正交；舊路徑輸出不變；自測 tools/selftest/ST-23b.mjs）
+  - [x] ST-23c PPTX 價值鏈頁（`buildValueChainShapesXml`）產品改在 Margin 右側直條：重算 `contentW`、`totalRows`、ST-20 `deepTotal`；更新 `tests/st-21-regression.mjs` 價值鏈頁 XML 比對基準（其他頁仍須一致）；依賴 ST-23b（完成 2026-10-26：產品 0.5" 直欄在 Margin 右側、連線走 vcProductRoute、非產品線排除產品障礙；順手修 Margin 箭頭 rot=90° 的 OOXML 尺寸錯誤改 downArrow；regression c 區段 slide1 另驗、--strict-slide1 可全比；自測 tools/selftest/ST-23c.mjs）
+
+第 4 階段：字級（在 23／24／26 之後，因為會掃過全部 CSS）
+- [x] ST-25 ![](assets/20261026_145342.png) 字的大小不一致，檢查全部的網頁，調整成適合的大小。（完成 2026-10-26：全站字級收斂到五階變數（--fs-xs/sm/base/md/lg），句型／SWOT／對陣點／行動表不再只有一半大；manual.html 同步）
+  - 原因：`html{font-size:150%}`（1rem=24px），多數用 rem，但 `.sentence-box summary`／`.sentence-list` 13px、SWOT／對陣點／行動表 11–12px 寫死 px，只有旁邊一半大；rem 另有 26 種相近值，無字級變數
+  - [x] ST-25a 在 `:root` 定 `--fs-xs .68rem`／`--fs-sm .74rem`／`--fs-base .80rem`／`--fs-md .92rem`／`--fs-lg 1.1rem`；所有 px 字級（`.sentence-box summary`、`.sentence-list`、`.premise-swot-*`、`.premise-quad`、`.clash-item`、`.action-toolbar`、`.action-table`）改用變數，表內 input 同一級（完成 2026-10-26：:root 五階 --fs-xs/sm/base/md/lg，8 處 px 改變數，表內控制項與表同級）
+  - [x] ST-25b 其餘 rem 值依角色收斂到 5 階（h1 2rem 例外）；六 tab 前後截圖對照；manual.html 同步檢查；依賴 ST-25a（完成 2026-10-26：28 種 rem 依區間收斂到五階，補 button/input/select/textarea 預設 sm 與 .guide-step；manual.html 同步；六 tab 字級由 24 種降到 6 種；自測 tools/selftest/ST-25.mjs）
+
+第 5 階段：策略要素說明
+- [x] ST-27 新增課本上策略要素的範例說明，Ex: 產品與市場之配合 (用簡圖、簡易說明、與範例)（完成 2026-10-26：策略要素說明卡：51 項補簡易說明／書上範例／實際頁碼／簡圖資料，chip 與面板 ⓘ 點開迷你矩陣簡圖卡片）
+  - 規劃依據與頁碼見 doc/reference/策略管理新論-Ch8-51項策略要素.md
+  - 已定：既有 `STRATEGY_ELEMENTS` 的 id／name／def／example 不改（箭頭已存要素 id），只加欄位；文字用自己的話並標 [S 頁碼]
+  - [x] ST-27a 讀課本 S 285–339 摘要 51 項要素：簡易說明、書上範例、實際頁碼、簡圖形狀 → doc/reference/策略管理新論-Ch8-51項策略要素.md [S 285–339]（完成 2026-10-26：四段 subagent 讀掃描頁，51 項全；含簡圖表示法建議、與程式名稱／頁碼差異、可補的形狀規則；5-7 後文與部分密集圖未確定，見摘要第五節）
+  - [x] ST-27b `STRATEGY_ELEMENTS` 加 `explain`／`caseExample`／`pages`／`shape`（簡圖規格：from/to 列、同欄／跨欄、投入／產出、匯流）資料，51 項依摘要檔填；依賴 ST-27a（完成 2026-10-26：51 項要素加 explain／caseExample／pages／shape（＋8 項 fullName）、page 改實際頁碼、ELEMENT_SHAPE_TYPES；自測 tools/selftest/ST-27b.mjs）
+  - [x] ST-27c 要素說明卡：要素 chip、「＋要素」面板每項旁 ⓘ 點開卡片——迷你矩陣 SVG 簡圖（依 `shape` 畫 3–4 欄 × 6 列與箭頭）＋簡易說明＋書上範例＋頁碼；取代原生 title tooltip；依賴 ST-27b（完成 2026-10-26：renderElementShapeSvg 4 欄×6 列弧形箭頭、#elemCardModal 說明卡（explain／caseExample／原 def・example／頁碼／※ 推論）、chip／面板／建議旁 ⓘ、Esc／遮罩關閉還焦點、textContent 防注入；自測 tools/selftest/ST-27c.mjs）
+
+第 6 階段：文件
+- [x] ST-28 manual.html 與 README 補 ST-23／24／26／27 新版面與要素說明卡，`tools/capture-manual.mjs` 重拍受影響截圖；依賴 ST-23～27（完成 2026-10-26：38 張全部重拍（ST-25 字級）＋新增 37-elem-card；capture-manual 改 07 目標、13／15b／16／24 切「全部構想」、32 拍 #matrixRow；手冊與 README 過時字句改完；自測 tools/selftest/ST-28.mjs）
+
+- [x] ST-38 band／fold／segment 在 ≤800px 直排時，群組內子項名稱被擠成一字一行直書（群組 body 直排後葉節點寬度過窄）；需給直排葉節點 min-width 或讓名稱橫排（ST-35c 驗證時發現；完成 2026-10-27：新增 max-width:800px 區塊，群組內葉節點撐滿、名稱 textarea 不受 inline 寬限制，porter 一併修、circle 排除；自測 tools/selftest/ST-38.mjs）
+- [x] ST-39 band 系版型下，連線進出端點的垂直段仍穿過祖先群組橫帶的文字（單一子項群組時進出點正好在字中央）；可把進出點 x 從方塊中點偏向來線那一側避開橫帶文字寬（PPTX 字寬估算）（ST-36 時發現，選項 B；完成 2026-10-27：vcEntryX 依自身／祖先橫帶文字寬（畫面 measureText、PPTX 估算）選進出 x，退回順序 6→2→文字旁→中點；hex 咬合鄰居也避；已知限制 PPTX hex 單子項群組無可用 x 退回中點；自測 tools/selftest/ST-39.mjs）
+- [x] ST-40 fold 版型預設收合時，端點都在收合群組內的連線 path 為零長度（如 `M 444 683 L 444 683`），畫面上看不到；應改接收合群組邊緣或不畫（ST-36 時發現，dev 既有；完成 2026-10-27：根因是相鄰收合群組 gapX=0 使 straight 兩點同座標；drawVcLinks 把 <8px 的 straight 延成 8px 正交短線、<2px 不輸出；自測 tools/selftest/ST-40.mjs）
+- [x] ST-36 價值鏈橫帶式（band）下，跨群組連線的繞行高度落在外層群組橫帶上，白描邊會壓到橫帶文字（如醫美範本「診斷→中醫醫療服務」）；`vcLinkRoute` 算繞行高度時不考慮包住端點的外層群組，畫面與 PPTX 共用；建議 band 版型繞行改走外層橫帶上方（ST-35a 驗證時發現；完成 2026-10-27：vcLinkRoute 加 opts.bandAnc，祖先群組矩形只算列範圍不當障礙，水平段走最外層橫帶上方；畫面 ≥801px band 系與 PPTX 非 circle 帶旗標；porter／circle 不變；進出端點垂直段仍穿橫帶→ST-39；自測 tools/selftest/ST-36.mjs）
+- [x] ST-37 band 版型滑鼠移上群組橫帶時動作鈕換到第二行，橫帶變高約 22px 使同列內容下移；可改成浮在橫帶上方（ST-35a 驗證時發現；完成 2026-10-27：band 系與 circle 的群組動作鈕改絕對定位浮在橫帶上方右側、hover／focus-within 顯示；自測 tools/selftest/ST-37.mjs）
+- [x] ST-29 價值鏈編輯器：主要活動欄太多折成第二列時，跨列連線（如醫美範本「中醫門診→中醫調理」，1400px 寬）`vcCrossRoute` 找不到通道退回斜直線（v1.0.0 即如此；ST-23c 驗證時確認）；需在折列情況補「列間水平通道」規則（完成 2026-10-26：新增 vcNestedRoute，vcCrossRoute 失敗才試；用頂層方塊判列、走 row-gap／祖先群組 padding／欄間縫；醫美、bio-dental-agent 斜線歸零，其他範例 path 不變；PPTX 共用；自測 tools/selftest/ST-29.mjs）
+- [x] ST-30 tools/selftest/ST-20.mjs 的 [A]「連線條數 新＝基準＋1」需要 ST-20 之前的基準版，用 v1.0.0 之後當基準必 FAIL；改為固定比對數字或移除（ST-23c 驗證時確認；完成 2026-10-26：[A] 改比對頁面範本 valueChain.links 數，基準版條數只印參考）
+
+### v1.1.0 之前
 - [x] ST-21 依教科書六步把頁面重整為分步引導（tab）＋每步「教材說明卡」：tab 列取代步驟條、各區塊依步驟歸位、矩陣 ②–⑥ 常駐、說明卡用課本短引文與頁碼說明；規劃依據、版面示意與頁碼見 doc/reference/策略管理新論-分步引導版面.md（全部子項完成 2026-10-26：a 文案 → b＋d tab 骨架與歸位 → c 說明卡 → e 回歸腳本 → f 手冊；三波、兩條平行線）（release v1.1.0）
   - 已定（2026-10-26）：目前 tab 沿用 `guideStep` 存檔，不新增欄位，`strategyMatrix_v4` 舊存檔照常載入；不改任何資料結構 key，PPTX 匯出與 tests/fixtures 輸出不變；搬區塊只換父容器、保留既有 id 與 render 函式；課本文字改寫為主，每步最多一兩句短引文加引號標 [S 頁碼]；切 tab 後要重畫 SVG 連線（display:none 下取不到座標）
   - 第 1 階段：文案

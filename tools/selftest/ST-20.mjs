@@ -2,8 +2,9 @@
 // 跑法（Node 24+、/usr/bin/google-chrome）：  node tools/selftest/ST-20.mjs [基準版 index.html 路徑，預設 ../dev/index.html]
 // 測：攔截 JSZip.generateAsync 取 ppt/slides/slide1.xml，新版與基準版各跑一次
 //   A) 價值鏈範本「連鎖醫美診所」(bio-aesthetic)：有「中醫門診」「中醫調理」方塊、「中醫醫療服務」「中醫術後照顧」框；
-//      連線條數（依「價值鏈連線 N」名稱）新版比基準版多 1；所有 shape 不超出 slide；狀態列沒有「略過」字樣
-//   B) 範例專案「網路書店 A 公司」(bookstore-a)：價值鏈頁所有 shape（含連接器）名稱＋座標與基準版完全一致（兩層以內不變）
+//      連線條數（依「價值鏈連線 N」名稱）新版必須等於頁面上範本的 valueChain.links 數（ST-30：不再與基準版比「+1」，基準版條數只印出當參考、不判 FAIL）；所有 shape 不超出 slide；狀態列沒有「略過」字樣
+//   B) 範例專案「網路書店 A 公司」(bookstore-a)：兩層以內不走第三層精算版面——支援／主要活動方塊的 y、h 與基準版一致、連線條數一致
+//      （ST-23c 起產品改在 Margin 右側直欄，x／寬度與產品方塊必然不同，不再要求全文一致；基準版用 ST-23c 之後的版本時全文也會一致）
 //   C) 醫美範本再加一個第四層節點「深層測試」(中醫門診→改成群組) 並加一條指向不存在 id 的連線：
 //      「深層測試」方塊存在、狀態列含「略過 1 條連線」與「攤平」
 //   D 「中醫醫療服務」多塞 3／20 個孫項：+3 字級可降但不溢字、不壓縮；+20 降到 6pt 並壓縮、狀態列「已縮小字級」
@@ -42,6 +43,7 @@ async function run(file, scenarios) {
     const out = {};
     for (const [key, setup, shot] of scenarios) {
       await ev(setup); await sleep(500);
+      const linkTotal = await ev(`(typeof valueChain!=='undefined'&&valueChain.links)?valueChain.links.length:null`); // 頁面上範本的連線數（ST-30：取代「基準＋1」）
       await ev(`window.__zip=null; exportPptx()`); await sleep(1500);
       const xml = await ev(`window.__zip.file('ppt/slides/slide1.xml').async('string')`);
       const status = await ev(`document.getElementById('statusText')?.textContent || ''`);
@@ -50,7 +52,7 @@ async function run(file, scenarios) {
         const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: Math.max(0, r.x), y: Math.max(0, r.y), width: r.w, height: r.h, scale: 1 } });
         writeFileSync(shot, Buffer.from(data, 'base64'));
       }
-      out[key] = { xml, status };
+      out[key] = { xml, status, linkTotal };
     }
     out.errors = errors;
     return out;
@@ -84,7 +86,8 @@ const na = parse(N.ae.xml), ba = parse(B.ae.xml);
 for (const n of ['中醫門診', '中醫調理', '雷射術後修護', '點滴']) chk(na.filter(s => s.kind === 'sp' && s.name === n).length === 1, `A 孫項方塊「${n}」存在（基準版：${ba.some(s => s.name === n) ? '有' : '無'}）`);
 for (const n of ['中醫醫療服務', '中醫術後照顧', '西醫醫療服務']) chk(na.some(s => s.kind === 'sp' && s.name === n), `A 子群組框「${n}」存在`);
 const nl = linkCount(na), bl = linkCount(ba);
-chk(nl === bl + 1, `A 連線條數 新 ${nl} = 基準 ${bl} + 1（connector 段數 新 ${na.filter(s => s.kind === 'cxnSp').length}／基準 ${ba.filter(s => s.kind === 'cxnSp').length}）`);
+const expA = N.ae.linkTotal;
+chk(nl === expA, `A 連線條數 新 ${nl} = 範本連線數 ${expA}（參考：基準版 ${bl}，connector 段數 新 ${na.filter(s => s.kind === 'cxnSp').length}／基準 ${ba.filter(s => s.kind === 'cxnSp').length}）`);
 const maxB = Math.max(...na.filter(s => s.kind === 'sp' && !/Margin/.test(s.name)).map(s => s.y + s.h));
 chk(maxB <= 5143500, `A shape 最大 y+h = ${maxB} ≤ slide 高 5143500`);
 // 孫項要落在其框內
@@ -114,10 +117,11 @@ console.log(`A 中醫門診 h = ${g0.h} EMU（${(g0.h / 914400).toFixed(3)} in�
 // B) 書店範例：完全一致
 writeFileSync(tmp + '/ae-slide1.xml', N.ae.xml); writeFileSync(tmp + '/deep-slide1.xml', N.deep.xml);
 const nb = parse(N.book.xml), bb = parse(B.book.xml);
-const key = s => `${s.kind}|${s.name}|${s.x}|${s.y}|${s.w}|${s.h}`;
-const diffs = nb.map(key).filter((k, i) => k !== key(bb[i] || {}));
-chk(nb.length === bb.length && diffs.length === 0, `B 書店價值鏈頁 ${nb.length} 個 shape 與基準完全一致（差異 ${diffs.length}；基準 ${bb.length}）`);
-chk(N.book.xml.replace(/id="\d+"/g, '') === B.book.xml.replace(/id="\d+"/g, ''), 'B 書店 slide1.xml 全文（去 shape id）一致');
+const bookProds = new Set(['中文書籍', '專業書籍', '影音商品', '產品', 'Margin／利潤']);
+const vMiss = bb.filter(b => b.kind === 'sp' && !bookProds.has(b.name) && b.y > 914400)
+  .filter(b => !nb.some(n => n.kind === 'sp' && n.name === b.name && n.y === b.y && n.h === b.h)).map(b => b.name);
+chk(vMiss.length === 0, `B 書店支援／主要活動方塊 y、h 與基準一致（不符：${vMiss.join(',') || '無'}）`);
+chk(linkCount(nb) === linkCount(bb), `B 書店連線條數 新 ${linkCount(nb)} = 基準 ${linkCount(bb)}`);
 
 // C) 第四層與壞連線
 const nd = parse(N.deep.xml);
