@@ -639,8 +639,21 @@
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap {
       flex: 1 0 100%; width: auto; height: auto !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head > .vc-act { display: none; margin-top: 0; }
-    #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-node-head:hover > .vc-act { display: inline; }
+    /* ST-37：群組橫帶的動作鈕改浮在橫帶上方右側（絕對定位，不佔橫帶高度、不把同列內容往下推）；hover／focus 橫帶才顯示。
+       三顆各給固定寬（em）靠 right 並排：✕ 在最右、＋子項、＋同層。circle 版型的群組底板 head 同樣處理（見下方 ST-37 circle） */
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head { position: relative; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act {
+      display: inline-block; position: absolute; top: -20px; right: 0; z-index: 6; box-sizing: border-box;
+      width: 4em; height: 20px; line-height: 18px; text-align: center; margin: 0;
+      background: rgba(255,255,255,0.96); border: 1px solid var(--grid-line); border-radius: 4px 4px 0 0;
+      color: var(--ink) !important; font-weight: 500; opacity: 0; pointer-events: none;
+    }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act.vc-act-remove { width: 2em; right: 0; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act[title^="在群組內"] { right: 2em; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act[title^="在後面"] { right: 6em; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head:is(:hover, :focus-within) > .vc-act { opacity: 0.85; pointer-events: auto; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act:hover { opacity: 1; color: var(--col-header) !important; }
+    #valueChainEditor :is(.vc-layout-band, .vc-layout-circle) .vc-zone-primary .vc-group > .vc-node-head > .vc-act.vc-act-remove:hover { color: #d64545 !important; }
     #valueChainEditor .vc-layout-band .vc-zone-primary .vc-group > .vc-group-body {
       flex-direction: row; align-items: flex-end; gap: 0; margin: 0; padding: 0; min-height: 58px; border-radius: 0;
     }
@@ -900,8 +913,7 @@
     #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > textarea.vc-name-wrap {
       flex: 1 0 100%; width: auto; height: auto !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head > .vc-act { display: none; margin-top: 0; }
-    #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-node-head:hover > .vc-act { display: inline; }
+    /* ST-37：circle 群組 head 的動作鈕同 band 浮在上方（規則併在 ST-35a band 區塊） */
     #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-group > .vc-group-body {
       flex-direction: row; align-items: flex-start; gap: 6px; min-height: 84px;
     }
@@ -913,6 +925,14 @@
       flex: 1 1 calc(100% - 56px) !important; width: auto !important; min-width: 4em; font-weight: 600;
     }
     #valueChainEditor .vc-layout-circle .vc-zone-primary .vc-unit > .vc-node-head > .vc-kind { margin-left: 51px; }
+  }
+  /* ST-38：≤800px 直排時，群組內葉節點撐滿群組寬、名稱橫排（band／segment／fold／hex 共用；circle 的 800 規則在上一區塊，不覆蓋其名稱 flex） */
+  @media (max-width: 800px) {
+    #valueChainEditor .vc-zone-primary .vc-group-body > .vc-unit { flex: 1 1 100%; min-width: 100%; max-width: 100%; }
+    #valueChainEditor .vc-zone-primary .vc-group-body > .vc-unit > .vc-node-head { flex: 1 1 auto; min-width: 0; }
+    #valueChainEditor .vc-zones:not(.vc-layout-circle) .vc-zone-primary .vc-unit > .vc-node-head > textarea.vc-name-wrap {
+      width: 100% !important; min-width: 0; white-space: normal; writing-mode: horizontal-tb;
+    }
   }
 
   /* ── Buttons ── */
