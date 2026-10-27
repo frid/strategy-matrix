@@ -9,7 +9,8 @@
 //   [5] segment、hex：相鄰頂層項目代表色（第一個葉節點填色）不同
 //   [6] circle：每個圓內文字＝icon 或名稱首字；有 dash 虛線群組底板（有群組時）；Margin 黑色 2B2D31
 //   [7] 分色配色 COLOR_PALETTES[6]＋band：葉節點填色含 ≥ 2 種 perUnit 色；circle 下不吃分色（圓色仍是八色）
-//   [8] porter（預設配色＋分色配色）下兩範例 slide1 與基準版逐 byte 相同
+//   [8] porter（預設配色＋分色配色）下兩範例 slide1 與基準版相同（ST-43 起產品改並排長條、活動區寬隨產品數變：
+//       比對前兩邊都去掉座標 off/ext、產品方塊與連接器、標籤間空白，Margin 幾何統一，其餘形狀／色／字逐 byte 相同）
 //   [9] console error 0；另測 layout='fold' 匯出走 band
 // 另把每個情境的 slide1 以簡易 SVG 重畫（prst 幾何近似）並截圖：$CLAUDE_JOB_DIR/tmp/ST-35g/<範例>-<版型>.png（本機沒有 LibreOffice）
 // 預期：全部 PASS、exit 0。
@@ -163,16 +164,22 @@ for (const ex of ['bookstore-a', 'bio-aesthetic']) {
 
 // [8] porter 與基準版逐 byte 相同
 const porter = [];
-for (const pal of [0, 6]) for (const ex of ['bookstore-a', 'bio-aesthetic']) porter.push([ex, pal, (await exportOnce(h, ex, 'porter', pal)).xml]);
+for (const pal of [0, 6]) for (const ex of ['bookstore-a', 'bio-aesthetic']) porter.push([ex, pal, (await exportOnce(h, ex, 'porter', pal)).xml, await h.ev(`valueChain.products.map(n=>n.name)`)]);
+// ST-43：產品長條（位置、尺寸、eaVert）、連接器、所有座標都允許不同；ST-44 Margin 幾何兩邊統一成 downArrow
+const norm8 = (xml, names) => xml
+  .replace(/<p:cxnSp>[\s\S]*?<\/p:cxnSp>/g, '')
+  .replace(/<p:sp>[\s\S]*?<\/p:sp>/g, b => names.includes((b.match(/name="([^"]*)"/) || [])[1]) && /prst="roundRect"/.test(b) ? '' : b)
+  .replace(/<a:off x="-?\d+" y="-?\d+"\/><a:ext cx="\d+" cy="\d+"\/>/g, '')
+  .replace(/prst="rightArrow"><a:avLst><a:gd name="adj1" fmla="val 80000"\/><a:gd name="adj2" fmla="val 28000"\/><\/a:avLst>/, 'prst="downArrow"><a:avLst/>')
+  .replace(/>\s+</g, '><');   // 連接器段數不同 → 拿掉後留下的縮排空白不同
 writeFileSync(`${out}/bookstore-a-porter.html`, svgOf(parse(porter[0][2])));
 const errNew = h.errors();
 await h.close();
 const hb = await boot(baseHtml);
-for (const [ex, pal, xml] of porter) {
-  const b = (await exportOnce(hb, ex, 'porter', pal)).xml;
-  // ST-44：Margin 改 rightArrow（唯一允許的差異）；比對前把新版 Margin 幾何換回舊 downArrow
-  const xn = xml.replace(/prst="rightArrow"><a:avLst><a:gd name="adj1" fmla="val 80000"\/><a:gd name="adj2" fmla="val 28000"\/><\/a:avLst>/, 'prst="downArrow"><a:avLst/>');
-  ok(xml && xn === b, `[${ex} porter 配色${pal}] [8] slide1 與 ${baseRef} 逐 byte 相同（${xml.length}/${b.length}）`);
+for (const [ex, pal, xml, names] of porter) {
+  const b = norm8((await exportOnce(hb, ex, 'porter', pal)).xml, names);
+  const xn = norm8(xml, names);
+  ok(xml && xn === b, `[${ex} porter 配色${pal}] [8] slide1 與 ${baseRef} 相同（去座標／產品／連接器後 ${xn.length}/${b.length}）`);
 }
 await hb.close();
 ok(!errNew.length, `[9] console error 0${errNew.length ? '：' + errNew.slice(0, 3).join(' | ') : ''}`);

@@ -1,13 +1,14 @@
 // ST-31 自測：價值鏈產品方塊文字改橫排（編輯器 ① 產品欄＋PPTX slide1 產品欄）。
+// ST-43 更新：寬螢幕與 PPTX 改成「一個產品一條直立長條、左右並排、名稱直書」，[a][b][e] 斷言改為新版；[c][d][f] 不變（[d] 700px 仍橫排）
 // 跑法：CLAUDE_JOB_DIR=... node tools/selftest/ST-31.mjs   （需 Chrome；截圖與 slide1.xml 寫 $CLAUDE_JOB_DIR/tmp/st31/）
 // 測了什麼：
-//   [a] 編輯器 1400 寬（bookstore-a）：產品名稱 textarea 與方塊 computed writing-mode=horizontal-tb；.vc-zone-products 寬 200±2；
-//       3 個產品 top 遞增、left 相同；產品名稱用 textarea.vc-name-wrap
-//   [b] 把第一個產品改成 13 字長名稱：方塊高度增加（換行）、scrollHeight ≤ clientHeight+1（未裁字）、方塊不超出產品欄寬
+//   [a] 編輯器 1400 寬（bookstore-a）：產品名稱 textarea 與方塊 computed writing-mode=vertical-rl（ST-43）；.vc-zone-products 寬 < 200（依產品數伸縮）；
+//       3 個產品 left 遞增、top 相同；產品名稱用 textarea.vc-name-wrap
+//   [b] 把第一個產品改成 13 字長名稱：未裁字、長條寬 ≤ 60px、不超出產品欄
 //   [c] 連線仍正交：客服→中文書籍 vcLinkRoute kind=product、相鄰點 x 或 y 相等、SVG main path 無 NaN
 //   [d] 700px 寬：產品在最下方橫列、方塊 horizontal-tb、名稱未裁字
-//   [e] PPTX slide1（bookstore-a）：產品 shape 寬 1.0"（長名稱情境 1.2"）、x 在 Margin 右側、右緣 ≤ slide 寬、無 vert="eaVert"、
-//       高 ≤ 0.6"；所有 connector 正交（cx 或 cy 為 0）
+//   [e] PPTX slide1（bookstore-a）：產品 shape 寬 0.42"（ST-43：與名稱長短無關）、x 在 Margin 右側、右緣 ≤ slide 寬、含 vert="eaVert"、
+//       高 > 0.6"（直立長條）；所有 connector 正交（cx 或 cy 為 0）
 //   [f] console error 0
 // 預期：全部 PASS、exit 0。
 import { launch } from '../cdp-harness.mjs';
@@ -54,11 +55,9 @@ function checkPptx(tag, xml, names, wantW) {
   const sh = parse(xml), sp = sh.filter(s => s.kind === 'sp'), cx = sh.filter(s => s.kind === 'cxnSp');
   const margin = sp.find(s => s.name === 'Margin／利潤');
   const prods = names.map(n => sp.filter(s => s.name === n && /prst="roundRect"/.test(s.raw)).sort((a, b) => b.x - a.x)[0]);
-  const lane = Math.round(0.06 * EMU);
   console.log(`INFO [${tag}] 產品 ${prods.map(p => p ? `${p.name} x=${(p.x / EMU).toFixed(3)} w=${(p.w / EMU).toFixed(3)} h=${(p.h / EMU).toFixed(3)}` : '缺').join(' / ')}；Margin x=${margin && (margin.x / EMU).toFixed(3)}`);
-  ok(prods.every(Boolean) && prods.every(p => Math.abs(p.w - Math.round(wantW * EMU)) <= 2 || Math.abs(p.w - (Math.round(wantW * EMU) - lane)) <= 2),
-    `[${tag}] 產品 shape 寬 ${wantW}"（有產品→產品線時扣 0.06" 通道）`);
-  ok(prods.every(p => p && !/vert="eaVert"/.test(p.raw) && p.h <= Math.round(0.6 * EMU) + 2), `[${tag}] 產品 shape 無 vert="eaVert"、高 ≤ 0.6"`);
+  ok(prods.every(Boolean) && prods.every(p => Math.abs(p.w - Math.round(wantW * EMU)) <= 2), `[${tag}] 產品 shape 寬 ${wantW}"`);
+  ok(prods.every(p => p && /vert="eaVert"/.test(p.raw) && p.h > Math.round(0.6 * EMU)), `[${tag}] 產品 shape 含 vert="eaVert"、高 > 0.6"（直立長條）`);
   ok(!!margin && prods.every(p => p && p.x >= margin.x + margin.w && p.x + p.w <= SLIDE_W), `[${tag}] 產品在 Margin 右側、右緣 ≤ slide 寬`);
   ok(cx.every(c => c.w === 0 || c.h === 0), `[${tag}] ${cx.length} 段 connector 全部正交`);
 }
@@ -69,10 +68,10 @@ try {
   await h.ev(`guideGoto('chain'); 0`); await sleep(700);
   // [a]
   let g = await h.ev(geo);
-  ok(g.units.length === 3 && g.units.every(u => u.wm === 'horizontal-tb' && u.iwm === 'horizontal-tb'), `[a] 產品方塊與名稱 writing-mode=horizontal-tb`);
+  ok(g.units.length === 3 && g.units.every(u => u.wm === 'vertical-rl' && u.iwm === 'vertical-rl'), `[a] 產品方塊與名稱 writing-mode=vertical-rl（ST-43）`);
   ok(g.units.every(u => u.tag === 'TEXTAREA' && /vc-name-wrap/.test(u.cls)), `[a] 產品名稱是 textarea.vc-name-wrap`);
-  ok(Math.abs(g.prod.w - 200) <= 2, `[a] .vc-zone-products 寬 ${g.prod.w}（200±2）`);
-  ok(g.units.every((u, i) => !i || (u.t > g.units[i - 1].t && u.l === g.units[0].l)), `[a] 3 個產品 top 遞增 ${g.units.map(u => u.t)}、left 相同 ${g.units.map(u => u.l)}`);
+  ok(g.prod.w < 200, `[a] .vc-zone-products 寬 ${g.prod.w}（< 200，依產品數伸縮）`);
+  ok(g.units.every((u, i) => !i || (u.l >= g.units[i - 1].r && u.t === g.units[0].t)), `[a] 3 個產品 left 遞增 ${g.units.map(u => u.l)}、top 相同 ${g.units.map(u => u.t)}`);
   ok(g.units.every(notClipped), `[a] 名稱未裁字`);
   await h.shot('#valueChainEditor .vc-zones', `${out}/a-wide.png`);
   // [b] 13 字長名稱
@@ -81,27 +80,27 @@ try {
   await sleep(400);
   g = await h.ev(geo);
   const u0 = g.units[0];
-  ok(u0.h > h0 && notClipped(u0), `[b] 13 字長名稱換行：高 ${h0}→${u0.h}、scrollHeight ${u0.sh} ≤ clientHeight ${u0.ch}+1`);
+  ok(notClipped(u0) && u0.w <= 60, `[b] 13 字長名稱未裁字、長條寬 ${u0.w} ≤ 60（高 ${h0}→${u0.h}）`);
   ok(u0.r <= g.prod.r && u0.l >= g.prod.l, `[b] 長名稱方塊不超出產品欄`);
   await h.shot('#valueChainEditor .vc-zones', `${out}/b-long-name.png`);
   // [c]
   const L = await h.ev(linkCheck);
   ok(L.kind === 'product' && L.ortho && !L.nan, `[c] 客服→產品 kind=${L.kind} 正交=${L.ortho} NaN=${L.nan}`);
-  // [e] PPTX：長名稱 13 字 → 1.2"；改回短名稱 → 1.0"
+  // [e] PPTX：長名稱 13 字與短名稱都是 0.42" 直立長條（ST-43）
   await h.ev(`const g0=JSZip.prototype.generateAsync; JSZip.prototype.generateAsync=function(...a){window.__zip=this;return g0.apply(this,a);};
     HTMLAnchorElement.prototype.click=function(){}; 0`);
   await h.stubDialogs();
   let names = await h.ev(`valueChain.products.map(n=>n.name)`);
   let xml = await slide1(h); writeFileSync(`${out}/slide1-long.xml`, xml);
-  checkPptx('pptx 長名稱', xml, names, 1.2);
+  checkPptx('pptx 長名稱', xml, names, 0.42);
   await h.ev(`valueChain.products[0].name='中文書籍'; commitValueChain(); 0`); await sleep(300);
   names = await h.ev(`valueChain.products.map(n=>n.name)`);
   xml = await slide1(h); writeFileSync(`${out}/slide1.xml`, xml);
-  checkPptx('pptx', xml, names, 1.0);
+  checkPptx('pptx', xml, names, 0.42);
   ok(h.errors().length === 0, `[f] 寬版無 console error ${JSON.stringify(h.errors())}`);
 } finally { await h.close(); }
 
-// [d] 700px
+// [d] 700px（ST-43：窄版維持橫排方塊）
 {
   const h2 = await launch({ width: 700, height: 900 });
   try {
